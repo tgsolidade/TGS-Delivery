@@ -292,6 +292,14 @@
     setTimeout(() => el.remove(), 3000);
   };
   
+  // Função para formatar WhatsApp
+  window.formatarWhats = function(numero) {
+      if (!numero) return '';
+      let limpo = numero.replace(/\D/g, '');
+      if (limpo.startsWith('55')) return limpo;
+      return '55' + limpo;
+  }
+
   window.switchTab = function(tabId) {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
@@ -363,12 +371,11 @@
   let promoUnsubscribe = null;
   let ordersUnsubscribe = null;
   let inboxUnsubscribe = null;
-  let recargasUnsubscribe = null; // Listener do Livro-Caixa de Recargas
+  let recargasUnsubscribe = null;
   
   function startAdminListener() {
     if(!auth.currentUser) return;
     
-    // ESCUTA DE RECARGAS (FATURAMENTO REAL)
     if(recargasUnsubscribe) recargasUnsubscribe();
     const qRecargas = query(collection(db, "recargas"), orderBy("timestamp", "desc"));
     recargasUnsubscribe = onSnapshot(qRecargas, (snapshot) => {
@@ -492,7 +499,7 @@
                     <p style="margin-top:6px;"><span class="status-badge status-pending">Aguardando Avaliação</span></p>
                   </div>
                   <div class="admin-row-actions">
-                    <button class="btn-icon" style="color:var(--neon-g); border-color:var(--neon-g);" onclick="aprovarMoto('${id}')" title="Aprovar"><i class="ph-bold ph-check"></i></button>
+                    <button class="btn-icon" style="color:var(--neon-g); border-color:var(--neon-g);" onclick="aprovarMoto('${id}', '${d.whats || ''}', '${encodeURIComponent(d.nome)}')" title="Aprovar"><i class="ph-bold ph-check"></i></button>
                     <button class="btn-icon" style="color:var(--neon-r); border-color:var(--neon-r);" onclick="recusarMoto('${id}')" title="Recusar e Deletar"><i class="ph-bold ph-x"></i></button>
                   </div>
                 </div>`;
@@ -612,15 +619,12 @@
 
   window.forcarResetSenha = async function(emailAlvo) {
       if(!emailAlvo || emailAlvo === 'undefined') return alert('Este usuário não possui e-mail cadastrado ou válido.');
-      
       if(confirm(`Tem certeza que deseja enviar o link de redefinição de senha para o e-mail:\n${emailAlvo}\n?`)) {
           try {
               showToast('<i class="ph ph-spinner ph-spin"></i> Enviando e-mail...');
               await sendPasswordResetEmail(auth, emailAlvo);
               showToast('<i class="ph-fill ph-check-circle"></i> Link de redefinição enviado com sucesso!');
-          } catch(e) {
-              alert("Erro ao tentar enviar e-mail: " + e.message);
-          }
+          } catch(e) { alert("Erro ao tentar enviar e-mail: " + e.message); }
       }
   }
 
@@ -659,7 +663,6 @@
      const input = document.getElementById('adminMsgInput');
      const txt = input.value.trim();
      if(!txt) return showToast("<i class='ph-fill ph-warning'></i> Digite uma mensagem antes de enviar!");
-     
      try {
         await addDoc(collection(db, "avisos"), { msg: txt, timestamp: serverTimestamp() });
         input.value = '';
@@ -678,23 +681,31 @@
      const uid = document.getElementById('msgTargetUid').value;
      const nome = document.getElementById('msgTargetName').textContent;
      const txt = document.getElementById('msgText').value.trim();
-     
      if(!txt) return showToast("<i class='ph-fill ph-warning'></i> Escreva a mensagem.");
-     
      try {
         showToast('<i class="ph ph-spinner ph-spin"></i> Enviando...');
-        await addDoc(collection(db, "mensagens"), {
-           to: uid, toName: nome, from: 'admin', text: txt, status: 'enviado', timestamp: serverTimestamp()
-        });
+        await addDoc(collection(db, "mensagens"), { to: uid, toName: nome, from: 'admin', text: txt, status: 'enviado', timestamp: serverTimestamp() });
         document.getElementById('sendMsgModal').classList.remove('open');
         showToast('<i class="ph-fill ph-check-circle"></i> Mensagem enviada com sucesso!');
         switchTab('tab-msg');
      } catch(e) { alert("Erro: " + e.message); }
   }
 
-  window.aprovarMoto = async function(id) {
-     if(confirm('Aprovar entregador? Ele receberá acesso imediato.')) {
-        try { await updateDoc(doc(db, "usuarios", id), { status: 'offline' }); showToast('<i class="ph-fill ph-check-circle"></i> Motoboy aprovado!'); } catch(e) {}
+  // ── FUNÇÃO DE APROVAR COM AUTOMAÇÃO DO WHATSAPP ──
+  window.aprovarMoto = async function(id, whats, nomeEnc) {
+     const nome = decodeURIComponent(nomeEnc);
+     if(confirm(`Aprovar o entregador ${nome}? Ele receberá acesso imediato.`)) {
+        try { 
+           await updateDoc(doc(db, "usuarios", id), { status: 'offline' }); 
+           showToast('<i class="ph-fill ph-check-circle"></i> Motoboy aprovado!'); 
+           
+           // Se ele tiver WhatsApp cadastrado, abre o chat com a mensagem de aprovação
+           if (whats && whats.trim() !== '') {
+              const whatsNum = window.formatarWhats(whats);
+              const msg = encodeURIComponent(`Olá ${nome}! 🎉 Seu cadastro no *TGS Delivery* foi APROVADO com sucesso! Você já pode acessar o aplicativo e começar a receber corridas. Boas entregas!`);
+              window.open(`https://wa.me/${whatsNum}?text=${msg}`, '_blank');
+           }
+        } catch(e) { showToast('<i class="ph-fill ph-warning"></i> Erro ao aprovar.'); }
      }
   }
 
@@ -744,9 +755,8 @@
      document.getElementById('editUid').value = id;
      document.getElementById('editUserName').value = decodeURIComponent(nomeEnc);
      document.getElementById('editUserDoc').value = docu;
-     
      const placaGroup = document.getElementById('editPlacaGroup');
-     if(placa !== 'null') {
+     if(placa && placa !== 'null') {
         placaGroup.style.display = 'block';
         document.getElementById('editUserPlaca').value = placa;
      } else {
@@ -761,7 +771,6 @@
      const nome = document.getElementById('editUserName').value.trim();
      const docu = document.getElementById('editUserDoc').value.trim();
      const placa = document.getElementById('editUserPlaca').value.trim();
-     
      if(!nome || !docu) return alert("Preencha Nome e Documento.");
      try {
         let updateData = { nome: nome, documento: docu };
