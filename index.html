@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#0a0a0f">
+<title>TGS Delivery</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
+<style>
+  :root {
+    --bg:        #0a0a0f;
+    --bg2:       #0f0f1a;
+    --bg3:       #13131f;
+    --panel:     #16161f;
+    --border:    #1e1e30;
+    --neon-y:    #f5e642;
+    --neon-g:    #00ff88;
+    --neon-b:    #00c8ff;
+    --neon-r:    #ff3366;
+    --neon-orange: #ff9900;
+    --text:      #e8e8f0;
+    --muted:     #6b6b8a;
+    --font-head: 'Orbitron', monospace;
+    --font-body: 'Rajdhani', sans-serif;
+    --font-mono: 'Share Tech Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 16px; overflow: hidden; }
+
+  .screen { display: none; height: 100vh; overflow-y: auto; overflow-x: hidden; flex-direction: column; }
+  .screen.active { display: flex; }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--neon-b); border-radius: 2px; }
+
+  .neon-y { color: var(--neon-y); } .neon-g { color: var(--neon-g); } .neon-b { color: var(--neon-b); } .neon-r { color: var(--neon-r); }
+
+  #splash { align-items: center; justify-content: center; background: radial-gradient(ellipse at center, #0f0f28 0%, #0a0a0f 70%); position: relative; overflow: hidden; }
+  .splash-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(0,200,255,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,200,255,.04) 1px, transparent 1px); background-size: 40px 40px; animation: gridPan 20s linear infinite; }
+  @keyframes gridPan { to { background-position: 40px 40px; } }
+  .splash-logo { text-align: center; z-index: 2; }
+  .splash-bolt { font-size: 80px; display: block; animation: boltPulse 1.5s ease-in-out infinite; filter: drop-shadow(0 0 20px var(--neon-y)); color: var(--neon-y); }
+  @keyframes boltPulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.15); opacity: .85; } }
+  .splash-title { font-family: var(--font-head); font-size: clamp(24px, 6vw, 42px); font-weight: 900; letter-spacing: .15em; color: var(--neon-y); text-shadow: 0 0 30px var(--neon-y), 0 0 60px rgba(245,230,66,.3); margin-top: 12px; }
+  .splash-sub { font-family: var(--font-mono); font-size: 13px; color: var(--muted); letter-spacing: .2em; margin-top: 6px; }
+  .splash-loader { margin-top: 48px; display: flex; gap: 8px; justify-content: center; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--neon-b); animation: dotBounce .9s ease-in-out infinite; }
+  .dot:nth-child(2) { animation-delay: .15s; background: var(--neon-g); }
+  .dot:nth-child(3) { animation-delay: .3s; background: var(--neon-y); }
+  @keyframes dotBounce { 0%,100% { transform: translateY(0); opacity:.4; } 50% { transform: translateY(-10px); opacity:1; } }
+
+  .login-card, .profile-card { width: 100%; max-width: 420px; background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 40px 32px; position: relative; box-shadow: 0 0 60px rgba(0,200,255,.05), inset 0 1px 0 rgba(255,255,255,.04); margin: auto; }
+  .login-card::before, .profile-card::before { content: ''; position: absolute; top: -1px; left: 20%; right: 20%; height: 2px; background: linear-gradient(90deg, transparent, var(--neon-b), transparent); }
+  .login-logo { text-align: center; margin-bottom: 32px; }
+  .login-logo i { font-size: 36px; color: var(--neon-y); }
+  .login-logo h1 { font-family: var(--font-head); font-size: 20px; color: var(--neon-y); letter-spacing: .1em; margin-top: 8px;}
+  
+  .form-group { margin-bottom: 16px; }
+  .form-group label { display: block; font-family: var(--font-mono); font-size: 11px; color: var(--muted); letter-spacing: .15em; text-transform: uppercase; margin-bottom: 6px; }
+  .form-group input, .form-group textarea { width: 100%; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; color: var(--text); font-family: var(--font-body); font-size: 16px; outline: none; transition: all .2s; resize: none; }
+  .form-group input:focus, .form-group textarea:focus { border-color: var(--neon-b); box-shadow: 0 0 0 3px rgba(0,200,255,.1); }
+  .form-group input:disabled, .form-group textarea:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 16px; border-radius: 10px; border: none; cursor: pointer; font-family: var(--font-head); font-size: 14px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; transition: all .2s; position: relative; overflow: hidden; }
+  .btn:active { transform: scale(.97); }
+  .btn-primary { background: linear-gradient(135deg, #d4c200, var(--neon-y)); color: #0a0a0f; box-shadow: 0 4px 20px rgba(245,230,66,.3); margin-top: 8px; }
+  .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text); margin-top: 10px; }
+  .btn-green { background: linear-gradient(135deg, #00cc6a, var(--neon-g)); color: #0a0a0f; box-shadow: 0 4px 20px rgba(0,255,136,.25); margin-top: 8px;}
+  .btn-blue { background: linear-gradient(135deg, #009acc, var(--neon-b)); color: #0a0a0f; box-shadow: 0 4px 20px rgba(0,200,255,.25); }
+  .btn-red { background: linear-gradient(135deg, #cc1144, var(--neon-r)); color: #fff; box-shadow: 0 4px 20px rgba(255,51,102,.25); }
+  .btn-sm { padding: 10px 16px; font-size: 12px; width: auto; }
+  
+  .btn-icon { width: 38px; height: 38px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 20px; background: var(--bg2); border: 1px solid var(--border); cursor: pointer; transition: all .2s; color: var(--text); }
+  .btn-icon:hover { border-color: var(--neon-y); color: var(--neon-y); }
+
+  .login-divider { display: flex; align-items: center; justify-content: center; width: 100%; gap: 12px; margin: 20px 0; }
+  .login-divider::before, .login-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .login-divider span { font-family: var(--font-mono); font-size: 11px; color: var(--muted); text-align: center; }
+  .login-link { text-align: center; margin-top: 16px; font-size: 13px; color: var(--muted); }
+  .login-link span { color: var(--neon-b); text-decoration: underline; cursor: pointer; }
+
+  .profile-option { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 20px 24px; margin-bottom: 14px; cursor: pointer; display: flex; align-items: center; gap: 18px; transition: all .2s; position: relative; overflow: hidden; }
+  .profile-option::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; opacity: 0; }
+  .profile-option.opt-store::before { background: var(--neon-b); } 
+  .profile-option.opt-pf::before { background: var(--neon-g); } 
+  .profile-option.opt-moto::before { background: var(--neon-y); }
+  .profile-option:hover { border-color: var(--muted); transform: translateX(4px); } 
+  .profile-option:hover::before { opacity: 1; }
+  .opt-icon { font-size: 32px; flex-shrink: 0; }
+  .opt-text h3 { font-family: var(--font-head); font-size: 14px; letter-spacing: .05em; }
+  .opt-text p { color: var(--muted); font-size: 13px; margin-top: 3px; }
+
+  .screen-header { background: var(--panel); border-bottom: 1px solid var(--border); padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+  .back-btn { width: 38px; height: 38px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; transition: all .2s; }
+  .back-btn:hover { border-color: var(--neon-b); color: var(--neon-b); }
+  .screen-header h2 { font-family: var(--font-head); font-size: 15px; letter-spacing: .08em; display:flex; align-items:center; gap:8px; }
+  .screen-body { padding: 24px 20px; flex: 1; }
+
+  .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; font-weight: bold;}
+  .status-pending { background: rgba(245,230,66,.1); color: var(--neon-y); border: 1px solid rgba(245,230,66,.2); }
+  .status-active  { background: rgba(0,255,136,.1); color: var(--neon-g); border: 1px solid rgba(0,255,136,.2); }
+  .status-going  { background: rgba(0,200,255,.1); color: var(--neon-b); border: 1px solid rgba(0,200,255,.2); }
+
+  .checkbox-box { display: flex; align-items: center; gap: 12px; background: var(--bg2); border: 1px solid var(--border); padding: 16px; border-radius: 8px; margin-bottom: 20px; cursor: pointer; transition: all 0.2s; }
+  .checkbox-box:hover { border-color: var(--neon-orange); }
+  .checkbox-box input[type="checkbox"] { width: 22px; height: 22px; cursor: pointer; accent-color: var(--neon-orange); flex-shrink: 0; }
+  .checkbox-box-text h4 { font-family: var(--font-head); font-size: 14px; color: var(--text); letter-spacing: 0.05em; display:flex; align-items:center; gap:6px;}
+  .checkbox-box-text p { font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  .stats-dash { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-bottom: 24px; }
+  .stat-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; text-align: center; }
+  .stat-box i { font-size: 20px; margin-bottom: 4px; display: block;}
+  .stat-box .val { font-family: var(--font-head); font-size: 20px; font-weight: 900; color: var(--text); line-height: 1; }
+  .stat-box .lbl { font-family: var(--font-mono); font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; margin-top: 6px; }
+
+  .top-bar { background: var(--panel); border-bottom: 1px solid var(--border); padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+  .top-bar-logo { font-family: var(--font-head); font-size: 16px; color: var(--neon-y); letter-spacing: .1em; display:flex; align-items:center; gap:6px;}
+  .avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--neon-b), var(--neon-g)); display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; color: #000; overflow:hidden;}
+  .avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+  .new-order-btn { background: linear-gradient(135deg, #d4c200, var(--neon-y)); border: none; border-radius: 16px; width: 100%; padding: 22px; display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer; box-shadow: 0 8px 30px rgba(245,230,66,.3), 0 0 0 1px rgba(245,230,66,.1); transition: all .2s; margin-bottom: 24px; }
+  .new-order-btn span { font-family: var(--font-head); font-size: 18px; font-weight: 900; color: #0a0a0f; letter-spacing: .08em; }
+  .section-title { font-family: var(--font-mono); font-size: 11px; color: var(--muted); letter-spacing: .2em; text-transform: uppercase; margin-bottom: 12px; display:flex; align-items:center; gap:6px; justify-content: space-between;}
+
+  .order-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; position: relative; overflow: hidden; transition: all .2s; }
+  .order-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; border-radius: 3px 0 0 3px; }
+  .order-card.waiting::before { background: var(--neon-y); }
+  .order-card.going::before   { background: var(--neon-b); }
+  .order-card.done::before    { background: var(--muted); }
+  .order-card.done { cursor: pointer; border-color: rgba(255,255,255,0.05); background: rgba(22,22,31,0.6); }
+  .order-card.done:hover { border-color: var(--neon-b); transform: translateY(-2px); }
+
+  .order-card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .order-id { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+  .order-fee { font-family: var(--font-head); font-size: 18px; color: var(--neon-g); }
+  .order-info { font-size: 14px; color: var(--text); margin-bottom: 6px; display:flex; gap:6px; align-items:flex-start;}
+  .order-info i { color: var(--neon-b); font-size: 18px; margin-top: 2px;}
+  .order-obs { font-size: 13px; color: var(--muted); font-style: italic; display:flex; gap:6px;}
+  .order-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
+  .pin-code { font-family: var(--font-mono); font-size: 18px; font-weight: bold; color: var(--neon-y); letter-spacing: 2px; background: rgba(245,230,66,.1); padding: 4px 10px; border-radius: 6px; border: 1px dashed var(--neon-y);}
+
+  .star-rating { display: flex; gap: 8px; font-size: 32px; color: var(--muted); cursor: pointer; justify-content: center; margin: 16px 0; }
+  .star-rating i { transition: all 0.2s; }
+  .star-rating i:hover { transform: scale(1.2); }
+
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.8); z-index: 100; align-items: flex-end; justify-content: center; backdrop-filter: blur(4px);}
+  .modal-overlay.open { display: flex; animation: fadeIn .2s; }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+  
+  .modal { background: var(--panel); border: 1px solid var(--border); border-radius: 20px 20px 0 0; padding: 32px 24px; width: 100%; max-width: 500px; animation: slideUp .3s ease-out; max-height: 90vh; overflow-y:auto;}
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal h3 { font-family: var(--font-head); font-size: 16px; color: var(--neon-y); margin-bottom: 24px; letter-spacing: .08em; display:flex; align-items:center; gap:8px;}
+
+  /* ── MODAL AVISO GLOBAL (SUAVE E DELICADO) ── */
+  .admin-alert-box { background-color: #FFFFEB; width: 90%; max-width: 400px; padding: 40px 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); text-align: center; border: 1px solid rgba(255, 255, 255, 0.1); position: relative; animation: slideUp .3s ease-out; margin: auto;}
+  .admin-alert-icon { background-color: #A52A2A; width: 60px; height: 60px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin: 0 auto 20px; box-shadow: 0 4px 10px rgba(165, 42, 42, 0.3); color: #FFFFEB; font-size: 32px; font-weight: bold;}
+  .admin-alert-title { color: #A52A2A; font-size: 16px; font-family: var(--font-body); font-weight: 600; margin: 0 0 10px; letter-spacing: normal;}
+  .admin-alert-text { color: #A52A2A; font-size: 28px; font-weight: bold; margin: 0 0 30px; line-height: 1.2; font-family: var(--font-body);}
+  .admin-alert-btn { display: inline-flex; align-items: center; justify-content: center; background-color: #FFFFFF; color: #A52A2A; border: none; padding: 12px 30px; border-radius: 25px; font-size: 16px; font-weight: 600; cursor: pointer; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08); transition: transform 0.2s, box-shadow 0.2s;}
+  .admin-alert-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);}
+
+  .credits-pill { display: flex; align-items: center; gap: 8px; background: rgba(0,255,136,.1); border: 1px solid rgba(0,255,136,.2); border-radius: 20px; padding: 6px 14px; font-family: var(--font-head); font-size: 14px; color: var(--neon-g); cursor: pointer; transition: all 0.2s;}
+  .credits-pill:active { transform: scale(0.95); }
+  .moto-status-bar { padding: 8px 20px; background: var(--bg2); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .live-dot { width: 8px; height: 8px; background: var(--neon-g); border-radius: 50%; animation: livePulse 1s ease-in-out infinite; }
+  @keyframes livePulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
+  .live-text { font-family: var(--font-mono); font-size: 12px; color: var(--neon-g); font-weight: bold; letter-spacing: 1px; }
+  
+  .delivery-card { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 16px; position: relative; overflow: hidden; animation: cardDrop .4s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes cardDrop { from { transform: translateY(-20px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+  
+  .delivery-card.new-arrival { border-color: var(--neon-y); box-shadow: 0 0 20px rgba(245,230,66,.15); }
+  .delivery-card.new-arrival::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--neon-y), transparent); animation: scanLine 2s linear infinite; }
+  @keyframes scanLine { 0%{transform:scaleX(0)}50%{transform:scaleX(1)}100%{transform:scaleX(0)} }
+  
+  .dc-store { font-family: var(--font-mono); font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .12em; margin-bottom: 8px; display:flex; align-items:center; gap:6px;}
+  .dc-store img { width: 20px; height: 20px; border-radius: 4px; object-fit: cover; }
+  .dc-bairro { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 4px; display:flex; align-items:center; gap:6px;}
+  .dc-fee { font-family: var(--font-head); font-size: 32px; font-weight: 900; color: var(--neon-g); line-height: 1; }
+  
+  .dc-actions { display: flex; gap: 12px; margin-top: 16px; align-items: stretch; }
+  .btn-accept { flex: 1; background: linear-gradient(135deg, #d4c200, var(--neon-y)); border: none; border-radius: 12px; padding: 24px; font-family: var(--font-head); font-size: 22px; font-weight: 900; color: #0a0a0f; letter-spacing: .05em; cursor: pointer; box-shadow: 0 0 30px rgba(245,230,66,.4); transition: all .15s; display: flex; align-items: center; justify-content: center; gap: 8px; text-transform: uppercase; }
+  .btn-accept i { font-size: 28px; }
+  .btn-accept:active { transform: scale(.95); box-shadow: 0 0 40px rgba(245,230,66,.6); }
+  .btn-pass { width: 64px; background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 24px; transition: all .2s; flex-shrink: 0; color: var(--text); }
+  .btn-pass:hover { border-color: var(--neon-r); color: var(--neon-r); }
+
+  .active-order { display: none; background: linear-gradient(135deg, rgba(0,200,255,.06), rgba(0,255,136,.04)); border: 1px solid rgba(0,200,255,.2); border-radius: 16px; padding: 20px; margin-bottom: 16px; position: relative; }
+  .active-order.visible { display: block; animation: fadeIn 0.3s ease; }
+  .active-order h3 { font-family: var(--font-head); font-size: 14px; color: var(--neon-b); letter-spacing: .08em; margin-bottom: 16px; display:flex; align-items:center; gap:6px;}
+  .address-box { background: var(--bg); padding: 12px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 12px;}
+  .address-box h4 { font-family: var(--font-mono); font-size: 10px; color: var(--muted); text-transform: uppercase; margin-bottom: 4px;}
+  .address-box p { font-size: 14px; color: var(--text); line-height: 1.4; display:flex; gap:6px;}
+
+  .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 20px; font-family: var(--font-mono); font-size: 13px; z-index: 99999 !important; white-space: nowrap; animation: toastIn .3s ease-out; box-shadow: 0 8px 24px rgba(0,0,0,.4); display:flex; align-items:center; gap:8px;}
+  @keyframes toastIn { from { transform: translateX(-50%) translateY(-10px); opacity:0; } to { transform: translateX(-50%) translateY(0); opacity:1; } }
+  
+  .lightning-overlay { position: fixed; inset: 0; z-index: 200; pointer-events: none; display: flex; align-items: center; justify-content: center; opacity: 0; }
+  .lightning-overlay.flash { animation: lightningFlash .5s ease-out forwards; }
+  @keyframes lightningFlash { 0%{opacity:0; background:rgba(245,230,66,0);} 10%{opacity:1; background:rgba(245,230,66,.15);} 30%{opacity:1; background:rgba(245,230,66,.2);} 100%{opacity:0; background:rgba(245,230,66,0);} }
+  
+  .lightning-bolt-big { font-size: 120px; animation: boltGrow .5s ease-out forwards; filter: drop-shadow(0 0 40px var(--neon-y)); color: var(--neon-y);}
+  @keyframes boltGrow { 0%{transform:scale(0) rotate(-10deg);opacity:0;} 50%{transform:scale(1.2) rotate(5deg);opacity:1;} 100%{transform:scale(0.8) rotate(0deg);opacity:0;} }
+
+  .bottom-nav { background: var(--panel); border-top: 1px solid var(--border); display: flex; flex-shrink: 0; padding-bottom: env(safe-area-inset-bottom); }
+  .nav-item { flex: 1; padding: 12px 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; transition: all .2s; font-family: var(--font-mono); font-size: 10px; color: var(--muted); }
+  .nav-item.active { color: var(--neon-y); }
+  .nav-item i { font-size: 24px; }
+  .nav-item:hover { color: var(--neon-y); }
+
+  /* OVERLAY KILL SWITCH */
+  #killSwitchOverlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:9999; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:24px; }
+</style>
+</head>
+<body>
+
+<div id="killSwitchOverlay">
+   <i class="ph-fill ph-warning-octagon" style="font-size:80px; color:var(--neon-r); margin-bottom:20px;"></i>
+   <h1 style="font-family:var(--font-head); color:var(--text); font-size:24px; margin-bottom:12px;">PLATAFORMA EM MANUTENÇÃO</h1>
+   <p style="color:var(--muted); font-size:14px;">As atividades foram temporariamente suspensas pelo Administrador. Voltaremos em breve!</p>
+</div>
+
+<div class="lightning-overlay" id="lightningOverlay">
+  <div class="lightning-bolt-big"><i class="ph-fill ph-lightning"></i></div>
+</div>
+
+<div class="screen active" id="splash">
+  <div class="splash-grid"></div>
+  <div class="splash-logo">
+    <i class="ph-fill ph-lightning splash-bolt"></i>
+    <div class="splash-title">TGS DELIVERY</div>
+    <div class="splash-sub">SISTEMA DE LOGÍSTICA v2.0</div>
+    <div class="splash-loader">
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    </div>
+  </div>
+</div>
+
+<div class="screen" id="login">
+  <div class="login-card">
+    <div class="login-logo">
+      <i class="ph-fill ph-lightning"></i>
+      <h1>TGS DELIVERY</h1>
+      <p>SISTEMA DE LOGÍSTICA EXPRESSA</p>
+    </div>
+    <div class="form-group">
+      <label>E-mail</label>
+      <input type="email" placeholder="seu@email.com" id="loginEmail">
+    </div>
+    <div class="form-group">
+      <label>Senha</label>
+      <input type="password" placeholder="••••••••" id="loginPass">
+    </div>
+    <button class="btn btn-primary" onclick="doLogin()"><i class="ph-fill ph-lightning"></i> ENTRAR</button>
+    <div class="login-link">
+      <span onclick="document.getElementById('esqueciSenhaModal').classList.add('open')">Esqueci minha senha</span>
+    </div>
+    <div class="login-divider"><span>ou</span></div>
+    <button class="btn btn-secondary" onclick="showScreen('choose-profile')">CRIAR CONTA</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="esqueciSenhaModal">
+  <div class="modal">
+    <h3><i class="ph-fill ph-lock-key"></i> RECUPERAR SENHA</h3>
+    <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Para sua segurança, valide seus dados abaixo para receber o link de recuperação.</p>
+    <div class="form-group"><label>E-mail da Conta</label><input type="email" placeholder="seu@email.com" id="recEmail"></div>
+    <div class="form-group"><label>CPF ou CNPJ Cadastrado</label><input type="text" placeholder="Apenas números" id="recDoc"></div>
+    <div class="form-group"><label>Data de Nascimento (Apenas Motoboys e Pessoas Físicas)</label><input type="date" id="recData"></div>
+    <button class="btn btn-primary" style="margin-top:8px" onclick="validarERecuperarSenha()"><i class="ph-fill ph-envelope-simple"></i> ENVIAR LINK</button>
+    <button class="btn btn-secondary" onclick="document.getElementById('esqueciSenhaModal').classList.remove('open')"><i class="ph ph-x"></i> CANCELAR</button>
+  </div>
+</div>
+
+<div class="screen" id="choose-profile">
+  <div class="profile-card">
+    <div class="profile-header">
+      <h2><i class="ph-fill ph-user-plus"></i> CRIAR CONTA</h2>
+      <p>Selecione seu tipo de perfil</p>
+    </div>
+    <div class="profile-option opt-store" onclick="showScreen('cadastro-loja')">
+      <div class="opt-icon"><i class="ph ph-storefront"></i></div>
+      <div class="opt-text">
+        <h3>SOU RESTAURANTE / LOJA</h3>
+        <p>Cadastro com CNPJ ou CPF · Plano mensal</p>
+      </div>
+      <span class="opt-badge">CNPJ / CPF</span>
+    </div>
+    <div class="profile-option opt-moto" onclick="showScreen('cadastro-moto')">
+      <div class="opt-icon"><i class="ph ph-motorcycle"></i></div>
+      <div class="opt-text">
+        <h3>SOU MOTOBOY</h3>
+        <p>Ganhos rápidos · Saque instantâneo</p>
+      </div>
+      <span class="opt-badge" style="color:var(--neon-y)">CPF</span>
+    </div>
+    <button class="btn btn-secondary" style="margin-top:8px" onclick="showScreen('login')"><i class="ph ph-arrow-left"></i> VOLTAR</button>
+  </div>
+</div>
+
+<div class="screen" id="cadastro-loja">
+  <div class="screen-header">
+    <div class="back-btn" onclick="showScreen('choose-profile')"><i class="ph ph-arrow-left"></i></div>
+    <h2><i class="ph ph-storefront"></i> CADASTRO DE LOJA</h2>
+  </div>
+  <div class="screen-body">
+    <div class="form-group">
+      <label>Logo da Empresa (Opcional)</label>
+      <input type="file" id="lojaLogo" accept="image/*" style="padding: 10px; font-size: 13px;">
+    </div>
+    <div class="form-group"><label>Nome da Loja</label><input type="text" id="lojaNome" placeholder="Ex: Pizzaria Volt"></div>
+    <div class="form-group"><label>CNPJ / CPF</label><input type="text" id="lojaCnpj" placeholder="Apenas números"></div>
+    <div class="form-group"><label>WhatsApp com DDD</label><input type="tel" id="lojaWhats" placeholder="(99) 99999-9999"></div>
+    <div style="display:flex; gap:10px;">
+      <div class="form-group" style="flex:2"><label>Rua / Av</label><input type="text" id="lojaRua" placeholder="Rua principal"></div>
+      <div class="form-group" style="flex:1"><label>Número</label><input type="text" id="lojaNum" placeholder="123"></div>
+    </div>
+    <div style="display:flex; gap:10px;">
+      <div class="form-group" style="flex:1"><label>Bairro</label><input type="text" id="lojaBairro" placeholder="Bairro da loja"></div>
+      <div class="form-group" style="flex:1"><label>Referência</label><input type="text" id="lojaRef" placeholder="Ao lado de..."></div>
+    </div>
+    <div class="form-group"><label>E-mail</label><input type="email" id="lojaEmail" placeholder="loja@email.com"></div>
+    <div class="form-group"><label>Senha</label><input type="password" id="lojaSenha" placeholder="Mínimo 8 caracteres"></div>
+    <button class="btn btn-blue" onclick="cadastrarLoja()"><i class="ph-fill ph-check-circle"></i> CRIAR CONTA E ASSINAR</button>
+  </div>
+</div>
+
+<div class="screen" id="cadastro-moto">
+  <div class="screen-header">
+    <div class="back-btn" onclick="showScreen('choose-profile')"><i class="ph ph-arrow-left"></i></div>
+    <h2><i class="ph ph-motorcycle"></i> CADASTRO MOTOBOY</h2>
+  </div>
+  <div class="screen-body">
+    <div class="form-group"><label>Nome Completo</label><input type="text" id="motoNome" placeholder="Seu nome completo"></div>
+    <div class="form-group"><label>CPF</label><input type="text" id="motoCpf" placeholder="Apenas números"></div>
+    <div class="form-group"><label>Data de Nascimento</label><input type="date" id="motoData"></div>
+    <div class="form-group"><label>Placa da Moto</label><input type="text" id="motoPlaca" placeholder="ABC-1D23" style="text-transform:uppercase"></div>
+    <div class="form-group"><label>WhatsApp com DDD</label><input type="tel" id="motoWhats" placeholder="(99) 99999-9999"></div>
+    <div class="form-group">
+      <label>Foto da Placa (Obrigatório para aprovação)</label>
+      <input type="file" id="motoPlacaFoto" accept="image/*" style="padding: 10px; font-size: 13px;">
+    </div>
+    <div class="checkbox-box" onclick="document.getElementById('motoBagGrande').click()">
+      <input type="checkbox" id="motoBagGrande" onclick="event.stopPropagation()">
+      <div class="checkbox-box-text">
+        <h4><i class="ph ph-package"></i> TENHO BAG GRANDE</h4>
+        <p>Posso transportar pizzas e fardos.</p>
+      </div>
+    </div>
+    <div class="form-group"><label>E-mail</label><input type="email" id="motoEmail" placeholder="moto@email.com"></div>
+    <div class="form-group"><label>Senha</label><input type="password" id="motoSenha" placeholder="Mínimo 8 caracteres"></div>
+    <button class="btn btn-primary" onclick="cadastrarMoto()"><i class="ph-fill ph-lightning"></i> ENVIAR CADASTRO</button>
+  </div>
+</div>
+
+<div class="screen" id="painel-loja">
+  <div class="top-bar">
+    <div class="top-bar-logo"><i class="ph-fill ph-lightning"></i> TGS DELIVERY</div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <button class="btn-icon" onclick="forceRefresh()" style="color:var(--neon-b)" title="Forçar Atualização"><i class="ph-bold ph-arrows-clockwise"></i></button>
+      <div class="status-badge status-active">● ONLINE</div>
+      <div class="avatar" onclick="abrirPerfilLoja()" title="Meu Perfil"><i class="ph-fill ph-user-circle"></i></div>
+    </div>
+  </div>
+  
+  <div class="loja-body" style="padding: 20px; flex:1; overflow-y:auto;">
+    <div class="stats-dash">
+      <div class="stat-box"><i class="ph-fill ph-motorcycle" style="color:var(--neon-g)"></i><div class="val" id="dashLojaOnline">0</div><div class="lbl">Motos Online</div></div>
+      <div class="stat-box"><i class="ph-fill ph-map-pin" style="color:var(--neon-b)"></i><div class="val" id="dashLojaRota">0</div><div class="lbl">Em Rota</div></div>
+      <div class="stat-box"><i class="ph-fill ph-users" style="color:var(--muted)"></i><div class="val" id="dashLojaTotal">0</div><div class="lbl">Cadastrados</div></div>
+    </div>
+
+    <button class="new-order-btn" onclick="openNewOrderModal()">
+      <i class="ph-fill ph-lightning" style="font-size: 28px;"></i>
+      <span>NOVO PEDIDO</span>
+    </button>
+    
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;">
+      <p class="section-title" style="margin-bottom:0;"><i class="ph-fill ph-broadcast"></i> PEDIDOS AO VIVO</p>
+    </div>
+    <div id="lojaOrdersContainer" style="margin-bottom: 30px;"></div>
+
+    <p class="section-title"><i class="ph-fill ph-clock-counter-clockwise"></i> HISTÓRICO (Toque para avaliar)</p>
+    <div id="lojaHistoryContainer"></div>
+  </div>
+</div>
+
+<div class="screen" id="perfil-loja">
+  <div class="screen-header">
+    <div class="back-btn" onclick="showScreen('painel-loja')"><i class="ph ph-arrow-left"></i></div>
+    <h2><i class="ph-fill ph-storefront"></i> MEU PERFIL (LOJA)</h2>
+  </div>
+  <div class="screen-body">
+    <div class="form-group"><label>E-mail (Login)</label><input type="email" id="editLojaEmail" disabled></div>
+    <div class="form-group"><label>CNPJ / CPF</label><input type="text" id="editLojaCnpj" disabled></div>
+    <div class="login-divider"><span>Dados Editáveis</span></div>
+    <div class="form-group"><label>Nova Logo (Opcional)</label><input type="file" id="editLojaLogo" accept="image/*" style="padding: 10px; font-size: 13px;"></div>
+    <div class="form-group"><label>Nome da Loja</label><input type="text" id="editLojaNome"></div>
+    <div class="form-group"><label>WhatsApp</label><input type="tel" id="editLojaWhats"></div>
+    <div style="display:flex; gap:10px;">
+      <div class="form-group" style="flex:2"><label>Rua / Av</label><input type="text" id="editLojaRua"></div>
+      <div class="form-group" style="flex:1"><label>Número</label><input type="text" id="editLojaNum"></div>
+    </div>
+    <div style="display:flex; gap:10px;">
+      <div class="form-group" style="flex:1"><label>Bairro</label><input type="text" id="editLojaBairro"></div>
+      <div class="form-group" style="flex:1"><label>Referência</label><input type="text" id="editLojaRef"></div>
+    </div>
+    <button class="btn btn-green" onclick="salvarPerfilLoja()"><i class="ph-fill ph-floppy-disk"></i> SALVAR ALTERAÇÕES</button>
+    <div class="login-divider" style="margin-top: 30px;"><span>Segurança</span></div>
+    <button class="btn btn-secondary" onclick="solicitarRedefinicaoSenha()"><i class="ph-fill ph-lock-key"></i> REDEFINIR SENHA</button>
+    <button class="btn btn-red" style="margin-top:20px" onclick="deslogar()"><i class="ph-fill ph-sign-out"></i> SAIR DA CONTA</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="newOrderModal">
+  <div class="modal">
+    <h3><i class="ph-fill ph-lightning"></i> NOVO PEDIDO</h3>
+    <div style="display:flex; gap:10px;">
+      <div class="form-group" style="flex:2"><label>Rua do Cliente</label><input type="text" placeholder="Ex: Travessa Mauriti" id="newRua"></div>
+      <div class="form-group" style="flex:1"><label>Nº</label><input type="text" placeholder="1050" id="newNum"></div>
+    </div>
+    <div class="form-group"><label>Bairro</label><input type="text" placeholder="Ex: Marco" id="newBairro"></div>
+    <div class="form-group"><label>Taxa de Entrega (R$)</label><input type="number" placeholder="8,00" id="newFee" style="font-family:var(--font-head);font-size:22px;color:var(--neon-g)"></div>
+    <div class="checkbox-box" onclick="document.getElementById('newBagGrande').click()">
+      <input type="checkbox" id="newBagGrande" onclick="event.stopPropagation()">
+      <div class="checkbox-box-text"><h4 style="color: var(--neon-orange);"><i class="ph-fill ph-package"></i> EXIGE BAG GRANDE</h4><p>Marque para lanches maiores ou pizzas.</p></div>
+    </div>
+    <div class="form-group"><label>Observação (opcional)</label><input type="text" placeholder="Ex: Chamar no interfone..." id="newObs"></div>
+    <button class="btn btn-primary" style="margin-top:8px" onclick="publishOrderReal()"><i class="ph-fill ph-paper-plane-tilt"></i> PUBLICAR NO MURAL</button>
+    <button class="btn btn-secondary" onclick="closeNewOrderModal()"><i class="ph ph-x"></i> CANCELAR</button>
+  </div>
+</div>
+
+<div class="screen" id="painel-moto">
+  
+  <div class="top-bar" style="position: relative; flex-wrap: wrap; gap: 10px;">
+     <div class="credits-pill" style="margin: 0; padding: 6px 12px; border-color: rgba(0,255,136,.3);">
+       <i class="ph-fill ph-wallet"></i> <span id="creditDisplay">R$ 0,00</span>
+     </div>
+     
+     <div style="font-family: var(--font-head); font-size: 14px; color: var(--text); letter-spacing: 1px; display: flex; align-items: center; gap: 6px; white-space: nowrap; margin: 0 auto;">
+       <i class="ph-fill ph-broadcast" style="color:var(--neon-r)"></i> MURAL AO VIVO
+     </div>
+
+     <div style="display:flex; align-items:center; gap:8px;">
+        <button class="btn-icon" onclick="forceRefresh()" style="color:var(--neon-y); width:32px; height:32px;" title="Atualizar"><i class="ph-bold ph-arrows-clockwise"></i></button>
+        <button class="btn-sm" onclick="abrirModalRecarga()" style="background:var(--neon-g); color:#000; font-family:var(--font-head); font-weight:bold; border-radius:8px; border:none; padding: 0 12px; height:32px; cursor:pointer; display:flex; align-items:center; gap:4px;" title="Recarregar Saldo">
+           <i class="ph-bold ph-plus"></i> RECARREGAR
+        </button>
+     </div>
+  </div>
+  
+  <div class="moto-status-bar" style="justify-content: space-between; padding: 8px 20px; background: var(--bg2); border-bottom: 1px solid var(--border);">
+     <span style="font-family: var(--font-head); font-size: 12px; color: var(--muted); letter-spacing: 1px;">TGS DELIVERY</span>
+     <div style="display:flex; align-items:center; gap: 8px;">
+        <div class="live-dot" style="background: var(--neon-g);"></div>
+        <span class="live-text" style="color: var(--neon-g); font-weight: bold; letter-spacing: 1px;">ONLINE</span>
+     </div>
+  </div>
+
+  <div class="mural" id="mural" style="flex:1; overflow-y:auto; padding: 20px;">
+    <div class="stats-dash" style="margin-bottom: 16px;">
+      <div class="stat-box"><i class="ph-fill ph-storefront" style="color:var(--neon-y)"></i><div class="val" id="dashMotoLojasAtivas">0</div><div class="lbl">Lojas Online</div></div>
+      <div class="stat-box"><i class="ph-fill ph-buildings" style="color:var(--muted)"></i><div class="val" id="dashMotoLojasTotal">0</div><div class="lbl">Cadastradas</div></div>
+      <div class="stat-box" style="background: rgba(0,255,136,.05); border-color: rgba(0,255,136,.2);"><i class="ph-fill ph-check-circle" style="color:var(--neon-g)"></i><div class="val" id="dashMotoHoje">0</div><div class="lbl">Suas Corridas</div></div>
+    </div>
+
+    <div class="active-order" id="activeOrder">
+      <h3><i class="ph-fill ph-motorcycle"></i> EM ANDAMENTO</h3>
+      <div class="address-box" style="border-color: var(--neon-y)">
+        <h4 style="color:var(--neon-y)">📍 1. RETIRADA (LOJA)</h4>
+        <p><strong id="activeLojaNome">—</strong></p>
+        <p><i class="ph-fill ph-map-pin"></i> <span id="activeLojaEnd">—</span></p>
+        <p style="margin-top:8px; display:flex; justify-content:space-between; align-items:center;"><span>Informe este PIN:</span><span class="pin-code" id="activePin">0000</span></p>
+        
+        <div id="activeWhatsLojaDiv" style="margin-top: 12px; display: none;">
+           <button id="activeBtnWhatsLoja" class="btn btn-sm" style="width:100%; background:#25D366; color:#fff; border:none; border-radius:8px; font-family:var(--font-head); font-weight:bold; cursor:pointer; padding:10px; display:flex; align-items:center; justify-content:center; gap:8px;">
+             <i class="ph-bold ph-whatsapp-logo" style="font-size:18px;"></i> CHAMAR LOJA NO WHATSAPP
+           </button>
+        </div>
+      </div>
+      <div class="address-box" style="border-color: var(--neon-b)">
+        <h4 style="color:var(--neon-b)">🚩 2. ENTREGA (CLIENTE)</h4>
+        <p><i class="ph-fill ph-map-pin"></i> <span id="activeClienteEnd">—</span></p>
+        <p style="color: var(--neon-g); font-family: var(--font-head); font-size: 20px; margin-top:8px;" id="activeFee">—</p>
+        <div id="activeObs" style="font-size:13px;color:var(--muted);margin-top:6px"></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button class="btn btn-green btn-sm" style="flex:1" onclick="completeOrder()"><i class="ph-bold ph-check"></i> CONCLUÍR</button>
+        <button class="btn btn-red btn-sm" onclick="returnOrder()"><i class="ph-bold ph-arrow-u-up-left"></i> DEVOLVER</button>
+      </div>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px;" id="muralTitle">
+      <p class="section-title" style="margin-bottom:0;"><i class="ph-fill ph-broadcast"></i> DISPONÍVEIS AGORA</p>
+    </div>
+    <div id="orderCards"></div>
+    <div style="text-align:center;padding:30px;color:var(--muted);font-family:var(--font-mono);font-size:13px" id="emptyMural">Aguardando novos pedidos...<br><i class="ph-fill ph-lightning" style="font-size: 24px; margin-top: 10px; color: var(--border);"></i></div>
+
+    <div id="motoHistoryWrapper" style="display:none; margin-top: 30px;">
+      <p class="section-title"><i class="ph-fill ph-clock-counter-clockwise"></i> ÚLTIMAS CONCLUÍDAS (Toque para avaliar)</p>
+      <div id="motoHistoryContainer"></div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="nav-item active" onclick="showScreen('painel-moto')"><i class="ph-fill ph-lightning"></i><span>MURAL</span></div>
+    <div class="nav-item" onclick="abrirPerfilMoto()"><i class="ph-fill ph-user-circle"></i><span>PERFIL</span></div>
+    <div class="nav-item" onclick="deslogar()"><i class="ph-fill ph-sign-out"></i><span>SAIR</span></div>
+  </div>
+</div>
+
+<div class="screen" id="perfil-moto">
+  <div class="screen-header">
+    <div class="back-btn" onclick="showScreen('painel-moto')"><i class="ph ph-arrow-left"></i></div>
+    <h2><i class="ph-fill ph-motorcycle"></i> MEU PERFIL (MOTOBOY)</h2>
+  </div>
+  <div class="screen-body">
+    <div class="form-group"><label>E-mail (Login)</label><input type="email" id="editMotoEmail" disabled></div>
+    <div class="form-group"><label>CPF</label><input type="text" id="editMotoCpf" disabled></div>
+    <div class="login-divider"><span>Dados Editáveis</span></div>
+    <div class="form-group"><label>Nome Completo</label><input type="text" id="editMotoNome"></div>
+    <div class="form-group"><label>Placa da Moto</label><input type="text" id="editMotoPlaca" style="text-transform:uppercase"></div>
+    <div class="form-group"><label>WhatsApp</label><input type="tel" id="editMotoWhats"></div>
+    <div class="form-group"><label>Data de Nascimento</label><input type="date" id="editMotoData"></div>
+    <div class="checkbox-box" onclick="document.getElementById('editMotoBag').click()">
+      <input type="checkbox" id="editMotoBag" onclick="event.stopPropagation()">
+      <div class="checkbox-box-text">
+        <h4><i class="ph ph-package"></i> MODO BAG GRANDE</h4>
+        <p>Marque para receber pedidos de fardos e pizzas.</p>
+      </div>
+    </div>
+    <button class="btn btn-green" onclick="salvarPerfilMoto()"><i class="ph-fill ph-floppy-disk"></i> SALVAR ALTERAÇÕES</button>
+    <div class="login-divider" style="margin-top: 30px;"><span>Segurança</span></div>
+    <button class="btn btn-secondary" onclick="solicitarRedefinicaoSenha()"><i class="ph-fill ph-lock-key"></i> REDEFINIR SENHA</button>
+  </div>
+  <div class="bottom-nav">
+    <div class="nav-item" onclick="showScreen('painel-moto')"><i class="ph-fill ph-lightning"></i><span>MURAL</span></div>
+    <div class="nav-item active"><i class="ph-fill ph-user-circle"></i><span>PERFIL</span></div>
+    <div class="nav-item" onclick="deslogar()"><i class="ph-fill ph-sign-out"></i><span>SAIR</span></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="historyModal">
+  <div class="modal">
+    <h3><i class="ph-fill ph-receipt"></i> DETALHES DO PEDIDO</h3>
+    
+    <div id="histModalContent" style="margin-bottom: 20px;">
+      </div>
+
+    <div id="ratingSection">
+      <div class="login-divider"><span>AVALIAÇÃO</span></div>
+      <p style="text-align:center; font-size:13px; color:var(--muted); margin-bottom:8px;" id="ratingPromptText">Como foi a experiência?</p>
+      
+      <div class="star-rating" id="starContainer">
+        <i class="ph ph-star" id="star-1" onclick="selecionarEstrela(1)"></i>
+        <i class="ph ph-star" id="star-2" onclick="selecionarEstrela(2)"></i>
+        <i class="ph ph-star" id="star-3" onclick="selecionarEstrela(3)"></i>
+        <i class="ph ph-star" id="star-4" onclick="selecionarEstrela(4)"></i>
+        <i class="ph ph-star" id="star-5" onclick="selecionarEstrela(5)"></i>
+      </div>
+
+      <div class="form-group" style="margin-top:16px;">
+        <textarea id="ratingComment" rows="3" placeholder="Deixe um comentário (opcional) sobre o parceiro..."></textarea>
+      </div>
+
+      <button class="btn btn-green" onclick="enviarAvaliacao()"><i class="ph-fill ph-paper-plane-tilt"></i> ENVIAR AVALIAÇÃO</button>
+    </div>
+
+    <div id="ratingDoneSection" style="display:none; text-align:center; padding: 16px; background: rgba(0,255,136,0.05); border: 1px solid rgba(0,255,136,0.2); border-radius: 8px;">
+       <i class="ph-fill ph-check-circle" style="color:var(--neon-g); font-size: 32px;"></i>
+       <p style="color:var(--neon-g); font-family:var(--font-head); margin-top:8px;">AVALIAÇÃO REGISTRADA</p>
+       <div id="ratingDoneStars" style="color:var(--neon-y); font-size:24px; margin-top:8px;"></div>
+       <p id="ratingDoneComment" style="font-size:13px; color:var(--text); margin-top:8px; font-style:italic;"></p>
+    </div>
+
+    <button class="btn btn-secondary" style="margin-top:20px;" onclick="document.getElementById('historyModal').classList.remove('open')"><i class="ph ph-x"></i> FECHAR</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="adminAlertModal" style="z-index: 9999;">
+  <div class="modal" style="background-color: #FFFFEB; border: 1px solid rgba(255, 255, 255, 0.1); text-align: center; max-width: 400px; padding: 40px 30px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);">
+    <div style="background-color: #A52A2A; width: 60px; height: 60px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin: 0 auto 20px; box-shadow: 0 4px 10px rgba(165, 42, 42, 0.3); color: #FFFFEB; font-size: 32px; font-weight: bold;">!</div>
+    <h2 style="color: #A52A2A; font-size: 16px; font-family: var(--font-body); font-weight: 600; margin: 0 0 10px; letter-spacing: normal;">Aviso do Admin</h2>
+    <p id="adminAlertText" style="color: #A52A2A; font-size: 28px; font-weight: bold; margin: 0 0 30px; line-height: 1.2; font-family: var(--font-body);"></p>
+    <button style="display: inline-flex; align-items: center; justify-content: center; background-color: #FFFFFF; color: #A52A2A; border: none; padding: 12px 30px; border-radius: 25px; font-size: 16px; font-weight: 600; cursor: pointer; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08); width:100%" onclick="document.getElementById('adminAlertModal').classList.remove('open')">
+      <i class="ph-bold ph-check" style="margin-right: 8px;"></i> Ciente
+    </button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="indivAlertModal" style="z-index: 9998;">
+  <div class="modal" style="background-color: #ff3366; border: 1px solid rgba(255, 255, 255, 0.1); text-align: center; max-width: 400px; padding: 30px;">
+    <div style="background-color: #ffffff; width: 50px; height: 50px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin: 0 auto 16px; color: #ff3366; font-size: 24px;"><i class="ph-bold ph-chat-text"></i></div>
+    <h2 style="color: #ffffff; font-size: 14px; font-family: var(--font-head); font-weight: 600; margin: 0 0 8px; letter-spacing: 2px;">MENSAGEM DO SUPORTE</h2>
+    <p id="indivAlertText" style="color: #ffffff; font-size: 16px; margin: 0 0 20px; line-height: 1.4; font-family: var(--font-body);"></p>
+    
+    <input type="hidden" id="indivAlertMsgId">
+    
+    <div class="form-group" style="margin-bottom: 16px;">
+       <textarea id="indivAlertReply" rows="3" placeholder="Escreva sua resposta aqui..." style="background: white; border: 1px solid #ddd; color: #333; border-radius: 8px;"></textarea>
+    </div>
+    
+    <div style="display:flex; gap:10px;">
+      <button style="flex:1; background-color: #ffffff; color: #ff3366; border: none; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);" onclick="responderAdmin()">
+        ENVIAR RESPOSTA
+      </button>
+      <button style="background: transparent; color: #ffffff; border: 1px solid #ffffff; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;" onclick="dispensarMensagemIndividual()">
+         FECHAR
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="rechargeModal" style="z-index: 9997;">
+  <div class="modal">
+    <h3><i class="ph-fill ph-money"></i> RECARREGAR SALDO</h3>
+    <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Insira o valor que deseja adicionar à sua carteira. (Mínimo R$ 10,00)</p>
+    
+    <div class="form-group">
+      <label>Valor da Recarga (R$)</label>
+      <input type="number" id="rechargeValue" placeholder="Ex: 10,00" step="1.00" min="10.00">
+    </div>
+    
+    <button class="btn btn-green" onclick="processarRecargaMock()"><i class="ph-fill ph-check-circle"></i> GERAR PIX E PAGAR</button>
+    <button class="btn btn-secondary" onclick="document.getElementById('rechargeModal').classList.remove('open')"><i class="ph ph-x"></i> CANCELAR</button>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, onAuthStateChanged, deleteUser } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+  import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, where, setDoc, doc, updateDoc, deleteDoc, getDoc, getDocs, increment, limit } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDLSvxNn8jwZGG8Ky9MUlDRvSH6vHK7vdI",
+    authDomain: "base-delivery-1d420.firebaseapp.com",
+    projectId: "base-delivery-1d420",
+    storageBucket: "base-delivery-1d420.firebasestorage.app",
+    messagingSenderId: "734860193156",
+    appId: "1:734860193156:web:b013890e8351b10b72c1d1"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  let activeOrderId = null;
+  let userDataGlobal = null; 
+  let userListenerUnsubscribe = null;
+  let currentConfig = { taxaApp: 0.40, isPaused: false };
+  
+  window.allOrdersMemory = {};
+  let currentModalOrderId = null;
+  let currentStarRating = 0;
+
+  window.showScreen = function(id) { 
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); 
+    document.getElementById(id).classList.add('active'); 
+  };
+
+  window.openNewOrderModal = function() { 
+    document.getElementById('newBagGrande').checked = false; 
+    document.getElementById('newOrderModal').classList.add('open'); 
+  };
+
+  window.closeNewOrderModal = function() { 
+    document.getElementById('newOrderModal').classList.remove('open'); 
+  };
+
+  window.showToast = function(msg) {
+    const existing = document.querySelector('.toast'); 
+    if (existing) existing.remove();
+    const el = document.createElement('div'); 
+    el.className = 'toast'; 
+    el.innerHTML = msg; 
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3000);
+  };
+
+  window.forceRefresh = function() {
+     showToast('<i class="ph ph-spinner ph-spin"></i> Atualizando dados...');
+  }
+
+  window.formatarWhats = function(numero) {
+      if (!numero) return '';
+      let limpo = numero.replace(/\D/g, '');
+      if (limpo.startsWith('55')) return limpo;
+      return '55' + limpo;
+  }
+
+  async function setOnlineStatus() {
+     if(auth.currentUser && userDataGlobal && !currentConfig.isPaused) {
+        try {
+           if(userDataGlobal.perfil === 'loja' || (userDataGlobal.perfil === 'motoboy' && userDataGlobal.status !== 'em_rota')) {
+              await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { status: 'online' });
+           }
+        } catch(e) {}
+     }
+  }
+
+  setInterval(setOnlineStatus, 15000); 
+  window.addEventListener('focus', setOnlineStatus);
+
+  window.addEventListener('beforeunload', () => {
+      if(auth.currentUser && userDataGlobal) {
+          updateDoc(doc(db, "usuarios", auth.currentUser.uid), { status: 'offline' });
+      }
+  });
+
+  function handleAuthError(error) {
+    if(error.code === 'auth/email-already-in-use') return '<i class="ph-fill ph-warning"></i> E-mail já cadastrado!';
+    if(error.code === 'auth/invalid-credential') return '<i class="ph-fill ph-warning"></i> Senha incorreta!';
+    return '<i class="ph-fill ph-warning"></i> Erro: ' + error.message;
+  }
+
+  function getBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader(); 
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 800; const MAX_HEIGHT = 800;
+          let width = img.width; let height = img.height;
+          if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+          } else { if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; } }
+          canvas.width = width; canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.6));
+        };
+      };
+      reader.onerror = error => reject(error);
+    });
+  }
+
+  function listenCurrentUser(uid) {
+    if (userListenerUnsubscribe) userListenerUnsubscribe();
+    userListenerUnsubscribe = onSnapshot(doc(db, "usuarios", uid), (docSnap) => {
+      if (docSnap.exists()) {
+        userDataGlobal = docSnap.data();
+        if (userDataGlobal.perfil === 'motoboy') {
+          const saldo = userDataGlobal.saldo !== undefined ? userDataGlobal.saldo : 0;
+          document.getElementById('creditDisplay').textContent = `R$ ${saldo.toFixed(2).replace('.',',')}`;
+          document.getElementById('creditDisplay').style.color = saldo < 0.40 ? "var(--neon-r)" : "var(--neon-g)";
+        }
+      }
+    });
+  }
+
+  let lastAvisoId = null;
+  let msgIndivUnsubscribe = null;
+
+  function listenConfigAndAlerts() {
+     onSnapshot(doc(db, "config", "geral"), (docSnap) => {
+        if(docSnap.exists()) {
+           currentConfig = docSnap.data();
+           const overlay = document.getElementById('killSwitchOverlay');
+           if(currentConfig.isPaused) {
+              overlay.style.display = 'flex';
+           } else {
+              overlay.style.display = 'none';
+           }
+        }
+     });
+
+     const qGlobal = query(collection(db, "avisos"), orderBy("timestamp", "desc"), limit(1));
+     onSnapshot(qGlobal, (snap) => {
+        snap.forEach(docAlerta => {
+           if(lastAvisoId !== null && lastAvisoId !== docAlerta.id) {
+               document.getElementById('adminAlertText').textContent = docAlerta.data().msg;
+               document.getElementById('adminAlertModal').classList.add('open');
+           }
+           lastAvisoId = docAlerta.id;
+        });
+     });
+     
+     if(auth.currentUser) {
+        const qMsg = query(collection(db, "mensagens"), where("to", "==", auth.currentUser.uid), where("status", "==", "enviado"));
+        msgIndivUnsubscribe = onSnapshot(qMsg, (snap) => {
+           snap.forEach(docMsg => {
+              const d = docMsg.data();
+              document.getElementById('indivAlertText').textContent = `"${d.text}"`;
+              document.getElementById('indivAlertMsgId').value = docMsg.id;
+              document.getElementById('indivAlertReply').value = '';
+              document.getElementById('indivAlertModal').classList.add('open');
+           });
+        });
+     }
+  }
+
+  window.responderAdmin = async function() {
+     const msgId = document.getElementById('indivAlertMsgId').value;
+     const replyTxt = document.getElementById('indivAlertReply').value.trim();
+     if(!replyTxt) return showToast("<i class='ph-fill ph-warning'></i> Digite uma resposta.");
+     
+     try {
+        await updateDoc(doc(db, "mensagens", msgId), {
+           status: 'respondido',
+           reply: replyTxt
+        });
+        document.getElementById('indivAlertModal').classList.remove('open');
+        showToast('<i class="ph-fill ph-check-circle"></i> Resposta enviada ao Suporte!');
+     } catch(e) { alert("Erro: " + e.message); }
+  }
+
+  window.dispensarMensagemIndividual = async function() {
+     const msgId = document.getElementById('indivAlertMsgId').value;
+     if(msgId) {
+         try {
+            await updateDoc(doc(db, "mensagens", msgId), {
+               status: 'lido' 
+            });
+         } catch(e) {}
+     }
+     document.getElementById('indivAlertModal').classList.remove('open');
+  }
+
+  // ── LÓGICA DE RECARGA (MOCK + LIVRO CAIXA) ──
+  window.abrirModalRecarga = function() {
+     document.getElementById('rechargeValue').value = '';
+     document.getElementById('rechargeModal').classList.add('open');
+  }
+
+  window.processarRecargaMock = async function() {
+     const valInput = document.getElementById('rechargeValue').value;
+     const valor = parseFloat(valInput.replace(',', '.'));
+     
+     if (isNaN(valor) || valor < 10) {
+        return showToast('<i class="ph-fill ph-warning"></i> O valor mínimo de recarga é R$ 10,00.');
+     }
+
+     showToast('<i class="ph ph-spinner ph-spin"></i> Processando pagamento...');
+
+     try {
+        // 1. Atualiza o Saldo do Motoboy
+        await updateDoc(doc(db, "usuarios", auth.currentUser.uid), {
+           saldo: increment(valor)
+        });
+
+        // 2. Registra o Faturamento no Livro-Caixa
+        await addDoc(collection(db, "recargas"), {
+           motoboyId: auth.currentUser.uid,
+           motoboyNome: userDataGlobal.nome,
+           valor: valor,
+           tipo: 'pix',
+           timestamp: Date.now() // Carimbo fixo para o sistema ler a data correta
+        });
+
+        document.getElementById('rechargeModal').classList.remove('open');
+        showToast(`<i class="ph-fill ph-check-circle"></i> Recarga de R$ ${valor.toFixed(2).replace('.', ',')} concluída!`);
+     } catch(e) {
+        showToast('<i class="ph-fill ph-warning"></i> Erro na recarga: ' + e.message);
+     }
+  }
+
+  let initialAuthChecked = false;
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      try {
+        const userDoc = await getDoc(doc(db, "usuarios", user.uid));
+        if (userDoc.exists()) {
+          userDataGlobal = userDoc.data();
+          listenCurrentUser(user.uid);
+          listenConfigAndAlerts();
+          
+          if (userDataGlobal.perfil === 'loja' || userDataGlobal.perfil === 'pf') {
+            await updateDoc(doc(db, "usuarios", user.uid), { status: 'online' });
+            window.showScreen('painel-loja'); startLojaListener(); listenStoreDashStats();
+          } else if(userDataGlobal.perfil === 'motoboy') {
+            if(userDataGlobal.status === 'pendente') {
+               showToast('<i class="ph-fill ph-warning"></i> Cadastro em análise pelo Admin!');
+               await signOut(auth); window.showScreen('login');
+            } else if (userDataGlobal.status === 'bloqueado') {
+               showToast('<i class="ph-fill ph-prohibit"></i> Conta banida pelo Admin!');
+               await signOut(auth); window.showScreen('login');
+            } else {
+               await updateDoc(doc(db, "usuarios", user.uid), { status: 'online' });
+               window.showScreen('painel-moto'); startMuralListener(); listenMotoDashStats();
+            }
+          }
+        } else { 
+          await signOut(auth); window.showScreen('login'); 
+        }
+      } catch(e) { window.showScreen('login'); }
+    } else {
+      if (!initialAuthChecked) { setTimeout(() => window.showScreen('login'), 1500); } 
+      else { window.showScreen('login'); }
+    }
+    initialAuthChecked = true;
+  });
+
+  window.doLogin = async function() {
+    const email = document.getElementById('loginEmail').value.trim(); 
+    const pass = document.getElementById('loginPass').value.trim();
+    if(!email || !pass) return showToast('<i class="ph-fill ph-warning"></i> Preencha tudo.');
+    try { 
+      showToast('<i class="ph ph-spinner ph-spin"></i> Entrando...'); 
+      const uc = await signInWithEmailAndPassword(auth, email, pass); 
+      
+      const userDoc = await getDoc(doc(db, "usuarios", uc.user.uid));
+      if (!userDoc.exists()) {
+         await deleteUser(uc.user); 
+         showToast('<i class="ph-fill ph-broom"></i> Cadastro corrompido limpo! Pode clicar em CRIAR CONTA novamente.');
+         return;
+      }
+    } catch (e) { showToast(handleAuthError(e)); }
+  };
+
+  window.deslogar = async function() {
+    if(userListenerUnsubscribe) userListenerUnsubscribe();
+    if(msgIndivUnsubscribe) msgIndivUnsubscribe();
+    if(auth.currentUser) { try { await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { status: 'offline' }); } catch(e){} }
+    await signOut(auth); userDataGlobal = null; showToast('<i class="ph-fill ph-sign-out"></i> Você saiu.'); window.showScreen('login');
+  }
+
+  window.validarERecuperarSenha = async function() {
+    const email = document.getElementById('recEmail').value.trim(); 
+    const docInput = document.getElementById('recDoc').value.trim(); 
+    const dataInput = document.getElementById('recData').value;
+    
+    if(!email || !docInput) return showToast("<i class='ph-fill ph-warning'></i> Preencha E-mail e Documento.");
+    
+    try {
+      showToast('<i class="ph ph-spinner ph-spin"></i> Validando...');
+      const q = query(collection(db, "usuarios"), where("email", "==", email));
+      const querySnapshot = await getDocs(q);
+      
+      if(querySnapshot.empty) return alert("Usuário não encontrado.");
+      let validado = false;
+      querySnapshot.forEach((docSnap) => {
+        const d = docSnap.data();
+        if(d.documento === docInput && (d.perfil === 'loja' || d.dataNasc === dataInput)) { validado = true; }
+      });
+
+      if(validado) { 
+        await sendPasswordResetEmail(auth, email); alert("Autenticação confirmada! Link enviado para o e-mail."); 
+        document.getElementById('esqueciSenhaModal').classList.remove('open'); 
+      } else { alert("Dados divergentes. Contate o Admin Geral."); }
+    } catch(e) { showToast("<i class='ph-fill ph-warning'></i> Erro na verificação."); }
+  }
+
+  window.cadastrarLoja = async function() {
+    const nome = document.getElementById('lojaNome').value.trim(); const email = document.getElementById('lojaEmail').value.trim();
+    const senha = document.getElementById('lojaSenha').value.trim(); const documento = document.getElementById('lojaCnpj').value.trim();
+    const rua = document.getElementById('lojaRua').value.trim(); const num = document.getElementById('lojaNum').value.trim();
+    const bairro = document.getElementById('lojaBairro').value.trim(); const ref = document.getElementById('lojaRef').value.trim();
+    const whats = document.getElementById('lojaWhats').value.trim();
+    const fileInput = document.getElementById('lojaLogo');
+    
+    if(!email || !senha || !nome || !rua || !bairro || !documento || !whats) return showToast("<i class='ph-fill ph-warning'></i> Preencha os campos!");
+    
+    try {
+      showToast('<i class="ph ph-spinner ph-spin"></i> Criando loja...');
+      let logoBase64 = null; if (fileInput.files.length > 0) { logoBase64 = await getBase64(fileInput.files[0]); }
+      
+      const uc = await createUserWithEmailAndPassword(auth, email, senha);
+      const newData = { nome, perfil: 'loja', email, documento, rua, num, bairro, ref, whats, logo: logoBase64, status: 'online', pedidosCriados: 0, ratingSum: 0, ratingCount: 0, dataCriacao: Date.now() };
+      await setDoc(doc(db, "usuarios", uc.user.uid), newData);
+      showToast('<i class="ph-fill ph-check-circle"></i> Bem-vindo!');
+    } catch (e) { showToast(handleAuthError(e)); }
+  };
+
+  window.cadastrarMoto = async function() {
+    const nome = document.getElementById('motoNome').value.trim(); const email = document.getElementById('motoEmail').value.trim();
+    const senha = document.getElementById('motoSenha').value.trim(); const documento = document.getElementById('motoCpf').value.trim();
+    const dataNasc = document.getElementById('motoData').value; const placa = document.getElementById('motoPlaca').value.trim();
+    const whats = document.getElementById('motoWhats').value.trim();
+    const temBag = document.getElementById('motoBagGrande').checked; const fotoPlacaInput = document.getElementById('motoPlacaFoto');
+    
+    if(!email || !senha || !documento || !dataNasc || !whats) return showToast("<i class='ph-fill ph-warning'></i> Preencha tudo!");
+    
+    try {
+      showToast('<i class="ph ph-spinner ph-spin"></i> Criando conta...');
+      let placaFotoBase64 = null; if (fotoPlacaInput.files.length > 0) { placaFotoBase64 = await getBase64(fotoPlacaInput.files[0]); }
+      
+      const uc = await createUserWithEmailAndPassword(auth, email, senha);
+      
+      let saldoInicial = 0;
+      try {
+        const configSnap = await getDoc(doc(db, "config", "geral"));
+        if(configSnap.exists()) {
+           const cfg = configSnap.data();
+           if(cfg.promoInicio && cfg.promoFim && cfg.promoValor) {
+              const offset = new Date().getTimezoneOffset() * 60000;
+              const dataLocalBR = (new Date(Date.now() - offset)).toISOString().split('T')[0];
+              if(dataLocalBR >= cfg.promoInicio && dataLocalBR <= cfg.promoFim) { saldoInicial = parseFloat(cfg.promoValor); }
+           }
+        }
+      } catch(e) {}
+
+      await setDoc(doc(db, "usuarios", uc.user.uid), { 
+        nome, perfil: 'motoboy', email, documento, dataNasc, placa, whats, bagGrande: temBag, placaFoto: placaFotoBase64, status: 'pendente', saldo: saldoInicial, entregasFeitas: 0, ratingSum: 0, ratingCount: 0, dataCriacao: Date.now() 
+      });
+      
+      showToast('<i class="ph-fill ph-check-circle"></i> Conta criada! Aguarde aprovação do Admin.');
+      await signOut(auth); window.showScreen('login');
+    } catch (e) { showToast(handleAuthError(e)); }
+  };
+
+  window.abrirPerfilLoja = function() {
+    document.getElementById('editLojaEmail').value = userDataGlobal.email || ''; document.getElementById('editLojaCnpj').value = userDataGlobal.documento || ''; 
+    document.getElementById('editLojaNome').value = userDataGlobal.nome || ''; document.getElementById('editLojaRua').value = userDataGlobal.rua || ''; 
+    document.getElementById('editLojaNum').value = userDataGlobal.num || ''; document.getElementById('editLojaBairro').value = userDataGlobal.bairro || ''; 
+    document.getElementById('editLojaRef').value = userDataGlobal.ref || ''; document.getElementById('editLojaWhats').value = userDataGlobal.whats || '';
+    showScreen('perfil-loja');
+  };
+
+  window.salvarPerfilLoja = async function() {
+    if(!auth.currentUser) return;
+    try {
+      showToast('<i class="ph ph-spinner ph-spin"></i> Salvando...');
+      let logoBase64 = userDataGlobal.logo; const fileInput = document.getElementById('editLojaLogo');
+      if (fileInput.files.length > 0) { logoBase64 = await getBase64(fileInput.files[0]); }
+      
+      await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { 
+        nome: document.getElementById('editLojaNome').value, rua: document.getElementById('editLojaRua').value, num: document.getElementById('editLojaNum').value, 
+        bairro: document.getElementById('editLojaBairro').value, ref: document.getElementById('editLojaRef').value, whats: document.getElementById('editLojaWhats').value, logo: logoBase64 
+      });
+      showToast('<i class="ph-fill ph-check-circle"></i> Perfil atualizado!');
+    } catch(e) { showToast('<i class="ph-fill ph-warning"></i> Erro ao salvar.'); }
+  };
+
+  window.abrirPerfilMoto = function() {
+    document.getElementById('editMotoEmail').value = userDataGlobal.email || ''; document.getElementById('editMotoCpf').value = userDataGlobal.documento || ''; 
+    document.getElementById('editMotoNome').value = userDataGlobal.nome || ''; document.getElementById('editMotoPlaca').value = userDataGlobal.placa || ''; 
+    document.getElementById('editMotoData').value = userDataGlobal.dataNasc || ''; document.getElementById('editMotoWhats').value = userDataGlobal.whats || '';
+    document.getElementById('editMotoBag').checked = userDataGlobal.bagGrande || false;
+    showScreen('perfil-moto');
+  };
+
+  window.salvarPerfilMoto = async function() {
+    if(!auth.currentUser) return;
+    try {
+      showToast('<i class="ph ph-spinner ph-spin"></i> Salvando...');
+      await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { 
+        nome: document.getElementById('editMotoNome').value, placa: document.getElementById('editMotoPlaca').value, whats: document.getElementById('editMotoWhats').value, dataNasc: document.getElementById('editMotoData').value, bagGrande: document.getElementById('editMotoBag').checked 
+      });
+      showToast('<i class="ph-fill ph-check-circle"></i> Perfil atualizado!');
+    } catch(e) { showToast('<i class="ph-fill ph-warning"></i> Erro ao salvar.'); }
+  };
+
+  window.solicitarRedefinicaoSenha = async function() {
+    if(confirm('Deseja receber um link no seu e-mail para redefinir a senha?')) {
+       try { await sendPasswordResetEmail(auth, userDataGlobal.email); alert("Link enviado com sucesso!"); } catch(e) { alert("Erro ao enviar e-mail."); }
+    }
+  }
+
+  window.publishOrderReal = async function() {
+    if(currentConfig.isPaused) return showToast("<i class='ph-fill ph-prohibit'></i> Plataforma em manutenção.");
+    const rua = document.getElementById('newRua').value.trim(); const num = document.getElementById('newNum').value.trim();
+    const bairro = document.getElementById('newBairro').value.trim(); const fee = document.getElementById('newFee').value;
+    const obs = document.getElementById('newObs').value.trim(); const bagGrande = document.getElementById('newBagGrande').checked; 
+    
+    if(!bairro || !fee || !rua) return showToast('<i class="ph-fill ph-warning"></i> Rua, Bairro e Taxa são obrigatórios');
+    const pin = Math.floor(1000 + Math.random() * 9000).toString();
+    
+    try {
+      await addDoc(collection(db, "pedidos"), {
+        lojaId: auth.currentUser.uid, lojaNome: userDataGlobal.nome || 'Loja', lojaLogo: userDataGlobal.logo || null, lojaWhats: userDataGlobal.whats || '',
+        lojaEnd: `${userDataGlobal.rua}, ${userDataGlobal.num} - ${userDataGlobal.bairro} (${userDataGlobal.ref})`,
+        clienteEnd: `${rua}, ${num} - ${bairro}`, bairro: bairro, taxa: `R$ ${fee}`, obs: obs, pin: pin, bagGrande: bagGrande, status: 'aguardando', timestamp: Date.now()
+      });
+      await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { pedidosCriados: increment(1) });
+
+      window.closeNewOrderModal(); document.getElementById('newRua').value = ''; document.getElementById('newNum').value = ''; document.getElementById('newBairro').value = ''; document.getElementById('newObs').value = '';
+      showToast('<i class="ph-fill ph-lightning"></i> Pedido no mural!');
+    } catch(e) { showToast("Erro: " + e.message); }
+  };
+
+  let lojaUnsubscribe = null;
+  function startLojaListener() {
+    if(!auth.currentUser) return;
+    if(lojaUnsubscribe) lojaUnsubscribe();
+    
+    const uid = auth.currentUser.uid;
+    const q = query(collection(db, "pedidos"), orderBy("timestamp", "desc"));
+    
+    lojaUnsubscribe = onSnapshot(q, (snapshot) => {
+      const contAtivos = document.getElementById('lojaOrdersContainer'); const contHist = document.getElementById('lojaHistoryContainer');
+      contAtivos.innerHTML = ''; contHist.innerHTML = ''; let ativos = 0; let hist = 0;
+      
+      snapshot.forEach((docSnap) => {
+        try {
+          const data = docSnap.data(); window.allOrdersMemory[docSnap.id] = data; 
+          if(data.lojaId === uid) {
+            if(data.status !== 'concluido') { ativos++; contAtivos.appendChild(buildLojaCard(docSnap.id, data)); } 
+            else { hist++; contHist.appendChild(buildLojaCard(docSnap.id, data)); }
+          }
+        } catch(e) {}
+      });
+      
+      if(ativos===0) contAtivos.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">Nenhum pedido ativo.</div>';
+      if(hist===0) contHist.innerHTML = '<div style="text-align:center;padding:10px;color:var(--muted);font-size:12px">Nenhum histórico.</div>';
+    });
+  }
+
+  function buildLojaCard(id, data) {
+    const div = document.createElement('div');
+    const isWaiting = data.status === 'aguardando'; const isDone = data.status === 'concluido';
+    div.className = `order-card ${isWaiting ? 'waiting' : (isDone ? 'done' : 'going')}`;
+    if(isDone) div.setAttribute('onclick', `abrirDetalhesPedido('${id}')`); 
+    
+    let statusHtml = isWaiting ? `<span class="status-badge status-pending"><i class="ph-fill ph-hourglass-high"></i> Aguardando Moto</span>` : (isDone ? `<span class="status-badge" style="background:var(--muted); color:#000;"><i class="ph-fill ph-check-circle"></i> Concluído</span>` : `<span class="status-badge status-going"><i class="ph-fill ph-motorcycle"></i> Em Rota</span>`);
+    const deleteBtn = isWaiting ? `<button class="btn-icon" style="background:transparent; color:var(--neon-r); border:1px solid var(--border);" onclick="event.stopPropagation(); deleteOrder('${id}')" title="Cancelar Pedido"><i class="ph ph-trash"></i></button>` : '';
+    
+    let whatsBtn = '';
+    if(!isWaiting && data.motoboyWhats && data.motoboyWhats.trim() !== '') {
+        const whatsNum = window.formatarWhats(data.motoboyWhats);
+        const whatsMsg = encodeURIComponent("Olá, sou a loja " + (userDataGlobal.nome || 'Loja') + " que enviou o pedido PIN " + data.pin);
+        whatsBtn = `<button class="btn-icon" style="background:#25D366; color:white; border:none; border-radius:8px;" onclick="event.stopPropagation(); window.open('https://wa.me/${whatsNum}?text=${whatsMsg}', '_blank')" title="Chamar Motoboy no Whats"><i class="ph-bold ph-whatsapp-logo"></i></button>`;
+    }
+
+    div.innerHTML = `<div class="order-card-top"><span class="order-id">#${id.substring(0,6).toUpperCase()} ${isDone ? '' : `· PIN: <strong style="color:var(--neon-y)">${data.pin}</strong>`}</span><div style="display:flex; gap:10px; align-items:center;"><span class="order-fee">${data.taxa}</span>${deleteBtn}${whatsBtn}</div></div><div class="order-info"><i class="ph-fill ph-map-pin"></i> <span>${data.clienteEnd}</span></div>${data.bagGrande ? `<div style="font-size:11px; font-weight:bold; color:var(--neon-orange); margin-bottom:6px;"><i class="ph-fill ph-package"></i> EXIGE BAG GRANDE</div>` : ''}<div class="order-footer">${statusHtml}</div>`;
+    return div;
+  }
+
+  window.deleteOrder = async function(id) {
+    if(confirm('Tem certeza que deseja apagar este pedido?')) { try { await deleteDoc(doc(db, "pedidos", id)); showToast('<i class="ph-fill ph-trash"></i> Pedido apagado.'); } catch(e) { showToast('Erro ao apagar.'); } }
+  }
+
+  function listenStoreDashStats() {
+    const q = query(collection(db, "usuarios"), where("perfil", "==", "motoboy"));
+    onSnapshot(q, (snap) => {
+      let online = 0; let emRota = 0; let total = snap.size;
+      snap.forEach(doc => { const d = doc.data(); if(d.status === 'online') online++; if(d.status === 'em_rota') emRota++; });
+      document.getElementById('dashLojaOnline').textContent = online; document.getElementById('dashLojaRota').textContent = emRota; document.getElementById('dashLojaTotal').textContent = total;
+    });
+  }
+
+  let motoMuralUnsubscribe = null;
+  function listenMotoDashStats() {
+    const q = query(collection(db, "usuarios"), where("perfil", "==", "loja"));
+    onSnapshot(q, (snap) => {
+      let onlineLojas = 0; snap.forEach(doc => { if(doc.data().status === 'online') onlineLojas++; });
+      document.getElementById('dashMotoLojasAtivas').textContent = onlineLojas; document.getElementById('dashMotoLojasTotal').textContent = snap.size;
+    });
+  }
+
+  function startMuralListener() {
+    if(!auth.currentUser) return;
+    if(motoMuralUnsubscribe) motoMuralUnsubscribe();
+    
+    const uid = auth.currentUser.uid;
+    const q = query(collection(db, "pedidos"), orderBy("timestamp", "desc"));
+    const statusText = document.getElementById('muralStatusText');
+
+    motoMuralUnsubscribe = onSnapshot(q, (snapshot) => {
+      const container = document.getElementById('orderCards'); const histContainer = document.getElementById('motoHistoryContainer');
+      container.innerHTML = ''; histContainer.innerHTML = ''; let pendentes = 0; let concluidasHj = 0;
+      let encontrouAtivo = false;
+
+      snapshot.forEach((docSnap) => {
+        try {
+          const data = docSnap.data(); window.allOrdersMemory[docSnap.id] = data;
+          
+          if(data.status === 'aguardando') {
+            if(data.bagGrande === true && userDataGlobal && !userDataGlobal.bagGrande) return; 
+            pendentes++; container.appendChild(buildCardReal(docSnap.id, data));
+          }
+          
+          if(data.status === 'aceito' && data.motoboyId === uid) {
+             encontrouAtivo = true;
+             activeOrderId = docSnap.id;
+             document.getElementById('activeLojaNome').textContent = data.lojaNome;
+             document.getElementById('activeLojaEnd').textContent = data.lojaEnd;
+             document.getElementById('activeClienteEnd').textContent = data.clienteEnd;
+             document.getElementById('activeFee').textContent = data.taxa;
+             document.getElementById('activePin').textContent = data.pin;
+             document.getElementById('activeObs').innerHTML = data.obs ? `<i class="ph-fill ph-warning"></i> ${data.obs}` : '';
+             
+             if (data.lojaWhats && data.lojaWhats.trim() !== '') {
+                const whatsNum = window.formatarWhats(data.lojaWhats);
+                const msgM = encodeURIComponent(`Olá, sou o motoboy responsável pelo pedido PIN ${data.pin}.`);
+                document.getElementById('activeWhatsLojaDiv').style.display = 'block';
+                document.getElementById('activeBtnWhatsLoja').onclick = () => window.open(`https://wa.me/${whatsNum}?text=${msgM}`, '_blank');
+             } else {
+                document.getElementById('activeWhatsLojaDiv').style.display = 'none';
+             }
+
+             document.getElementById('activeOrder').classList.add('visible'); 
+             document.getElementById('muralTitle').style.display = 'none';
+          }
+          
+          if(data.status === 'concluido' && data.motoboyId === uid) {
+             concluidasHj++; const hDiv = document.createElement('div'); hDiv.className='order-card done'; hDiv.setAttribute('onclick', `abrirDetalhesPedido('${docSnap.id}')`);
+             
+             let whatsBtn = '';
+             if(data.lojaWhats && data.lojaWhats.trim() !== '') {
+                 const whatsNum = window.formatarWhats(data.lojaWhats);
+                 const msgM = encodeURIComponent("Olá, sou o motoboy responsável pelo pedido PIN " + data.pin);
+                 whatsBtn = `<button class="btn-icon" style="background:#25D366; color:white; border:none; border-radius:8px;" onclick="event.stopPropagation(); window.open('https://wa.me/${whatsNum}?text=${msgM}', '_blank')" title="Chamar Loja no Whats"><i class="ph-bold ph-whatsapp-logo"></i></button>`;
+             }
+
+             hDiv.innerHTML = `<div class="order-card-top"><span class="order-id">${data.lojaNome}</span><div style="display:flex; gap:10px; align-items:center;"><span class="order-fee">${data.taxa}</span>${whatsBtn}</div></div><div class="order-info"><i class="ph-fill ph-map-pin"></i> ${data.bairro}</div>`;
+             histContainer.appendChild(hDiv);
+          }
+        } catch(e) {}
+      });
+      
+      if(!encontrouAtivo) {
+         document.getElementById('activeOrder').classList.remove('visible'); 
+         document.getElementById('muralTitle').style.display = 'flex';
+         activeOrderId = null;
+      }
+
+      document.getElementById('dashMotoHoje').textContent = concluidasHj;
+      document.getElementById('emptyMural').style.display = pendentes === 0 ? 'block' : 'none';
+      if(concluidasHj > 0) document.getElementById('motoHistoryWrapper').style.display = 'block';
+    });
+  }
+
+  function buildCardReal(id, data) {
+    const div = document.createElement('div'); div.className = 'delivery-card new-arrival';
+    const logoHtml = data.lojaLogo ? `<img src="${data.lojaLogo}">` : `<i class="ph-fill ph-storefront"></i>`;
+    div.innerHTML = `<div class="dc-store">${logoHtml} ${data.lojaNome || 'Loja'}</div><div class="dc-bairro"><i class="ph-fill ph-map-pin" style="color:var(--neon-b)"></i> ${data.bairro}</div><div class="dc-fee">${data.taxa}</div>${data.bagGrande ? `<div class="status-badge" style="background: rgba(255,153,0,0.1); color: var(--neon-orange); border: 1px solid rgba(255,153,0,0.2); margin-top: 4px; margin-bottom: 8px;"><i class="ph-fill ph-package"></i> EXIGE BAG GRANDE</div>` : ''}<div class="dc-actions"><button class="btn-accept" onclick="acceptOrderReal('${id}', encodeURIComponent('${data.lojaNome}'), encodeURIComponent('${data.lojaEnd}'), encodeURIComponent('${data.clienteEnd}'), '${data.taxa}', '${data.pin}', encodeURIComponent('${data.obs}'), '${data.lojaWhats || ''}')"><i class="ph-fill ph-lightning"></i> ACEITAR</button><button class="btn-pass" onclick="this.closest('.delivery-card').remove()"><i class="ph-bold ph-arrow-right"></i></button></div>`;
+    return div;
+  }
+
+  window.acceptOrderReal = async function(id, lNome, lEnd, cEnd, taxa, pin, obs, lWhats) {
+    if(currentConfig.isPaused) return showToast("<i class='ph-fill ph-prohibit'></i> Plataforma em manutenção.");
+    
+    const taxaCobranca = currentConfig.taxaApp || 0.40;
+    if(userDataGlobal.saldo < taxaCobranca) return showToast(`<i class="ph-fill ph-wallet"></i> Saldo insuficiente (Mínimo R$ ${taxaCobranca.toFixed(2).replace('.',',')}).`);
+    
+    try {
+      await updateDoc(doc(db, "pedidos", id), { status: 'aceito', motoboyId: auth.currentUser.uid, motoboyNome: userDataGlobal.nome, motoboyWhats: userDataGlobal.whats || '' });
+      await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { status: 'em_rota' });
+
+      document.getElementById('activeLojaNome').textContent = decodeURIComponent(lNome); document.getElementById('activeLojaEnd').textContent = decodeURIComponent(lEnd); 
+      document.getElementById('activeClienteEnd').textContent = decodeURIComponent(cEnd); document.getElementById('activeFee').textContent = taxa; document.getElementById('activePin').textContent = pin;
+      
+      const decObs = decodeURIComponent(obs); document.getElementById('activeObs').innerHTML = decObs ? `<i class="ph-fill ph-warning"></i> ${decObs}` : '';
+      
+      if (lWhats && lWhats !== 'undefined' && lWhats.trim() !== '') {
+         const whatsNum = window.formatarWhats(lWhats);
+         const msgM = encodeURIComponent(`Olá, sou o motoboy responsável pelo pedido PIN ${pin}.`);
+         document.getElementById('activeWhatsLojaDiv').style.display = 'block';
+         document.getElementById('activeBtnWhatsLoja').onclick = () => window.open(`https://wa.me/${whatsNum}?text=${msgM}`, '_blank');
+      } else {
+         document.getElementById('activeWhatsLojaDiv').style.display = 'none';
+      }
+
+      document.getElementById('activeOrder').classList.add('visible'); document.getElementById('muralTitle').style.display = 'none'; activeOrderId = id;
+      triggerLightning(); showToast('<i class="ph-fill ph-lightning"></i> Aceito! Vá para a Loja.');
+    } catch(e) { showToast('<i class="ph-fill ph-warning"></i> Alguém foi mais rápido ou ocorreu um erro!'); }
+  };
+
+  window.completeOrder = async function() {
+    if(!activeOrderId) return;
+    try {
+      await updateDoc(doc(db, "pedidos", activeOrderId), { status: 'concluido' });
+      
+      const taxaCobranca = currentConfig.taxaApp || 0.40;
+      const novoSaldo = userDataGlobal.saldo - taxaCobranca;
+      
+      await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { 
+        saldo: novoSaldo, status: 'online', entregasFeitas: increment(1) 
+      });
+      
+      document.getElementById('activeOrder').classList.remove('visible'); document.getElementById('muralTitle').style.display = 'flex';
+      activeOrderId = null; showToast(`<i class="ph-fill ph-wallet"></i> Corrida concluída! -R$ ${taxaCobranca.toFixed(2).replace('.',',')}`);
+    } catch(e) {}
+  };
+
+  window.returnOrder = async function() {
+    if(!activeOrderId) return;
+    try {
+      await updateDoc(doc(db, "pedidos", activeOrderId), { status: 'aguardando', motoboyId: null, motoboyNome: null, motoboyWhats: null });
+      await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { status: 'online' });
+      document.getElementById('activeOrder').classList.remove('visible'); document.getElementById('muralTitle').style.display = 'flex';
+      activeOrderId = null; showToast('<i class="ph-bold ph-arrow-u-up-left"></i> Devolvido ao mural.');
+    } catch(e) {}
+  };
+
+  window.selecionarEstrela = function(nota) {
+    currentStarRating = nota;
+    for(let i=1; i<=5; i++) {
+        const star = document.getElementById('star-'+i);
+        if(i <= nota) { star.classList.replace('ph', 'ph-fill'); star.style.color = 'var(--neon-y)'; } 
+        else { star.classList.replace('ph-fill', 'ph'); star.style.color = 'var(--muted)'; }
+    }
+  };
+
+  window.abrirDetalhesPedido = function(id) {
+    const pedido = window.allOrdersMemory[id]; if(!pedido) return;
+    currentModalOrderId = id; currentStarRating = 0; window.selecionarEstrela(0); document.getElementById('ratingComment').value = '';
+    const contentDiv = document.getElementById('histModalContent'); const isLoja = userDataGlobal.perfil === 'loja';
+    
+    let html = `<div class="address-box"><h4>CÓDIGO # ${id.substring(0,6).toUpperCase()}</h4><p style="margin-top:8px;"><i class="ph-fill ph-map-pin"></i> Destino: ${pedido.clienteEnd}</p><p style="margin-top:8px;"><i class="ph-fill ph-money"></i> Taxa: <strong style="color:var(--neon-g)">${pedido.taxa}</strong></p>`;
+    if(isLoja) { html += `<p style="margin-top:8px;"><i class="ph-fill ph-motorcycle"></i> Entregador: <strong style="color:var(--neon-b)">${pedido.motoboyNome || 'Não registrado'}</strong></p></div>`; document.getElementById('ratingPromptText').textContent = "Avalie o entregador desta corrida:"; } 
+    else { html += `<p style="margin-top:8px;"><i class="ph-fill ph-storefront"></i> Loja: <strong style="color:var(--neon-b)">${pedido.lojaNome}</strong></p></div>`; document.getElementById('ratingPromptText').textContent = "Avalie a loja responsável por este pedido:"; }
+    contentDiv.innerHTML = html;
+
+    const campoAvaliacao = isLoja ? pedido.avaliacaoDaLoja : pedido.avaliacaoDoMotoboy;
+    
+    if(campoAvaliacao) {
+       document.getElementById('ratingSection').style.display = 'none'; document.getElementById('ratingDoneSection').style.display = 'block';
+       let starsHtml = ''; for(let i=0; i<5; i++) { starsHtml += i < campoAvaliacao.nota ? '<i class="ph-fill ph-star"></i>' : '<i class="ph ph-star" style="color:var(--muted)"></i>'; }
+       document.getElementById('ratingDoneStars').innerHTML = starsHtml; document.getElementById('ratingDoneComment').textContent = campoAvaliacao.msg ? `"${campoAvaliacao.msg}"` : '';
+    } else { document.getElementById('ratingSection').style.display = 'block'; document.getElementById('ratingDoneSection').style.display = 'none'; }
+    document.getElementById('historyModal').classList.add('open');
+  };
+
+  window.enviarAvaliacao = async function() {
+    if(currentStarRating === 0) return showToast("<i class='ph-fill ph-warning'></i> Selecione as estrelas!");
+    const msg = document.getElementById('ratingComment').value.trim(); const isLoja = userDataGlobal.perfil === 'loja';
+    try {
+      showToast('<i class="ph ph-spinner ph-spin"></i> Registrando...');
+      const pedido = window.allOrdersMemory[currentModalOrderId];
+      const targetUserId = isLoja ? pedido.motoboyId : pedido.lojaId;
+      const objAvaliacao = { nota: currentStarRating, msg: msg };
+      const atualizacao = isLoja ? { avaliacaoDaLoja: objAvaliacao } : { avaliacaoDoMotoboy: objAvaliacao };
+      
+      await updateDoc(doc(db, "pedidos", currentModalOrderId), atualizacao);
+      if (targetUserId) { await updateDoc(doc(db, "usuarios", targetUserId), { ratingSum: increment(currentStarRating), ratingCount: increment(1) }); }
+
+      showToast('<i class="ph-fill ph-check-circle"></i> Avaliação enviada!');
+      document.getElementById('historyModal').classList.remove('open');
+    } catch(e) { showToast('<i class="ph-fill ph-warning"></i> Erro ao enviar.'); }
+  };
+
+  function triggerLightning() { const el = document.getElementById('lightningOverlay'); el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 600); }
+</script>
+</body>
+</html>

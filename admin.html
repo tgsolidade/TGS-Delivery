@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#0a0a0f">
+<title>Painel Admin - Lightning</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
+<style>
+  :root {
+    --bg:        #0a0a0f;
+    --bg2:       #0f0f1a;
+    --panel:     #16161f;
+    --border:    #1e1e30;
+    --neon-y:    #f5e642;
+    --neon-g:    #00ff88;
+    --neon-b:    #00c8ff;
+    --neon-r:    #ff3366;
+    --text:      #e8e8f0;
+    --muted:     #6b6b8a;
+    --font-head: 'Orbitron', monospace;
+    --font-body: 'Rajdhani', sans-serif;
+    --font-mono: 'Share Tech Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 16px; overflow: hidden; }
+
+  .screen { display: none; height: 100vh; overflow-y: auto; overflow-x: hidden; flex-direction: column; }
+  .screen.active { display: flex; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--neon-r); border-radius: 3px; }
+
+  /* ── LOGIN ADMIN ── */
+  #login-admin { align-items: center; justify-content: center; background: radial-gradient(ellipse at top, #1a0a10 0%, var(--bg) 60%); padding: 24px; }
+  .login-card { width: 100%; max-width: 420px; background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 40px 32px; position: relative; box-shadow: 0 0 60px rgba(255,51,102,.05); margin: auto; }
+  .login-card::before { content: ''; position: absolute; top: -1px; left: 20%; right: 20%; height: 2px; background: linear-gradient(90deg, transparent, var(--neon-r), transparent); }
+  .login-logo { text-align: center; margin-bottom: 32px; }
+  .login-logo i { font-size: 42px; color: var(--neon-r); }
+  .login-logo h1 { font-family: var(--font-head); font-size: 20px; color: var(--neon-r); letter-spacing: .1em; margin-top: 8px;}
+  
+  .form-group { margin-bottom: 16px; }
+  .form-group label { display: block; font-family: var(--font-mono); font-size: 11px; color: var(--muted); letter-spacing: .15em; text-transform: uppercase; margin-bottom: 6px; }
+  .form-group input { width: 100%; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; color: var(--text); font-family: var(--font-body); font-size: 16px; outline: none; transition: all .2s; }
+  .form-group input:focus { border-color: var(--neon-r); box-shadow: 0 0 0 3px rgba(255,51,102,.1); }
+  .form-group textarea { width: 100%; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; color: var(--text); font-family: var(--font-body); font-size: 16px; outline: none; transition: all .2s; resize: vertical; }
+
+  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 16px; border-radius: 10px; border: none; cursor: pointer; font-family: var(--font-head); font-size: 14px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; transition: all .2s; }
+  .btn:active { transform: scale(.97); }
+  .btn-primary { background: linear-gradient(135deg, #d4c200, var(--neon-y)); color: #0a0a0f; margin-top: 8px; }
+  .btn-red { background: linear-gradient(135deg, #cc1144, var(--neon-r)); color: #fff; box-shadow: 0 4px 20px rgba(255,51,102,.25); margin-top: 8px; }
+  .btn-green { background: linear-gradient(135deg, #00cc6a, var(--neon-g)); color: #0a0a0f; margin-top: 8px; }
+  .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text); margin-top: 10px; }
+  .btn-icon { width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 16px; background: var(--bg2); border: 1px solid var(--border); cursor: pointer; transition: all .2s; color: var(--text); }
+  .btn-icon:hover { border-color: inherit; }
+
+  /* ── PAINEL MASTER ── */
+  .top-bar { background: var(--panel); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+  .top-bar-logo { font-family: var(--font-head); font-size: 18px; color: var(--neon-r); letter-spacing: .1em; display:flex; align-items:center; gap:8px;}
+  .avatar { width: 40px; height: 40px; border-radius: 8px; background: rgba(255,51,102,.1); border: 1px solid rgba(255,51,102,.3); display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; color: var(--neon-r); transition: all .2s;}
+  .avatar:hover { background: var(--neon-r); color: #fff; }
+
+  /* ── NAVEGAÇÃO DE ABAS ── */
+  .tab-nav { display: flex; background: var(--bg2); border-bottom: 1px solid var(--border); overflow-x: auto; flex-shrink: 0; }
+  .tab-btn { padding: 16px 24px; color: var(--muted); cursor: pointer; white-space: nowrap; font-family: var(--font-head); font-size: 13px; font-weight: bold; letter-spacing: 1px; transition: 0.2s; border-bottom: 2px solid transparent; display: flex; align-items: center; gap: 8px; }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--neon-r); border-bottom-color: var(--neon-r); }
+  .tab-content { display: none; padding: 24px; max-width: 1000px; margin: 0 auto; width: 100%; animation: fadeIn 0.3s; }
+  .tab-content.active { display: block; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  .stats-dash { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; margin-bottom: 32px; }
+  .stat-box { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-align: center; position: relative; overflow: hidden;}
+  .stat-box i { font-size: 28px; margin-bottom: 8px; display: block;}
+  .stat-box .val { font-family: var(--font-head); font-size: 32px; font-weight: 900; color: var(--text); line-height: 1; }
+  .stat-box .lbl { font-family: var(--font-mono); font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; margin-top: 8px; }
+
+  .section-title { font-family: var(--font-mono); font-size: 13px; color: var(--muted); letter-spacing: .2em; text-transform: uppercase; margin-bottom: 16px; display:flex; align-items:center; gap:8px;}
+
+  /* ── LISTAS ADMIN ── */
+  .admin-row { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;}
+  .admin-row-info h4 { font-size: 16px; color: var(--text); margin-bottom: 6px; display:flex; align-items:center; gap:8px;}
+  .admin-row-info p { font-family: var(--font-mono); font-size: 12px; color: var(--muted); line-height: 1.4;}
+  .admin-row-actions { display: flex; gap: 8px; flex-wrap: wrap;}
+  
+  .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; font-weight: bold;}
+  .status-pending { background: rgba(245,230,66,.1); color: var(--neon-y); border: 1px solid rgba(245,230,66,.2); }
+  .status-active  { background: rgba(0,255,136,.1); color: var(--neon-g); border: 1px solid rgba(0,255,136,.2); }
+  .status-blocked { background: rgba(255,51,102,.1); color: var(--neon-r); border: 1px solid rgba(255,51,102,.2); }
+  .status-offline { background: rgba(255,255,255,.05); color: var(--muted); border: 1px solid rgba(255,255,255,.1); }
+
+  .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 20px; font-family: var(--font-mono); font-size: 13px; z-index: 300; white-space: nowrap; animation: toastIn .3s ease-out; box-shadow: 0 8px 24px rgba(0,0,0,.4); display:flex; align-items:center; gap:8px;}
+  @keyframes toastIn { from { transform: translateX(-50%) translateY(-10px); opacity:0; } to { transform: translateX(-50%) translateY(0); opacity:1; } }
+
+  .doc-link { color: var(--neon-b); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: color .2s; cursor: pointer;}
+  .doc-link:hover { color: #fff; }
+
+  .kill-switch { background: rgba(255,51,102,.1); border: 1px solid var(--neon-r); color: var(--neon-r); padding: 20px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap:wrap; gap:16px;}
+  .kill-switch h3 { font-family: var(--font-head); font-size: 16px; margin-bottom: 4px;}
+  .kill-switch p { font-size: 12px; color: var(--muted);}
+
+  /* Modal Edit Custom */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.8); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(4px);}
+  .modal-overlay.open { display: flex; animation: fadeIn .2s; }
+  .modal { background: var(--panel); border: 1px solid var(--border); border-radius: 20px; padding: 32px 24px; width: 90%; max-width: 400px; }
+  .modal h3 { font-family: var(--font-head); font-size: 16px; margin-bottom: 24px; display:flex; align-items:center; gap:8px;}
+
+  /* Search Input */
+  .search-box { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; color: var(--text); font-size: 14px; outline: none; margin-bottom: 20px; font-family: var(--font-body); transition: 0.2s;}
+  .search-box:focus { border-color: var(--neon-y); }
+  
+  /* Inbox Message Card */
+  .inbox-card { background: var(--bg2); border: 1px solid var(--border); padding: 16px; border-radius: 12px; margin-bottom: 12px; }
+  .inbox-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12px; color: var(--muted); font-family: var(--font-mono); }
+  .inbox-msg { color: var(--text); font-size: 14px; margin-bottom: 12px; }
+  .inbox-reply { background: rgba(0,255,136,.05); border-left: 3px solid var(--neon-g); padding: 12px; border-radius: 4px; font-size: 13px; color: var(--text); }
+  .inbox-reply strong { color: var(--neon-g); font-family: var(--font-mono); font-size: 11px; display: block; margin-bottom: 4px; }
+</style>
+</head>
+<body>
+
+<div class="screen active" id="login-admin">
+  <div class="login-card">
+    <div class="login-logo">
+      <i class="ph-fill ph-shield-check"></i>
+      <h1>BACKOFFICE MASTER</h1>
+      <p>ACESSO RESTRITO</p>
+    </div>
+    <div class="form-group"><label>E-mail Corporativo</label><input type="email" placeholder="admin@seudominio.com" id="loginEmail"></div>
+    <div class="form-group"><label>Senha de Acesso</label><input type="password" placeholder="••••••••" id="loginPass"></div>
+    <button class="btn btn-red" onclick="doAdminLogin()"><i class="ph-bold ph-key"></i> AUTENTICAR</button>
+  </div>
+</div>
+
+<div class="screen" id="painel-admin">
+  <div class="top-bar">
+    <div class="top-bar-logo"><i class="ph-fill ph-shield-check"></i> MASTER DASHBOARD</div>
+    <div style="display:flex; align-items:center; gap:16px;">
+       <span style="font-family:var(--font-mono); font-size:12px; color:var(--muted)" id="adminEmailDisplay">admin@app.com</span>
+       <div class="avatar" onclick="deslogar()" title="Sair do Sistema"><i class="ph-bold ph-sign-out"></i></div>
+    </div>
+  </div>
+
+  <div class="tab-nav">
+    <div class="tab-btn active" onclick="switchTab('tab-dash')"><i class="ph-fill ph-squares-four"></i> DASHBOARD</div>
+    <div class="tab-btn" onclick="switchTab('tab-users')"><i class="ph-fill ph-users"></i> USUÁRIOS <span id="badgePendente" style="background:var(--neon-r); color:#fff; padding:2px 6px; border-radius:10px; font-size:10px; display:none; margin-left:4px;">0</span></div>
+    <div class="tab-btn" onclick="switchTab('tab-orders')"><i class="ph-fill ph-package"></i> PEDIDOS AO VIVO</div>
+    <div class="tab-btn" onclick="switchTab('tab-config')"><i class="ph-fill ph-gear"></i> CONFIGURAÇÕES</div>
+    <div class="tab-btn" onclick="switchTab('tab-msg')"><i class="ph-fill ph-chats"></i> COMUNICAÇÃO</div>
+  </div>
+
+  <div class="tab-content active" id="tab-dash">
+    
+    <div class="kill-switch" id="killSwitchBox">
+       <div>
+         <h3><i class="ph-fill ph-power"></i> STATUS DA PLATAFORMA</h3>
+         <p id="killSwitchStatus">A plataforma está rodando normalmente.</p>
+       </div>
+       <button class="btn btn-red" style="width: auto; margin: 0;" onclick="togglePlataforma()" id="btnKillSwitch">PAUSAR APLICATIVO</button>
+    </div>
+
+    <div class="stats-dash">
+      <div class="stat-box"><i class="ph-fill ph-money" style="color:var(--neon-g)"></i><div class="val" id="dashFaturamentoHoje">R$ 0,00</div><div class="lbl">Faturamento (Hoje)</div></div>
+      <div class="stat-box"><i class="ph-fill ph-check-circle" style="color:var(--neon-b)"></i><div class="val" id="dashEntregasHoje">0</div><div class="lbl">Entregas Concluídas</div></div>
+      <div class="stat-box" style="border-color: rgba(245,230,66,.2); background: rgba(245,230,66,.05);"><i class="ph-fill ph-storefront" style="color:var(--neon-y)"></i><div class="val" id="dashLojas">0</div><div class="lbl">Lojas Ativas</div></div>
+      <div class="stat-box" style="border-color: rgba(245,230,66,.2); background: rgba(245,230,66,.05);"><i class="ph-fill ph-motorcycle" style="color:var(--neon-y)"></i><div class="val" id="dashMotos">0</div><div class="lbl">Motos Ativas</div></div>
+    </div>
+
+    <p class="section-title" style="color:var(--neon-r); margin-top:30px;"><i class="ph-fill ph-warning"></i> ALERTAS DE QUALIDADE (NOTA BAIXA)</p>
+    <div id="alertasList">
+      <div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;border:1px dashed var(--border);border-radius:12px;">Todos os usuários estão com boa pontuação.</div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-users">
+    <input type="text" class="search-box" id="searchUser" placeholder="Pesquisar por nome, placa ou documento..." onkeyup="filtrarUsuarios()">
+
+    <p class="section-title"><i class="ph-fill ph-warning-circle" style="color:var(--neon-y)"></i> AGUARDANDO APROVAÇÃO</p>
+    <div id="adminPendentesList" style="margin-bottom: 40px;"></div>
+
+    <p class="section-title"><i class="ph-fill ph-motorcycle" style="color:var(--neon-g)"></i> GESTÃO DE MOTOBOYS</p>
+    <div id="adminMotosList" style="margin-bottom: 40px;"></div>
+
+    <p class="section-title"><i class="ph-fill ph-storefront" style="color:var(--neon-b)"></i> GESTÃO DE LOJAS</p>
+    <div id="adminLojasList" style="margin-bottom: 40px;"></div>
+  </div>
+
+  <div class="tab-content" id="tab-orders">
+    <p class="section-title"><i class="ph-fill ph-crosshair"></i> MONITORAMENTO DE PEDIDOS</p>
+    <div id="adminOrdersList">
+      <div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;border:1px dashed var(--border);border-radius:12px;">Nenhum pedido rodando no momento.</div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-config">
+    <div style="background:var(--bg2); border:1px solid var(--border); padding:24px; border-radius:12px; margin-bottom:24px;">
+       <p class="section-title" style="color:var(--neon-g)"><i class="ph-fill ph-coin"></i> TAXA DE INTERMEDIAÇÃO (LUCRO DO APP)</p>
+       <p style="font-size: 12px; color: var(--muted); margin-bottom: 16px;">Valor a ser descontado do saldo do motoboy em cada entrega concluída.</p>
+       <div style="display:flex; gap:10px; align-items:end;">
+          <div class="form-group" style="flex:1; margin-bottom:0;"><label>Taxa Padrão (R$)</label><input type="number" id="configTaxaApp" placeholder="Ex: 0.40" step="0.05"></div>
+          <button class="btn btn-primary" style="width:auto; margin:0;" onclick="salvarConfigTaxa()"><i class="ph-fill ph-floppy-disk"></i> SALVAR</button>
+       </div>
+    </div>
+
+    <div style="background:var(--bg2); border:1px solid var(--border); padding:24px; border-radius:12px;">
+       <p class="section-title" style="color:var(--neon-y)"><i class="ph-fill ph-gift"></i> PROMOÇÃO: BÔNUS PARA NOVOS MOTOBOYS</p>
+       <div style="display:flex; gap:10px; align-items:end; flex-wrap:wrap;">
+          <div class="form-group" style="flex:1; margin-bottom:0;"><label>Data Início</label><input type="date" id="promoInicio"></div>
+          <div class="form-group" style="flex:1; margin-bottom:0;"><label>Data Fim</label><input type="date" id="promoFim"></div>
+          <div class="form-group" style="flex:1; margin-bottom:0;"><label>Valor (R$)</label><input type="number" id="promoValor" placeholder="Ex: 10"></div>
+          <button class="btn btn-primary" style="width:auto; margin:0;" onclick="salvarPromo()"><i class="ph-fill ph-floppy-disk"></i> SALVAR</button>
+       </div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-msg">
+    <div style="background:var(--bg2); border:1px solid var(--border); padding:24px; border-radius:12px; margin-bottom: 30px;">
+       <p class="section-title" style="color:var(--neon-r)"><i class="ph-fill ph-megaphone"></i> ENVIAR AVISO GERAL</p>
+       <p style="font-size: 12px; color: var(--muted); margin-bottom: 16px;">O alerta saltará na tela de TODOS os usuários conectados (lojas e motos).</p>
+       <div style="display:flex; flex-direction:column; gap:12px;">
+          <textarea id="adminMsgInput" rows="3" style="background:var(--bg); border:1px solid var(--border); color:white; padding:16px; border-radius:8px; outline:none; font-family:var(--font-body); font-size: 16px;" placeholder="Digite o alerta global aqui..."></textarea>
+          <button class="btn btn-red" onclick="enviarAvisoGlobal()"><i class="ph-fill ph-paper-plane-tilt"></i> DISPARAR ALERTA GERAL</button>
+       </div>
+    </div>
+
+    <p class="section-title"><i class="ph-fill ph-chat-centered-text"></i> CAIXA DE MENSAGENS INDIVIDUAIS</p>
+    <div id="adminInboxList">
+       <div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;border:1px dashed var(--border);border-radius:12px;">Nenhuma mensagem enviada ainda.</div>
+    </div>
+  </div>
+
+</div>
+
+<div id="docModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:999; align-items:center; justify-content:center; padding:20px;" onclick="this.style.display='none'">
+  <img id="docImagePreview" src="" style="max-width:100%; max-height:90vh; border-radius:8px; border:2px solid var(--neon-r);">
+</div>
+
+<div class="modal-overlay" id="editUserModal">
+  <div class="modal">
+    <h3 id="editUserTitle" style="color: var(--neon-b);"><i class="ph-fill ph-pencil"></i> EDITAR USUÁRIO</h3>
+    <input type="hidden" id="editUid">
+    <div class="form-group"><label>Nome Completo / Loja</label><input type="text" id="editUserName"></div>
+    <div class="form-group"><label>CPF / CNPJ</label><input type="text" id="editUserDoc"></div>
+    <div class="form-group" id="editPlacaGroup"><label>Placa da Moto</label><input type="text" id="editUserPlaca" style="text-transform:uppercase"></div>
+    <button class="btn btn-green" onclick="salvarEdicaoUsuario()"><i class="ph-fill ph-floppy-disk"></i> SALVAR DADOS</button>
+    <button class="btn btn-secondary" onclick="document.getElementById('editUserModal').classList.remove('open')"><i class="ph ph-x"></i> CANCELAR</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="sendMsgModal">
+  <div class="modal">
+    <h3 style="color: var(--neon-b);"><i class="ph-fill ph-paper-plane-tilt"></i> MENSAGEM DIRETA</h3>
+    <p style="font-size:12px; color:var(--muted); margin-bottom:16px;">Enviando para: <strong id="msgTargetName" style="color:var(--text)"></strong></p>
+    <input type="hidden" id="msgTargetUid">
+    <div class="form-group">
+      <textarea id="msgText" rows="4" placeholder="Escreva a mensagem..."></textarea>
+    </div>
+    <button class="btn btn-blue" onclick="dispararMsgIndividual()"><i class="ph-fill ph-paper-plane-tilt"></i> ENVIAR MENSAGEM</button>
+    <button class="btn btn-secondary" onclick="document.getElementById('sendMsgModal').classList.remove('open')"><i class="ph ph-x"></i> CANCELAR</button>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+  import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, setDoc, doc, updateDoc, deleteDoc, getDoc, serverTimestamp, increment } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDLSvxNn8jwZGG8Ky9MUlDRvSH6vHK7vdI",
+    authDomain: "base-delivery-1d420.firebaseapp.com",
+    projectId: "base-delivery-1d420",
+    storageBucket: "base-delivery-1d420.firebasestorage.app",
+    messagingSenderId: "734860193156",
+    appId: "1:734860193156:web:b013890e8351b10b72c1d1"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const MASTER_EMAIL = "talessolidade@yahoo.com";
+  let currentConfig = { taxaApp: 0.40, isPaused: false };
+
+  window.showScreen = function(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); };
+  window.showToast = function(msg) {
+    const existing = document.querySelector('.toast'); if (existing) existing.remove();
+    const el = document.createElement('div'); el.className = 'toast'; el.innerHTML = msg; document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3000);
+  };
+  
+  window.switchTab = function(tabId) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    document.getElementById(tabId).classList.add('active');
+  }
+
+  window.viewDocument = function(base64str) {
+    document.getElementById('docImagePreview').src = base64str;
+    document.getElementById('docModal').style.display = 'flex';
+  }
+
+  window.filtrarUsuarios = function() {
+      const termo = document.getElementById('searchUser').value.toLowerCase();
+      document.querySelectorAll('#tab-users .admin-row').forEach(row => {
+          const texto = row.innerText.toLowerCase();
+          row.style.display = texto.includes(termo) ? 'flex' : 'none';
+      });
+  }
+
+  let initialAuthChecked = false;
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      try {
+        let userDoc = await getDoc(doc(db, "usuarios", user.uid));
+        let dados = userDoc.exists() ? userDoc.data() : {};
+
+        if (user.email === MASTER_EMAIL) {
+           if (dados.perfil !== 'admin') {
+              await setDoc(doc(db, "usuarios", user.uid), { nome: "Admin Geral", email: user.email, perfil: "admin", status: "online", dataCriacao: serverTimestamp() }, { merge: true });
+           }
+           document.getElementById('adminEmailDisplay').textContent = user.email;
+           window.showScreen('painel-admin'); startAdminListener(); return;
+        }
+
+        if (userDoc.exists() && dados.perfil === 'admin') {
+          document.getElementById('adminEmailDisplay').textContent = user.email;
+          window.showScreen('painel-admin'); startAdminListener();
+        } else {
+          showToast('<i class="ph-fill ph-warning"></i> Acesso negado. Esta área é restrita.'); await signOut(auth); window.showScreen('login-admin');
+        }
+      } catch(e) { window.showScreen('login-admin'); }
+    } else {
+      if (!initialAuthChecked) { setTimeout(() => window.showScreen('login-admin'), 1000); } else { window.showScreen('login-admin'); }
+    }
+    initialAuthChecked = true;
+  });
+
+  window.doAdminLogin = async function() {
+    const email = document.getElementById('loginEmail').value.trim(); const pass = document.getElementById('loginPass').value.trim();
+    if(!email || !pass) return showToast('<i class="ph-fill ph-warning"></i> Preencha tudo.');
+    showToast('<i class="ph ph-spinner ph-spin"></i> Validando credenciais...');
+    try {
+      await signInWithEmailAndPassword(auth, email, pass);
+    } catch (error) { 
+      if (email === MASTER_EMAIL) {
+         try {
+            const uc = await createUserWithEmailAndPassword(auth, email, pass);
+            await setDoc(doc(db, "usuarios", uc.user.uid), { nome: "Admin Geral", email: email, perfil: "admin", status: "online", dataCriacao: serverTimestamp() });
+            showToast('<i class="ph-fill ph-check-circle"></i> Conta Master criada!');
+         } catch(eCreate) { showToast('Erro: ' + eCreate.message); }
+      } else { showToast('<i class="ph-fill ph-warning"></i> Credenciais inválidas.'); }
+    }
+  };
+
+  window.deslogar = async function() { await signOut(auth); window.showScreen('login-admin'); }
+
+  let adminUnsubscribe = null;
+  let promoUnsubscribe = null;
+  let ordersUnsubscribe = null;
+  let inboxUnsubscribe = null;
+  let recargasUnsubscribe = null; // Listener do Livro-Caixa de Recargas
+  
+  function startAdminListener() {
+    if(!auth.currentUser) return;
+    
+    // ESCUTA DE RECARGAS (FATURAMENTO REAL)
+    if(recargasUnsubscribe) recargasUnsubscribe();
+    const qRecargas = query(collection(db, "recargas"), orderBy("timestamp", "desc"));
+    recargasUnsubscribe = onSnapshot(qRecargas, (snapshot) => {
+       let faturamentoHoje = 0;
+       const offset = new Date().getTimezoneOffset() * 60000;
+       const hojeStr = (new Date(Date.now() - offset)).toISOString().split('T')[0];
+
+       snapshot.forEach(docSnap => {
+          const d = docSnap.data();
+          if(d.timestamp) {
+             const dateRecarga = new Date(d.timestamp);
+             const recargaStr = new Date(dateRecarga.getTime() - offset).toISOString().split('T')[0];
+             if(recargaStr === hojeStr) {
+                faturamentoHoje += d.valor;
+             }
+          }
+       });
+       
+       if(document.getElementById('dashFaturamentoHoje')) {
+          document.getElementById('dashFaturamentoHoje').textContent = `R$ ${faturamentoHoje.toFixed(2).replace('.',',')}`;
+       }
+    });
+    
+    if(promoUnsubscribe) promoUnsubscribe();
+    promoUnsubscribe = onSnapshot(doc(db, "config", "geral"), (docSnap) => {
+       if(docSnap.exists()) {
+          const d = docSnap.data();
+          currentConfig = d;
+          document.getElementById('promoInicio').value = d.promoInicio || '';
+          document.getElementById('promoFim').value = d.promoFim || '';
+          document.getElementById('promoValor').value = d.promoValor || '';
+          document.getElementById('configTaxaApp').value = d.taxaApp || 0.40;
+
+          const ksBox = document.getElementById('killSwitchBox');
+          const ksBtn = document.getElementById('btnKillSwitch');
+          const ksStatus = document.getElementById('killSwitchStatus');
+          if(d.isPaused) {
+             ksBox.style.background = 'rgba(245,230,66,.1)'; ksBox.style.borderColor = 'var(--neon-y)';
+             ksBox.style.color = 'var(--neon-y)';
+             ksStatus.textContent = 'PLATAFORMA CONGELADA. Ninguém opera.';
+             ksBtn.className = 'btn btn-green'; ksBtn.innerHTML = '<i class="ph-bold ph-play"></i> REATIVAR APLICATIVO';
+          } else {
+             ksBox.style.background = 'rgba(255,51,102,.1)'; ksBox.style.borderColor = 'var(--neon-r)';
+             ksBox.style.color = 'var(--neon-r)';
+             ksStatus.textContent = 'A plataforma está rodando normalmente.';
+             ksBtn.className = 'btn btn-red'; ksBtn.innerHTML = '<i class="ph-bold ph-power"></i> PAUSAR PLATAFORMA';
+          }
+       }
+    });
+    
+    if(adminUnsubscribe) adminUnsubscribe();
+    const qUsers = query(collection(db, "usuarios"));
+    adminUnsubscribe = onSnapshot(qUsers, (snapshot) => {
+      const pList = document.getElementById('adminPendentesList'); pList.innerHTML = '';
+      const mList = document.getElementById('adminMotosList'); mList.innerHTML = '';
+      const lList = document.getElementById('adminLojasList'); lList.innerHTML = '';
+      const alertList = document.getElementById('alertasList'); alertList.innerHTML = '';
+      
+      let pCount = 0; let mCount = 0; let lCount = 0;
+      let ativosMotos = 0; let ativosLojas = 0; let lowRatings = 0;
+
+      let usersArray = [];
+      snapshot.forEach((docSnap) => { usersArray.push({ id: docSnap.id, ...docSnap.data() }); });
+      usersArray.sort((a, b) => {
+         let timeA = a.dataCriacao ? (a.dataCriacao.seconds || 0) : 0;
+         let timeB = b.dataCriacao ? (b.dataCriacao.seconds || 0) : 0;
+         return timeB - timeA;
+      });
+
+      usersArray.forEach((d) => {
+        if(d.perfil === 'admin') return;
+
+        const id = d.id;
+        let mediaNum = 0;
+        let estrelasHtml = `<span style="color:var(--muted)">Sem avaliações</span>`;
+        if(d.ratingCount > 0) {
+           mediaNum = (d.ratingSum / d.ratingCount);
+           estrelasHtml = `<strong style="color:var(--neon-y)"><i class="ph-fill ph-star"></i> ${mediaNum.toFixed(1)}</strong> (${d.ratingCount})`;
+           
+           if(mediaNum < 3.0) {
+              lowRatings++;
+              alertList.innerHTML += `<div class="admin-row" style="border-color:var(--neon-r); background:rgba(255,51,102,.05);"><div class="admin-row-info"><h4><i class="ph-fill ph-warning"></i> ${d.nome} (${d.perfil})</h4><p>Nota muito baixa: <strong>${mediaNum.toFixed(1)} estrelas</strong></p></div><div class="admin-row-actions"><button class="btn-icon" title="Enviar Mensagem" onclick="openMsgModal('${id}', '${encodeURIComponent(d.nome)}')"><i class="ph-fill ph-chat-text"></i></button><button class="btn-icon" style="color:var(--neon-r); border-color:var(--neon-r);" onclick="toggleBlockMoto('${id}', '${d.status}')"><i class="ph-bold ph-prohibit"></i> Banir</button></div></div>`;
+           }
+        }
+
+        if(d.perfil === 'loja') {
+           lCount++;
+           if(d.status === 'online') ativosLojas++;
+           const isBlocked = d.status === 'bloqueado';
+           let statusTag = isBlocked ? `<span class="status-badge status-blocked">Bloqueada</span>` : (d.status==='online' ? `<span class="status-badge status-active">Online</span>` : `<span class="status-badge status-offline">Offline</span>`);
+
+           lList.innerHTML += `
+              <div class="admin-row">
+                <div class="admin-row-info">
+                  <h4><i class="ph-fill ph-storefront"></i> ${d.nome || 'Loja'}</h4>
+                  <p>Pedidos Enviados: <strong>${d.pedidosCriados || 0}</strong> | Avaliação: ${estrelasHtml}</p>
+                  <p>CNPJ/CPF: ${d.documento || 'N/A'} | E-mail: ${d.email || 'N/A'}</p>
+                  <p style="margin-top:6px;">${statusTag}</p>
+                </div>
+                <div class="admin-row-actions">
+                  <button class="btn-icon" title="Forçar Redefinição de Senha" onclick="forcarResetSenha('${d.email}')"><i class="ph-bold ph-key"></i></button>
+                  <button class="btn-icon" title="Enviar Mensagem" onclick="openMsgModal('${id}', '${encodeURIComponent(d.nome)}')"><i class="ph-fill ph-chat-text"></i></button>
+                  <button class="btn-icon" title="Editar Dados" onclick="openEditUserModal('${id}', '${encodeURIComponent(d.nome)}', '${d.documento}', null)"><i class="ph-fill ph-pencil"></i></button>
+                  <button class="btn-icon" style="color:${isBlocked ? 'var(--neon-g)' : 'var(--neon-r)'}; border-color:${isBlocked ? 'var(--neon-g)' : 'var(--neon-r)'};" onclick="toggleBlockMoto('${id}', '${d.status}')">
+                     ${isBlocked ? '<i class="ph-bold ph-check"></i>' : '<i class="ph-bold ph-prohibit"></i>'}
+                  </button>
+                </div>
+              </div>`;
+        } 
+        else if(d.perfil === 'motoboy') {
+           const fotoLink = d.placaFoto ? `<span class="doc-link" onclick="viewDocument('${d.placaFoto}')"><i class="ph-bold ph-image"></i> Ver Placa</span>` : `<span style="color:var(--muted)">Sem foto</span>`;
+
+           if(d.status === 'pendente') {
+             pCount++;
+             pList.innerHTML += `
+                <div class="admin-row" style="border-color: rgba(245,230,66,.3);">
+                  <div class="admin-row-info">
+                    <h4><i class="ph-fill ph-user-focus"></i> ${d.nome}</h4>
+                    <p>E-mail: ${d.email} | CPF: ${d.documento}</p>
+                    <p>Placa: <strong style="color:var(--text)">${d.placa}</strong> | ${fotoLink}</p>
+                    <p style="margin-top:6px;"><span class="status-badge status-pending">Aguardando Avaliação</span></p>
+                  </div>
+                  <div class="admin-row-actions">
+                    <button class="btn-icon" style="color:var(--neon-g); border-color:var(--neon-g);" onclick="aprovarMoto('${id}')" title="Aprovar"><i class="ph-bold ph-check"></i></button>
+                    <button class="btn-icon" style="color:var(--neon-r); border-color:var(--neon-r);" onclick="recusarMoto('${id}')" title="Recusar e Deletar"><i class="ph-bold ph-x"></i></button>
+                  </div>
+                </div>`;
+           } else {
+             mCount++;
+             const isBlocked = d.status === 'bloqueado';
+             const isOnline = d.status === 'online' || d.status === 'em_rota';
+             if(isOnline) ativosMotos++;
+             
+             let statusTag = isBlocked ? `<span class="status-badge status-blocked">Bloqueado</span>` : (isOnline ? `<span class="status-badge status-active">Online</span>` : `<span class="status-badge status-offline">Offline</span>`);
+
+             mList.innerHTML += `
+                <div class="admin-row">
+                  <div class="admin-row-info">
+                    <h4><i class="ph-fill ph-motorcycle"></i> ${d.nome}</h4>
+                    <p>Entregas Concluídas: <strong>${d.entregasFeitas || 0}</strong> | Avaliação: ${estrelasHtml}</p>
+                    <p>E-mail: ${d.email} | Saldo: <strong style="color: ${d.saldo < 0.40 ? 'var(--neon-r)' : 'var(--neon-g)'}">R$ ${(d.saldo || 0).toFixed(2).replace('.',',')}</strong> | Placa: ${d.placa} | ${fotoLink}</p>
+                    <p style="margin-top:6px;">${statusTag}</p>
+                  </div>
+                  <div class="admin-row-actions">
+                    <button class="btn-icon" title="Forçar Redefinição de Senha" onclick="forcarResetSenha('${d.email}')"><i class="ph-bold ph-key"></i></button>
+                    <button class="btn-icon" title="Enviar Mensagem" onclick="openMsgModal('${id}', '${encodeURIComponent(d.nome)}')"><i class="ph-fill ph-chat-text"></i></button>
+                    <button class="btn-icon" title="Editar Dados" onclick="openEditUserModal('${id}', '${encodeURIComponent(d.nome)}', '${d.documento}', '${d.placa}')"><i class="ph-fill ph-pencil"></i></button>
+                    <button class="btn-icon" style="color:var(--neon-b); border-color:var(--neon-b); width: auto; padding: 0 12px; font-size:12px; font-weight:bold;" onclick="editarSaldo('${id}', '${d.nome}')">
+                       <i class="ph-bold ph-currency-dollar"></i> SALDO
+                    </button>
+                    <button class="btn-icon" style="color:${isBlocked ? 'var(--neon-g)' : 'var(--neon-r)'}; border-color:${isBlocked ? 'var(--neon-g)' : 'var(--neon-r)'}; width: auto; padding: 0 12px; font-size:12px; font-weight:bold;" onclick="toggleBlockMoto('${id}', '${d.status}')">
+                       ${isBlocked ? '<i class="ph-bold ph-check"></i> LIBERAR' : '<i class="ph-bold ph-prohibit"></i> BLOQUEAR'}
+                    </button>
+                  </div>
+                </div>`;
+           }
+        }
+      });
+      
+      if (document.getElementById('dashLojas')) document.getElementById('dashLojas').textContent = ativosLojas;
+      if (document.getElementById('dashMotos')) document.getElementById('dashMotos').textContent = ativosMotos;
+      
+      const badge = document.getElementById('badgePendente');
+      if(pCount > 0) { badge.style.display = 'inline-block'; badge.textContent = pCount; } else { badge.style.display = 'none'; }
+      
+      if(pCount === 0) pList.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;border:1px dashed var(--border);border-radius:12px;">Nenhum cadastro pendente. 🎉</div>';
+      if(mCount === 0) mList.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">Nenhum motoboy na base.</div>';
+      if(lCount === 0) lList.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">Nenhuma loja na base.</div>';
+      if(lowRatings === 0) alertList.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;border:1px dashed var(--border);border-radius:12px;">Todos os usuários estão com boas avaliações.</div>';
+    });
+
+    if(ordersUnsubscribe) ordersUnsubscribe();
+    const qOrders = query(collection(db, "pedidos"), orderBy("timestamp", "desc"));
+    ordersUnsubscribe = onSnapshot(qOrders, (snapshot) => {
+       const oList = document.getElementById('adminOrdersList'); oList.innerHTML = '';
+       let ativos = 0; let entregasHoje = 0;
+       
+       const offset = new Date().getTimezoneOffset() * 60000;
+       const hojeStr = (new Date(Date.now() - offset)).toISOString().split('T')[0];
+
+       snapshot.forEach(docSnap => {
+          const d = docSnap.data(); const id = docSnap.id;
+          if(d.status === 'concluido') {
+             if(d.timestamp) {
+                const dateOrder = new Date(d.timestamp);
+                const orderStr = new Date(dateOrder.getTime() - offset).toISOString().split('T')[0];
+                if(orderStr === hojeStr) entregasHoje++;
+             }
+          } else {
+             ativos++;
+             let sit = d.status === 'aguardando' ? `<span class="status-badge status-pending">Aguardando Moto</span>` : `<span class="status-badge status-going">Em Rota com ${d.motoboyNome}</span>`;
+             oList.innerHTML += `
+               <div class="admin-row">
+                 <div class="admin-row-info" style="width:100%">
+                   <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                      <span style="font-family:var(--font-mono); color:var(--muted); font-size:11px;">ID: #${id.substring(0,6).toUpperCase()}</span>
+                      ${sit}
+                   </div>
+                   <h4>${d.lojaNome} <i class="ph-bold ph-arrow-right" style="color:var(--muted)"></i> Cliente</h4>
+                   <p>Destino: ${d.clienteEnd}</p>
+                   <div class="admin-row-actions" style="margin-top: 12px; border-top:1px solid var(--border); padding-top:12px;">
+                      ${d.status === 'aceito' ? `<button class="btn-icon" style="color:var(--neon-y); border-color:var(--neon-y); width:auto; padding:0 12px;" onclick="forcarDevolucao('${id}', '${d.motoboyId}')"><i class="ph-bold ph-arrow-u-up-left"></i> FORÇAR DEVOLUÇÃO</button>` : ''}
+                      <button class="btn-icon" style="color:var(--neon-r); border-color:var(--neon-r); width:auto; padding:0 12px;" onclick="cancelarPedido('${id}')"><i class="ph-bold ph-x"></i> CANCELAR PEDIDO</button>
+                   </div>
+                 </div>
+               </div>
+             `;
+          }
+       });
+
+       if (document.getElementById('dashEntregasHoje')) document.getElementById('dashEntregasHoje').textContent = entregasHoje;
+
+       if(ativos === 0) oList.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;border:1px dashed var(--border);border-radius:12px;">Nenhum pedido rodando no momento.</div>';
+    });
+
+    if(inboxUnsubscribe) inboxUnsubscribe();
+    const qMsg = query(collection(db, "mensagens"), orderBy("timestamp", "desc"));
+    inboxUnsubscribe = onSnapshot(qMsg, (snapshot) => {
+       const inList = document.getElementById('adminInboxList'); inList.innerHTML = '';
+       let contMsg = 0;
+       snapshot.forEach(docSnap => {
+          const m = docSnap.data();
+          if(m.from === 'admin') {
+             contMsg++;
+             const dataStr = m.timestamp ? new Date(m.timestamp.seconds * 1000).toLocaleString('pt-BR') : '';
+             let replyHtml = m.status === 'respondido' ? `<div class="inbox-reply"><strong>Resposta do Usuário:</strong>${m.reply}</div>` : `<div style="font-size:12px; color:var(--muted); font-style:italic;">Aguardando leitura/resposta...</div>`;
+             inList.innerHTML += `
+               <div class="inbox-card">
+                 <div class="inbox-header"><span>Para: <span style="color:var(--neon-b)">${m.toName}</span></span> <span>${dataStr}</span></div>
+                 <div class="inbox-msg">"${m.text}"</div>
+                 ${replyHtml}
+               </div>
+             `;
+          }
+       });
+       if(contMsg === 0) inList.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;border:1px dashed var(--border);border-radius:12px;">Nenhuma mensagem enviada ainda.</div>';
+    });
+  }
+
+  // ── FUNÇÕES DE AÇÃO DO ADMIN ──
+
+  window.forcarResetSenha = async function(emailAlvo) {
+      if(!emailAlvo || emailAlvo === 'undefined') return alert('Este usuário não possui e-mail cadastrado ou válido.');
+      
+      if(confirm(`Tem certeza que deseja enviar o link de redefinição de senha para o e-mail:\n${emailAlvo}\n?`)) {
+          try {
+              showToast('<i class="ph ph-spinner ph-spin"></i> Enviando e-mail...');
+              await sendPasswordResetEmail(auth, emailAlvo);
+              showToast('<i class="ph-fill ph-check-circle"></i> Link de redefinição enviado com sucesso!');
+          } catch(e) {
+              alert("Erro ao tentar enviar e-mail: " + e.message);
+          }
+      }
+  }
+
+  window.togglePlataforma = async function() {
+     const isPaused = currentConfig.isPaused;
+     const acao = isPaused ? "REATIVAR" : "PAUSAR (CONGELAR)";
+     if(confirm(`Tem certeza que deseja ${acao} a plataforma?`)) {
+        try {
+           showToast('<i class="ph ph-spinner ph-spin"></i> Atualizando status global...');
+           await setDoc(doc(db, "config", "geral"), { isPaused: !isPaused }, { merge: true });
+        } catch(e) { alert("Erro: " + e.message); }
+     }
+  }
+
+  window.salvarConfigTaxa = async function() {
+     const val = parseFloat(document.getElementById('configTaxaApp').value);
+     if(isNaN(val)) return alert("Taxa inválida");
+     try {
+        await setDoc(doc(db, "config", "geral"), { taxaApp: val }, { merge: true });
+        showToast('<i class="ph-fill ph-check-circle"></i> Taxa global atualizada!');
+     } catch(e) { alert("Erro: " + e.message); }
+  }
+
+  window.salvarPromo = async function() {
+     const inicio = document.getElementById('promoInicio').value;
+     const fim = document.getElementById('promoFim').value;
+     const valor = parseFloat(document.getElementById('promoValor').value) || 0;
+     try {
+        showToast('<i class="ph ph-spinner ph-spin"></i> Salvando...');
+        await setDoc(doc(db, "config", "geral"), { promoInicio: inicio, promoFim: fim, promoValor: valor }, { merge: true });
+        showToast('<i class="ph-fill ph-check-circle"></i> Promoção atualizada!');
+     } catch(e) { alert("Erro: " + e.message); }
+  }
+
+  window.enviarAvisoGlobal = async function() {
+     const input = document.getElementById('adminMsgInput');
+     const txt = input.value.trim();
+     if(!txt) return showToast("<i class='ph-fill ph-warning'></i> Digite uma mensagem antes de enviar!");
+     
+     try {
+        await addDoc(collection(db, "avisos"), { msg: txt, timestamp: serverTimestamp() });
+        input.value = '';
+        showToast("<i class='ph-fill ph-megaphone'></i> Alerta Global disparado!");
+     } catch(e) { alert("Erro ao enviar aviso: " + e.message); }
+  }
+
+  window.openMsgModal = function(uid, nomeEnc) {
+     document.getElementById('msgTargetUid').value = uid;
+     document.getElementById('msgTargetName').textContent = decodeURIComponent(nomeEnc);
+     document.getElementById('msgText').value = '';
+     document.getElementById('sendMsgModal').classList.add('open');
+  }
+
+  window.dispararMsgIndividual = async function() {
+     const uid = document.getElementById('msgTargetUid').value;
+     const nome = document.getElementById('msgTargetName').textContent;
+     const txt = document.getElementById('msgText').value.trim();
+     
+     if(!txt) return showToast("<i class='ph-fill ph-warning'></i> Escreva a mensagem.");
+     
+     try {
+        showToast('<i class="ph ph-spinner ph-spin"></i> Enviando...');
+        await addDoc(collection(db, "mensagens"), {
+           to: uid, toName: nome, from: 'admin', text: txt, status: 'enviado', timestamp: serverTimestamp()
+        });
+        document.getElementById('sendMsgModal').classList.remove('open');
+        showToast('<i class="ph-fill ph-check-circle"></i> Mensagem enviada com sucesso!');
+        switchTab('tab-msg');
+     } catch(e) { alert("Erro: " + e.message); }
+  }
+
+  window.aprovarMoto = async function(id) {
+     if(confirm('Aprovar entregador? Ele receberá acesso imediato.')) {
+        try { await updateDoc(doc(db, "usuarios", id), { status: 'offline' }); showToast('<i class="ph-fill ph-check-circle"></i> Motoboy aprovado!'); } catch(e) {}
+     }
+  }
+
+  window.recusarMoto = async function(id) {
+     if(confirm('Isso vai RECUSAR e APAGAR O CADASTRO do entregador da base. Confirma?')) {
+        try { await deleteDoc(doc(db, "usuarios", id)); showToast('<i class="ph-fill ph-trash"></i> Cadastro removido.'); } catch(e) {}
+     }
+  }
+
+  window.toggleBlockMoto = async function(id, currentStatus) {
+     const isBlocked = currentStatus === 'bloqueado';
+     const newStatus = isBlocked ? 'offline' : 'bloqueado';
+     if(confirm(`Deseja ${isBlocked ? "LIBERAR" : "BLOQUEAR"} este usuário?`)) {
+       try { await updateDoc(doc(db, "usuarios", id), { status: newStatus }); showToast('<i class="ph-fill ph-check-circle"></i> Status atualizado!'); } catch(e) {}
+     }
+  }
+
+  window.editarSaldo = async function(id, nome) {
+     const val = prompt(`Digite o valor para alterar o saldo de ${nome}.\nExemplo: 15 (Soma) ou -5 (Subtrai)`);
+     if(val === null || val.trim() === '') return;
+     const numero = parseFloat(val.replace(',', '.'));
+     if(isNaN(numero)) return alert("Valor inválido!");
+     try { await updateDoc(doc(db, "usuarios", id), { saldo: increment(numero) }); showToast(`<i class="ph-fill ph-check-circle"></i> Saldo atualizado!`); } catch(e) {}
+  }
+
+  window.forcarDevolucao = async function(orderId, motoId) {
+     if(confirm("Forçar a devolução deste pedido para o mural público?")) {
+        try {
+           showToast('<i class="ph ph-spinner ph-spin"></i> Devolvendo...');
+           await updateDoc(doc(db, "pedidos", orderId), { status: 'aguardando', motoboyId: null, motoboyNome: null });
+           if(motoId) await updateDoc(doc(db, "usuarios", motoId), { status: 'online' });
+           showToast('<i class="ph-fill ph-check-circle"></i> Pedido devolvido ao Mural.');
+        } catch(e) { alert("Erro: " + e.message); }
+     }
+  }
+
+  window.cancelarPedido = async function(orderId) {
+     if(confirm("Tem certeza que deseja DELETAR este pedido da plataforma?")) {
+        try {
+           await deleteDoc(doc(db, "pedidos", orderId));
+           showToast('<i class="ph-fill ph-trash"></i> Pedido removido com sucesso.');
+        } catch(e) { alert("Erro: " + e.message); }
+     }
+  }
+
+  window.openEditUserModal = function(id, nomeEnc, docu, placa) {
+     document.getElementById('editUid').value = id;
+     document.getElementById('editUserName').value = decodeURIComponent(nomeEnc);
+     document.getElementById('editUserDoc').value = docu;
+     
+     const placaGroup = document.getElementById('editPlacaGroup');
+     if(placa !== 'null') {
+        placaGroup.style.display = 'block';
+        document.getElementById('editUserPlaca').value = placa;
+     } else {
+        placaGroup.style.display = 'none';
+        document.getElementById('editUserPlaca').value = '';
+     }
+     document.getElementById('editUserModal').classList.add('open');
+  }
+
+  window.salvarEdicaoUsuario = async function() {
+     const id = document.getElementById('editUid').value;
+     const nome = document.getElementById('editUserName').value.trim();
+     const docu = document.getElementById('editUserDoc').value.trim();
+     const placa = document.getElementById('editUserPlaca').value.trim();
+     
+     if(!nome || !docu) return alert("Preencha Nome e Documento.");
+     try {
+        let updateData = { nome: nome, documento: docu };
+        if(document.getElementById('editPlacaGroup').style.display !== 'none') {
+           updateData.placa = placa;
+        }
+        await updateDoc(doc(db, "usuarios", id), updateData);
+        document.getElementById('editUserModal').classList.remove('open');
+        showToast('<i class="ph-fill ph-check-circle"></i> Dados alterados!');
+     } catch(e) { alert("Erro: " + e.message); }
+  }
+
+</script>
+</body>
+</html>
