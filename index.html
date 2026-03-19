@@ -2,9 +2,18 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#0a0a0f">
 <title>TGS Delivery</title>
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TGS Delivery">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22TGS%20Delivery%22%2C%22short_name%22%3A%22TGS%20Delivery%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230a0a0f%22%2C%22theme_color%22%3A%22%230a0a0f%22%7D">
+<link rel="apple-touch-icon" href="https://via.placeholder.com/192/0a0a0f/f5e642?text=TGS">
+<link rel="icon" type="image/png" href="https://via.placeholder.com/192/0a0a0f/f5e642?text=TGS">
+
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/@phosphor-icons/web"></script>
 <style>
@@ -64,8 +73,7 @@
   .form-group input:focus, .form-group textarea:focus { border-color: var(--neon-b); box-shadow: 0 0 0 3px rgba(0,200,255,.1); }
   .form-group input:disabled, .form-group textarea:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  /* BOTÕES OTIMIZADOS PARA MOBILE */
-  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 14px; border-radius: 10px; border: none; cursor: pointer; font-family: var(--font-head); font-size: 14px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; transition: all .2s; position: relative; overflow: hidden; }
+  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 16px; border-radius: 10px; border: none; cursor: pointer; font-family: var(--font-head); font-size: 14px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; transition: all .2s; position: relative; overflow: hidden; }
   .btn:active { transform: scale(.97); }
   .btn-primary { background: linear-gradient(135deg, #d4c200, var(--neon-y)); color: #0a0a0f; box-shadow: 0 4px 20px rgba(245,230,66,.3); margin-top: 8px; }
   .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text); margin-top: 10px; }
@@ -117,24 +125,36 @@
   .stat-box .val { font-family: var(--font-head); font-size: 20px; font-weight: 900; color: var(--text); line-height: 1; }
   .stat-box .lbl { font-family: var(--font-mono); font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; margin-top: 6px; }
 
-  /* ── NOVO DESIGN DE ABAS (TOPO) ── */
-  .tab-nav { display: flex; background: var(--bg2); border-bottom: 1px solid var(--border); overflow-x: auto; flex-shrink: 0; width: 100%; }
-  .tab-btn { flex: 1; padding: 12px 4px; color: var(--muted); cursor: pointer; text-align: center; font-family: var(--font-mono); font-size: 10px; font-weight: bold; letter-spacing: 1px; transition: 0.2s; border-bottom: 2px solid transparent; display: flex; flex-direction: column; align-items: center; gap: 4px; text-transform: uppercase; }
-  .tab-btn i { font-size: 22px; }
-  .moto-tab.active { color: var(--neon-y); border-bottom-color: var(--neon-y); }
-  .loja-tab.active { color: var(--neon-b); border-bottom-color: var(--neon-b); }
-  .tab-content { display: none; width: 100%; animation: fadeIn 0.3s; }
-  .tab-content.active { display: block; }
-
-  .top-bar { background: var(--panel); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+  .top-bar { background: var(--panel); border-bottom: 1px solid var(--border); padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
   .top-bar-logo { font-family: var(--font-head); font-size: 16px; color: var(--neon-y); letter-spacing: .1em; display:flex; align-items:center; gap:6px;}
+  .avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--neon-b), var(--neon-g)); display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; color: #000; overflow:hidden;}
+  .avatar img { width: 100%; height: 100%; object-fit: cover; }
 
-  /* CARDS COMPACTADOS PARA MOBILE */
-  .new-order-btn { background: linear-gradient(135deg, #d4c200, var(--neon-y)); border: none; border-radius: 14px; width: 100%; padding: 16px; display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer; box-shadow: 0 8px 30px rgba(245,230,66,.3), 0 0 0 1px rgba(245,230,66,.1); transition: all .2s; margin-bottom: 24px; }
-  .new-order-btn span { font-family: var(--font-head); font-size: 16px; font-weight: 900; color: #0a0a0f; letter-spacing: .08em; }
+  .new-order-btn { background: linear-gradient(135deg, #d4c200, var(--neon-y)); border: none; border-radius: 16px; width: 100%; padding: 22px; display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer; box-shadow: 0 8px 30px rgba(245,230,66,.3), 0 0 0 1px rgba(245,230,66,.1); transition: all .2s; margin-bottom: 24px; }
+  .new-order-btn span { font-family: var(--font-head); font-size: 18px; font-weight: 900; color: #0a0a0f; letter-spacing: .08em; }
   .section-title { font-family: var(--font-mono); font-size: 11px; color: var(--muted); letter-spacing: .2em; text-transform: uppercase; margin-bottom: 12px; display:flex; align-items:center; gap:6px; justify-content: space-between;}
 
-  .order-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; position: relative; overflow: hidden; transition: all .2s; }
+  /* ── CSS CIRÚRGICO: CARDS DE PEDIDOS COMPACTADOS PARA MOBILE ── */
+  .delivery-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; position: relative; overflow: hidden; animation: cardDrop .4s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes cardDrop { from { transform: translateY(-20px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+  
+  .delivery-card.new-arrival { border-color: var(--neon-y); box-shadow: 0 0 20px rgba(245,230,66,.15); }
+  .delivery-card.new-arrival::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--neon-y), transparent); animation: scanLine 2s linear infinite; }
+  @keyframes scanLine { 0%{transform:scaleX(0)}50%{transform:scaleX(1)}100%{transform:scaleX(0)} }
+  
+  .dc-store { font-family: var(--font-mono); font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .12em; margin-bottom: 6px; display:flex; align-items:center; gap:6px;}
+  .dc-store img { width: 18px; height: 18px; border-radius: 4px; object-fit: cover; }
+  .dc-bairro { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 2px; display:flex; align-items:center; gap:6px;}
+  .dc-fee { font-family: var(--font-head); font-size: 24px; font-weight: 900; color: var(--neon-g); line-height: 1; }
+  
+  .dc-actions { display: flex; gap: 8px; margin-top: 12px; align-items: stretch; }
+  .btn-accept { flex: 1; background: linear-gradient(135deg, #d4c200, var(--neon-y)); border: none; border-radius: 10px; padding: 14px; font-family: var(--font-head); font-size: 16px; font-weight: 900; color: #0a0a0f; letter-spacing: .05em; cursor: pointer; box-shadow: 0 0 20px rgba(245,230,66,.4); transition: all .15s; display: flex; align-items: center; justify-content: center; gap: 8px; text-transform: uppercase; }
+  .btn-accept i { font-size: 20px; }
+  .btn-accept:active { transform: scale(.95); box-shadow: 0 0 30px rgba(245,230,66,.6); }
+  .btn-pass { width: 50px; background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; transition: all .2s; flex-shrink: 0; color: var(--text); }
+  .btn-pass:hover { border-color: var(--neon-r); color: var(--neon-r); }
+
+  .order-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; position: relative; overflow: hidden; transition: all .2s; }
   .order-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; border-radius: 3px 0 0 3px; }
   .order-card.waiting::before { background: var(--neon-y); }
   .order-card.going::before   { background: var(--neon-b); }
@@ -142,14 +162,21 @@
   .order-card.done { cursor: pointer; border-color: rgba(255,255,255,0.05); background: rgba(22,22,31,0.6); }
   .order-card.done:hover { border-color: var(--neon-b); transform: translateY(-2px); }
 
-  .order-card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .order-card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
   .order-id { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
-  .order-fee { font-family: var(--font-head); font-size: 16px; color: var(--neon-g); }
-  .order-info { font-size: 13px; color: var(--text); margin-bottom: 6px; display:flex; gap:6px; align-items:flex-start;}
-  .order-info i { color: var(--neon-b); font-size: 16px; margin-top: 2px;}
-  .order-obs { font-size: 12px; color: var(--muted); font-style: italic; display:flex; gap:6px;}
-  .order-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
-  .pin-code { font-family: var(--font-mono); font-size: 16px; font-weight: bold; color: var(--neon-y); letter-spacing: 2px; background: rgba(245,230,66,.1); padding: 4px 10px; border-radius: 6px; border: 1px dashed var(--neon-y);}
+  .order-fee { font-family: var(--font-head); font-size: 18px; color: var(--neon-g); }
+  .order-info { font-size: 14px; color: var(--text); margin-bottom: 6px; display:flex; gap:6px; align-items:flex-start;}
+  .order-info i { color: var(--neon-b); font-size: 18px; margin-top: 2px;}
+  .order-obs { font-size: 13px; color: var(--muted); font-style: italic; display:flex; gap:6px;}
+  .order-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
+  .pin-code { font-family: var(--font-mono); font-size: 18px; font-weight: bold; color: var(--neon-y); letter-spacing: 2px; background: rgba(245,230,66,.1); padding: 4px 10px; border-radius: 6px; border: 1px dashed var(--neon-y);}
+
+  .active-order { display: none; background: linear-gradient(135deg, rgba(0,200,255,.06), rgba(0,255,136,.04)); border: 1px solid rgba(0,200,255,.2); border-radius: 12px; padding: 14px; margin-bottom: 16px; position: relative; }
+  .active-order.visible { display: block; animation: fadeIn 0.3s ease; }
+  .active-order h3 { font-family: var(--font-head); font-size: 14px; color: var(--neon-b); letter-spacing: .08em; margin-bottom: 16px; display:flex; align-items:center; gap:6px;}
+  .address-box { background: var(--bg); padding: 12px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 12px;}
+  .address-box h4 { font-family: var(--font-mono); font-size: 10px; color: var(--muted); text-transform: uppercase; margin-bottom: 4px;}
+  .address-box p { font-size: 14px; color: var(--text); line-height: 1.4; display:flex; gap:6px;}
 
   .star-rating { display: flex; gap: 8px; font-size: 32px; color: var(--muted); cursor: pointer; justify-content: center; margin: 16px 0; }
   .star-rating i { transition: all 0.2s; }
@@ -159,11 +186,11 @@
   .modal-overlay.open { display: flex; animation: fadeIn .2s; }
   @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
   
-  .modal { background: var(--panel); border: 1px solid var(--border); border-radius: 20px 20px 0 0; padding: 24px; width: 100%; max-width: 500px; animation: slideUp .3s ease-out; max-height: 90vh; overflow-y:auto; padding-bottom: 40px;}
+  .modal { background: var(--panel); border: 1px solid var(--border); border-radius: 20px 20px 0 0; padding: 32px 24px; width: 100%; max-width: 500px; animation: slideUp .3s ease-out; max-height: 90vh; overflow-y:auto;}
   @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-  .modal h3 { font-family: var(--font-head); font-size: 16px; color: var(--neon-y); margin-bottom: 20px; letter-spacing: .08em; display:flex; align-items:center; gap:8px;}
+  .modal h3 { font-family: var(--font-head); font-size: 16px; color: var(--neon-y); margin-bottom: 24px; letter-spacing: .08em; display:flex; align-items:center; gap:8px;}
 
-  /* ── MODAL AVISO GLOBAL (SUAVE E DELICADO) ── */
+  /* ── MODAL AVISO GLOBAL E INDIVIDUAL ── */
   .admin-alert-box { background-color: #FFFFEB; width: 90%; max-width: 400px; padding: 40px 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); text-align: center; border: 1px solid rgba(255, 255, 255, 0.1); position: relative; animation: slideUp .3s ease-out; margin: auto;}
   .admin-alert-icon { background-color: #A52A2A; width: 60px; height: 60px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin: 0 auto 20px; box-shadow: 0 4px 10px rgba(165, 42, 42, 0.3); color: #FFFFEB; font-size: 32px; font-weight: bold;}
   .admin-alert-title { color: #A52A2A; font-size: 16px; font-family: var(--font-body); font-weight: 600; margin: 0 0 10px; letter-spacing: normal;}
@@ -177,32 +204,15 @@
   .live-dot { width: 8px; height: 8px; background: var(--neon-g); border-radius: 50%; animation: livePulse 1s ease-in-out infinite; }
   @keyframes livePulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
   .live-text { font-family: var(--font-mono); font-size: 12px; color: var(--neon-g); font-weight: bold; letter-spacing: 1px; }
-  
-  .delivery-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; position: relative; overflow: hidden; animation: cardDrop .4s cubic-bezier(.34,1.56,.64,1); }
-  @keyframes cardDrop { from { transform: translateY(-20px); opacity:0; } to { transform: translateY(0); opacity:1; } }
-  
-  .delivery-card.new-arrival { border-color: var(--neon-y); box-shadow: 0 0 15px rgba(245,230,66,.15); }
-  .delivery-card.new-arrival::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--neon-y), transparent); animation: scanLine 2s linear infinite; }
-  @keyframes scanLine { 0%{transform:scaleX(0)}50%{transform:scaleX(1)}100%{transform:scaleX(0)} }
-  
-  .dc-store { font-family: var(--font-mono); font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .12em; margin-bottom: 8px; display:flex; align-items:center; gap:6px;}
-  .dc-store img { width: 20px; height: 20px; border-radius: 4px; object-fit: cover; }
-  .dc-bairro { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 4px; display:flex; align-items:center; gap:6px;}
-  .dc-fee { font-family: var(--font-head); font-size: 24px; font-weight: 900; color: var(--neon-g); line-height: 1; margin: 4px 0;}
-  
-  .dc-actions { display: flex; gap: 10px; margin-top: 12px; align-items: stretch; }
-  .btn-accept { flex: 1; background: linear-gradient(135deg, #d4c200, var(--neon-y)); border: none; border-radius: 10px; padding: 14px; font-family: var(--font-head); font-size: 16px; font-weight: 900; color: #0a0a0f; letter-spacing: .05em; cursor: pointer; box-shadow: 0 0 20px rgba(245,230,66,.3); transition: all .15s; display: flex; align-items: center; justify-content: center; gap: 8px; text-transform: uppercase; }
-  .btn-accept i { font-size: 20px; }
-  .btn-accept:active { transform: scale(.95); box-shadow: 0 0 30px rgba(245,230,66,.5); }
-  .btn-pass { width: 50px; background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; transition: all .2s; flex-shrink: 0; color: var(--text); }
-  .btn-pass:hover { border-color: var(--neon-r); color: var(--neon-r); }
 
-  .active-order { display: none; background: linear-gradient(135deg, rgba(0,200,255,.06), rgba(0,255,136,.04)); border: 1px solid rgba(0,200,255,.2); border-radius: 12px; padding: 14px; margin-bottom: 16px; position: relative; }
-  .active-order.visible { display: block; animation: fadeIn 0.3s ease; }
-  .active-order h3 { font-family: var(--font-head); font-size: 13px; color: var(--neon-b); letter-spacing: .08em; margin-bottom: 12px; display:flex; align-items:center; gap:6px;}
-  .address-box { background: var(--bg); padding: 10px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 10px;}
-  .address-box h4 { font-family: var(--font-mono); font-size: 10px; color: var(--muted); text-transform: uppercase; margin-bottom: 4px;}
-  .address-box p { font-size: 13px; color: var(--text); line-height: 1.4; display:flex; gap:6px;}
+  /* ── CSS CIRÚRGICO: ABAS NO TOPO ── */
+  .tab-nav { display: flex; background: var(--bg2); border-bottom: 1px solid var(--border); overflow-x: auto; flex-shrink: 0; width: 100%; }
+  .tab-btn { flex: 1; padding: 12px 4px; color: var(--muted); cursor: pointer; text-align: center; font-family: var(--font-mono); font-size: 10px; font-weight: bold; letter-spacing: 1px; transition: 0.2s; border-bottom: 2px solid transparent; display: flex; flex-direction: column; align-items: center; gap: 4px; text-transform: uppercase; }
+  .tab-btn i { font-size: 22px; }
+  .moto-tab.active { color: var(--neon-y); border-bottom-color: var(--neon-y); }
+  .loja-tab.active { color: var(--neon-b); border-bottom-color: var(--neon-b); }
+  .tab-content { display: none; width: 100%; animation: fadeIn 0.3s; }
+  .tab-content.active { display: block; }
 
   .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 20px; font-family: var(--font-mono); font-size: 13px; z-index: 99999 !important; white-space: nowrap; animation: toastIn .3s ease-out; box-shadow: 0 8px 24px rgba(0,0,0,.4); display:flex; align-items:center; gap:8px;}
   @keyframes toastIn { from { transform: translateX(-50%) translateY(-10px); opacity:0; } to { transform: translateX(-50%) translateY(0); opacity:1; } }
@@ -235,7 +245,7 @@
   <div class="splash-logo">
     <i class="ph-fill ph-lightning splash-bolt"></i>
     <div class="splash-title">TGS DELIVERY</div>
-    <div class="splash-sub">SISTEMA DE DELIVERY V1.0</div>
+    <div class="splash-sub">SISTEMA DE LOGÍSTICA v2.0</div>
     <div class="splash-loader">
       <div class="dot"></div><div class="dot"></div><div class="dot"></div>
     </div>
@@ -307,7 +317,7 @@
 <div class="screen" id="cadastro-loja">
   <div class="screen-header">
     <div class="back-btn" onclick="showScreen('choose-profile')"><i class="ph ph-arrow-left"></i></div>
-    <h2><i class="ph ph-storefront"></i> CADASTRO DE LOJA</h2>
+    <h2><i class="ph-fill ph-storefront"></i> CADASTRO DE LOJA</h2>
   </div>
   <div class="screen-body">
     <div class="form-group">
@@ -364,9 +374,6 @@
   <div class="top-bar" style="position: relative; flex-wrap: wrap; gap: 10px; padding: 12px 16px;">
      <div style="font-family: var(--font-head); font-size: 16px; color: var(--neon-b); letter-spacing: 1px; display: flex; align-items: center; gap: 6px;">
        <i class="ph-fill ph-storefront"></i> PAINEL DA LOJA
-     </div>
-     <div style="display:flex; align-items:center; gap:8px;">
-        <button class="btn-icon" onclick="forceRefresh()" style="color:var(--neon-b); width:32px; height:32px;" title="Atualizar"><i class="ph-bold ph-arrows-clockwise"></i></button>
      </div>
   </div>
   
@@ -431,40 +438,17 @@
   </div>
 </div>
 
-<div class="modal-overlay" id="newOrderModal">
-  <div class="modal">
-    <h3><i class="ph-fill ph-lightning"></i> NOVO PEDIDO</h3>
-    <div style="display:flex; gap:10px;">
-      <div class="form-group" style="flex:2"><label>Rua do Cliente</label><input type="text" placeholder="Ex: Travessa Mauriti" id="newRua"></div>
-      <div class="form-group" style="flex:1"><label>Nº</label><input type="text" placeholder="1050" id="newNum"></div>
-    </div>
-    <div class="form-group"><label>Bairro</label><input type="text" placeholder="Ex: Marco" id="newBairro"></div>
-    <div class="form-group"><label>Taxa de Entrega (R$)</label><input type="number" placeholder="8,00" id="newFee" style="font-family:var(--font-head);font-size:22px;color:var(--neon-g)"></div>
-    <div class="checkbox-box" onclick="document.getElementById('newBagGrande').click()">
-      <input type="checkbox" id="newBagGrande" onclick="event.stopPropagation()">
-      <div class="checkbox-box-text"><h4 style="color: var(--neon-orange);"><i class="ph-fill ph-package"></i> EXIGE BAG GRANDE</h4><p>Marque para lanches maiores ou pizzas.</p></div>
-    </div>
-    <div class="form-group"><label>Observação (opcional)</label><input type="text" placeholder="Ex: Chamar no interfone..." id="newObs"></div>
-    <button class="btn btn-primary" style="margin-top:8px" onclick="publishOrderReal()"><i class="ph-fill ph-paper-plane-tilt"></i> PUBLICAR NO MURAL</button>
-    <button class="btn btn-secondary" onclick="closeNewOrderModal()"><i class="ph ph-x"></i> CANCELAR</button>
-  </div>
-</div>
-
 
 <div class="screen" id="painel-moto">
   
   <div class="top-bar" style="position: relative; flex-wrap: wrap; gap: 10px; padding: 12px 16px;">
-     <div class="credits-pill" style="margin: 0; padding: 6px 12px; border-color: rgba(0,255,136,.3);">
+     <div class="credits-pill" style="margin: 0; padding: 6px 12px; border-color: rgba(0,255,136,.3); cursor: pointer;" onclick="abrirModalRecarga()" title="Recarregar Saldo">
        <i class="ph-fill ph-wallet"></i> <span id="creditDisplay">R$ 0,00</span>
+       <i class="ph-bold ph-plus-circle" style="color:var(--neon-y); margin-left:4px; font-size:16px;"></i>
      </div>
+     
      <div style="font-family: var(--font-head); font-size: 14px; color: var(--text); letter-spacing: 1px; display: flex; align-items: center; gap: 6px; white-space: nowrap; margin: 0 auto;">
        <i class="ph-fill ph-broadcast" style="color:var(--neon-r)"></i> MURAL AO VIVO
-     </div>
-     <div style="display:flex; align-items:center; gap:8px;">
-        <button class="btn-icon" onclick="forceRefresh()" style="color:var(--neon-y); width:32px; height:32px;" title="Atualizar"><i class="ph-bold ph-arrows-clockwise"></i></button>
-        <button class="btn-sm" onclick="abrirModalRecarga()" style="background:var(--neon-g); color:#000; font-family:var(--font-head); font-weight:bold; border-radius:8px; border:none; padding: 0 12px; height:32px; cursor:pointer; display:flex; align-items:center; gap:4px;" title="Recarregar Saldo">
-           <i class="ph-bold ph-plus"></i> RECARREGAR
-        </button>
      </div>
   </div>
   
@@ -497,7 +481,7 @@
         <div class="address-box" style="border-color: var(--neon-y); padding: 10px;">
           <h4 style="color:var(--neon-y)">📍 1. RETIRADA (LOJA)</h4>
           <p><strong id="activeLojaNome">—</strong></p>
-          <p><i class="ph-fill ph-map-pin"></i> <span id="activeLojaEnd">—</span></p>
+          <p style="font-size:12px; color:var(--muted);"><i class="ph-fill ph-map-pin"></i> <span id="activeLojaEnd">—</span></p>
           <p style="margin-top:8px; display:flex; justify-content:space-between; align-items:center;"><span>Informe este PIN:</span><span class="pin-code" style="font-size:16px; padding:2px 8px;" id="activePin">0000</span></p>
           
           <div id="activeWhatsLojaDiv" style="margin-top: 12px; display: none;">
@@ -514,7 +498,7 @@
         </div>
         <div style="display:flex;gap:10px;margin-top:16px">
           <button class="btn btn-green btn-sm" style="flex:1; padding:14px; font-size:14px;" onclick="completeOrder()"><i class="ph-bold ph-check"></i> CONCLUÍR</button>
-          <button class="btn btn-red btn-sm" style="padding:14px; font-size:14px;" onclick="returnOrder()"><i class="ph-bold ph-arrow-u-up-left"></i> DEVOLVER</button>
+          <button class="btn btn-red btn-sm" style="padding:14px; font-size:14px; background:transparent; border:1px solid var(--border);" onclick="returnOrder()"><i class="ph-bold ph-arrow-u-up-left"></i> DEVOLVER</button>
         </div>
       </div>
 
@@ -553,6 +537,25 @@
        <button class="btn btn-secondary" onclick="solicitarRedefinicaoSenha()"><i class="ph-fill ph-lock-key"></i> REDEFINIR SENHA</button>
     </div>
 
+  </div>
+</div>
+
+<div class="modal-overlay" id="newOrderModal">
+  <div class="modal">
+    <h3><i class="ph-fill ph-lightning"></i> NOVO PEDIDO</h3>
+    <div style="display:flex; gap:10px;">
+      <div class="form-group" style="flex:2"><label>Rua do Cliente</label><input type="text" placeholder="Ex: Travessa Mauriti" id="newRua"></div>
+      <div class="form-group" style="flex:1"><label>Nº</label><input type="text" placeholder="1050" id="newNum"></div>
+    </div>
+    <div class="form-group"><label>Bairro</label><input type="text" placeholder="Ex: Marco" id="newBairro"></div>
+    <div class="form-group"><label>Taxa de Entrega (R$)</label><input type="number" placeholder="8,00" id="newFee" style="font-family:var(--font-head);font-size:22px;color:var(--neon-g)"></div>
+    <div class="checkbox-box" onclick="document.getElementById('newBagGrande').click()">
+      <input type="checkbox" id="newBagGrande" onclick="event.stopPropagation()">
+      <div class="checkbox-box-text"><h4 style="color: var(--neon-orange);"><i class="ph-fill ph-package"></i> EXIGE BAG GRANDE</h4><p>Marque para lanches maiores ou pizzas.</p></div>
+    </div>
+    <div class="form-group"><label>Observação (opcional)</label><input type="text" placeholder="Ex: Chamar no interfone..." id="newObs"></div>
+    <button class="btn btn-primary" style="margin-top:8px" onclick="publishOrderReal()"><i class="ph-fill ph-paper-plane-tilt"></i> PUBLICAR NO MURAL</button>
+    <button class="btn btn-secondary" onclick="closeNewOrderModal()"><i class="ph ph-x"></i> CANCELAR</button>
   </div>
 </div>
 
@@ -1132,13 +1135,13 @@
     if(isDone) div.setAttribute('onclick', `abrirDetalhesPedido('${id}')`); 
     
     let statusHtml = isWaiting ? `<span class="status-badge status-pending"><i class="ph-fill ph-hourglass-high"></i> Aguardando Moto</span>` : (isDone ? `<span class="status-badge" style="background:var(--muted); color:#000;"><i class="ph-fill ph-check-circle"></i> Concluído</span>` : `<span class="status-badge status-going"><i class="ph-fill ph-motorcycle"></i> Em Rota</span>`);
-    const deleteBtn = isWaiting ? `<button class="btn-icon-sm" style="background:transparent; color:var(--neon-r); border:1px solid var(--border);" onclick="event.stopPropagation(); deleteOrder('${id}')" title="Cancelar Pedido"><i class="ph ph-trash"></i></button>` : '';
+    const deleteBtn = isWaiting ? `<button class="btn-icon-sm" style="background:transparent; color:var(--neon-r); border:1px solid var(--border);" onclick="event.stopPropagation(); deleteOrder('${id}')"><i class="ph ph-trash"></i></button>` : '';
     
     let whatsBtn = '';
     if(!isWaiting && data.motoboyWhats && data.motoboyWhats.trim() !== '') {
         const whatsNum = window.formatarWhats(data.motoboyWhats);
         const whatsMsg = encodeURIComponent("Olá, sou a loja " + (userDataGlobal.nome || 'Loja') + " que enviou o pedido PIN " + data.pin);
-        whatsBtn = `<button class="btn-icon-sm" style="background:#25D366; color:white; border:none;" onclick="event.stopPropagation(); window.open('https://wa.me/${whatsNum}?text=${whatsMsg}', '_blank')" title="Chamar Motoboy no Whats"><i class="ph-bold ph-whatsapp-logo"></i></button>`;
+        whatsBtn = `<button class="btn-icon-sm" style="background:#25D366; color:white; border:none;" onclick="event.stopPropagation(); window.open('https://wa.me/${whatsNum}?text=${whatsMsg}', '_blank')"><i class="ph-bold ph-whatsapp-logo"></i></button>`;
     }
 
     div.innerHTML = `<div class="order-card-top"><span class="order-id">#${id.substring(0,6).toUpperCase()} ${isDone ? '' : `· PIN: <strong style="color:var(--neon-y)">${data.pin}</strong>`}</span><div style="display:flex; gap:10px; align-items:center;"><span class="order-fee">${data.taxa}</span>${deleteBtn}${whatsBtn}</div></div><div class="order-info"><i class="ph-fill ph-map-pin"></i> <span>${data.clienteEnd}</span></div>${data.bagGrande ? `<div style="font-size:11px; font-weight:bold; color:var(--neon-orange); margin-bottom:6px;"><i class="ph-fill ph-package"></i> EXIGE BAG GRANDE</div>` : ''}<div class="order-footer">${statusHtml}</div>`;
@@ -1218,10 +1221,10 @@
              if(data.lojaWhats && data.lojaWhats.trim() !== '') {
                  const whatsNum = window.formatarWhats(data.lojaWhats);
                  const msgM = encodeURIComponent("Olá, sou o motoboy responsável pelo pedido PIN " + data.pin);
-                 whatsBtn = `<button class="btn-icon-sm" style="background:#25D366; color:white; border:none;" onclick="event.stopPropagation(); window.open('https://wa.me/${whatsNum}?text=${msgM}', '_blank')" title="Chamar Loja no Whats"><i class="ph-bold ph-whatsapp-logo"></i></button>`;
+                 whatsBtn = `<button class="btn-icon-sm" style="background:#25D366; color:white; border:none;" onclick="event.stopPropagation(); window.open('https://wa.me/${whatsNum}?text=${msgM}', '_blank')"><i class="ph-bold ph-whatsapp-logo"></i></button>`;
              }
 
-             hDiv.innerHTML = `<div class="order-card-top"><span class="order-id">${data.lojaNome}</span><div style="display:flex; gap:10px; align-items:center;"><span class="order-fee">${data.taxa}</span>${whatsBtn}</div></div><div class="order-info"><i class="ph-fill ph-map-pin"></i> ${data.bairro}</div>`;
+             hDiv.innerHTML = `<div class="order-card-top"><span class="order-id">${data.lojaNome}</span><div style="display:flex; gap:8px; align-items:center;"><span class="order-fee">${data.taxa}</span>${whatsBtn}</div></div><div class="order-info"><i class="ph-fill ph-map-pin"></i> ${data.bairro}</div>`;
              histContainer.appendChild(hDiv);
           }
         } catch(e) {}
