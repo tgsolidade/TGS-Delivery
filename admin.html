@@ -292,6 +292,7 @@
     setTimeout(() => el.remove(), 3000);
   };
   
+  // Função para formatar WhatsApp
   window.formatarWhats = function(numero) {
       if (!numero) return '';
       let limpo = numero.replace(/\D/g, '');
@@ -376,7 +377,7 @@
     if(!auth.currentUser) return;
     
     if(recargasUnsubscribe) recargasUnsubscribe();
-    const qRecargas = query(collection(db, "recargas"));
+    const qRecargas = query(collection(db, "recargas"), orderBy("timestamp", "desc"));
     recargasUnsubscribe = onSnapshot(qRecargas, (snapshot) => {
        let faturamentoHoje = 0;
        const offset = new Date().getTimezoneOffset() * 60000;
@@ -496,11 +497,21 @@
 
            if(d.status === 'pendente') {
              pCount++;
+             
+             // Formatar a data de nascimento para o padrão BR
+             let nascBR = 'Não informado';
+             if(d.dataNasc) {
+                 const pts = d.dataNasc.split('-');
+                 if(pts.length === 3) nascBR = `${pts[2]}/${pts[1]}/${pts[0]}`;
+                 else nascBR = d.dataNasc;
+             }
+
              pList.innerHTML += `
                 <div class="admin-row" style="border-color: rgba(245,230,66,.3);">
                   <div class="admin-row-info">
                     <h4><i class="ph-fill ph-user-focus"></i> ${d.nome}</h4>
                     <p>E-mail: ${d.email} | CPF: ${d.documento}</p>
+                    <p>Nascimento: <strong>${nascBR}</strong></p>
                     <p>Placa: <strong style="color:var(--text)">${d.placa}</strong> | ${fotoLink}</p>
                     <p style="margin-top:6px;"><span class="status-badge status-pending">Aguardando Avaliação</span></p>
                   </div>
@@ -697,7 +708,7 @@
      } catch(e) { alert("Erro: " + e.message); }
   }
 
-  // ── FUNÇÃO DE APROVAR COM AUTOMAÇÃO DO WHATSAPP ──
+  // ── FUNÇÃO DE APROVAR COM AUTOMAÇÃO DO WHATSAPP MELHORADA (COM UNICODE SAFE EMOJIS) ──
   window.aprovarMoto = async function(id, whats, nomeEnc) {
      const nome = decodeURIComponent(nomeEnc);
      if(confirm(`Aprovar o entregador ${nome}? Ele receberá acesso imediato.`)) {
@@ -707,7 +718,8 @@
            
            if (whats && whats.trim() !== '') {
               const whatsNum = window.formatarWhats(whats);
-              const msg = encodeURIComponent(`Olá ${nome}! 🎉 Seu cadastro no *TGS Delivery* foi APROVADO com sucesso! Você já pode acessar o aplicativo e começar a receber corridas. Boas entregas!`);
+              // Usando códigos \u para garantir que os emojis não quebrem nunca, independente do editor de texto
+              const msg = encodeURIComponent(`Olá, ${nome}! \uD83C\uDFCD\uFE0F\uD83D\uDCA8\n\nBoas notícias: Seu cadastro na *TGS Delivery* acabou de ser *APROVADO*! \uD83C\uDF89\n\nVocê já pode acessar o aplicativo e começar a faturar com suas corridas.\n\nSeja muito bem-vindo(a) ao time!`);
               window.open(`https://wa.me/${whatsNum}?text=${msg}`, '_blank');
            }
         } catch(e) { showToast('<i class="ph-fill ph-warning"></i> Erro ao aprovar.'); }
@@ -787,7 +799,6 @@
         showToast('<i class="ph-fill ph-check-circle"></i> Dados alterados!');
      } catch(e) { alert("Erro: " + e.message); }
   }
-
 </script>
 </body>
 </html>
