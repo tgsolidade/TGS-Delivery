@@ -528,12 +528,14 @@
         <div class="address-box" style="border-color: var(--neon-b); padding: 10px;">
           <h4 style="color:var(--neon-b)">🚩 2. ROTA DE ENTREGA</h4>
           <div id="activeClienteEnd" style="font-size:13px; color:var(--text); line-height:1.6; margin-top:6px;">—</div>
-          <p style="color: var(--neon-g); font-family: var(--font-head); font-size: 20px; margin-top:8px;" id="activeFee">—</p>
           <div id="activeObs" style="font-size:13px;color:var(--muted);margin-top:6px"></div>
         </div>
-        <div style="display:flex;gap:10px;margin-top:16px">
-          <button class="btn btn-green btn-sm" style="flex:1; padding:14px; font-size:14px;" onclick="completeOrder()"><i class="ph-bold ph-check"></i> CONCLUÍR</button>
-          <button class="btn btn-red btn-sm" style="padding:14px; font-size:14px; background:transparent; border:1px solid var(--border);" onclick="returnOrder()"><i class="ph-bold ph-arrow-u-up-left"></i> DEVOLVER</button>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px;">
+           <span style="font-family:var(--font-head); font-size:22px; color:var(--neon-g);" id="activeFee">—</span>
+           <div style="display:flex; gap:8px;">
+              <button class="btn btn-green btn-sm" style="padding:12px 18px; width:auto;" onclick="completeOrder()"><i class="ph-bold ph-check"></i> CONCLUÍR</button>
+              <button class="btn btn-red btn-sm" style="padding:12px 14px; width:auto; background:transparent; border:1px solid var(--border);" onclick="returnOrder()"><i class="ph-bold ph-arrow-u-up-left"></i> DEVOLVER</button>
+           </div>
         </div>
       </div>
 
@@ -579,8 +581,7 @@
   <div class="modal">
     <h3><i class="ph-fill ph-receipt"></i> DETALHES DO PEDIDO</h3>
     
-    <div id="histModalContent" style="margin-bottom: 20px;">
-      </div>
+    <div id="histModalContent" style="margin-bottom: 20px;"></div>
 
     <div id="ratingSection">
       <div class="login-divider"><span>AVALIAÇÃO</span></div>
@@ -662,7 +663,7 @@
 </div>
 
 <script type="module">
-  // BLINDAGEM DO ÁUDIO (Desbloqueia o som no primeiro toque do usuário)
+  // BLINDAGEM DO ÁUDIO
   window.audioUnlocked = false;
   document.body.addEventListener('click', function() {
       if(!window.audioUnlocked) {
@@ -715,7 +716,7 @@
   let userDataGlobal = null; 
   let userListenerUnsubscribe = null;
   let currentConfig = { taxaApp: 0.40, isPaused: false };
-  let lastPendentesCount = 0; // Para o toque do áudio
+  let lastPendentesCount = 0; 
   
   window.allOrdersMemory = {};
   let currentModalOrderId = null;
@@ -884,11 +885,10 @@
   let lastAvisoId = null;
   let msgIndivUnsubscribe = null;
 
-  // ── FUNÇÃO DE FECHAR AVISO E SALVAR NA MEMÓRIA ──
   window.fecharAvisoGlobal = function() {
      document.getElementById('adminAlertModal').classList.remove('open');
      if(window.currentAvisoId) {
-         localStorage.setItem('lastAvisoId', window.currentAvisoId);
+         try { localStorage.setItem('lastAvisoId', window.currentAvisoId); } catch(e){}
      }
   }
 
@@ -905,15 +905,14 @@
         }
      });
 
-     // ── ALERTA GLOBAL (COM MEMÓRIA E EXPIRAÇÃO DE 24H) ──
      const qGlobal = query(collection(db, "avisos"), orderBy("timestamp", "desc"), limit(1));
      onSnapshot(qGlobal, (snap) => {
         if(!snap.empty) {
            const docAlerta = snap.docs[0];
            const data = docAlerta.data();
-           const savedId = localStorage.getItem('lastAvisoId');
+           let savedId = null;
+           try { savedId = localStorage.getItem('lastAvisoId'); } catch(e){}
            
-           // Verifica se o alerta tem mais de 24 horas (24 * 60 * 60 * 1000 milissegundos)
            let isExpired = false;
            if (data.timestamp) {
                const alertTime = data.timestamp.toMillis ? data.timestamp.toMillis() : (data.timestamp.seconds * 1000);
@@ -930,7 +929,6 @@
         }
      });
      
-     // ── ALERTA INDIVIDUAL (PUXA O PRIMEIRO NÃO LIDO) ──
      if(auth.currentUser) {
         const qMsg = query(collection(db, "mensagens"), where("to", "==", auth.currentUser.uid), where("status", "==", "enviado"));
         msgIndivUnsubscribe = onSnapshot(qMsg, (snap) => {
@@ -1551,6 +1549,15 @@
   };
 
   function triggerLightning() { const el = document.getElementById('lightningOverlay'); el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 600); }
+
+  // ── ESCAPE DO SPLASH ETERNO (GATILHO DE SEGURANÇA) ──
+  setTimeout(() => {
+      const splash = document.getElementById('splash');
+      if (splash && splash.classList.contains('active')) {
+          window.showScreen('login');
+          showToast('<i class="ph-fill ph-warning"></i> Conexão instável. Tente novamente.');
+      }
+  }, 6000); // Se não carregar em 6 segundos, força a tela de login
 </script>
 </body>
 </html>
