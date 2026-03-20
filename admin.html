@@ -292,7 +292,6 @@
     setTimeout(() => el.remove(), 3000);
   };
   
-  // Função para formatar WhatsApp
   window.formatarWhats = function(numero) {
       if (!numero) return '';
       let limpo = numero.replace(/\D/g, '');
@@ -377,7 +376,7 @@
     if(!auth.currentUser) return;
     
     if(recargasUnsubscribe) recargasUnsubscribe();
-    const qRecargas = query(collection(db, "recargas"), orderBy("timestamp", "desc"));
+    const qRecargas = query(collection(db, "recargas"));
     recargasUnsubscribe = onSnapshot(qRecargas, (snapshot) => {
        let faturamentoHoje = 0;
        const offset = new Date().getTimezoneOffset() * 60000;
@@ -439,10 +438,17 @@
 
       let usersArray = [];
       snapshot.forEach((docSnap) => { usersArray.push({ id: docSnap.id, ...docSnap.data() }); });
+      
+      /* TRADUTOR DE DATAS CIRÚRGICO */
       usersArray.sort((a, b) => {
-         let timeA = a.dataCriacao ? (a.dataCriacao.seconds || 0) : 0;
-         let timeB = b.dataCriacao ? (b.dataCriacao.seconds || 0) : 0;
-         return timeB - timeA;
+         const getMs = (val) => {
+            if(!val) return 0;
+            if(typeof val === 'number') return val;
+            if(val.toMillis) return val.toMillis();
+            if(val.seconds) return val.seconds * 1000;
+            return 0;
+         };
+         return getMs(b.dataCriacao) - getMs(a.dataCriacao);
       });
 
       usersArray.forEach((d) => {
@@ -457,7 +463,7 @@
            
            if(mediaNum < 3.0) {
               lowRatings++;
-              alertList.innerHTML += `<div class="admin-row" style="border-color:var(--neon-r); background:rgba(255,51,102,.05);"><div class="admin-row-info"><h4><i class="ph-fill ph-warning"></i> ${d.nome} (${d.perfil})</h4><p>Nota muito baixa: <strong>${mediaNum.toFixed(1)} estrelas</strong></p></div><div class="admin-row-actions"><button class="btn-icon" title="Enviar Mensagem" onclick="openMsgModal('${id}', '${encodeURIComponent(d.nome)}')"><i class="ph-fill ph-chat-text"></i></button><button class="btn-icon" style="color:var(--neon-r); border-color:var(--neon-r);" onclick="toggleBlockMoto('${id}', '${d.status}')"><i class="ph-bold ph-prohibit"></i> Banir</button></div></div>`;
+              alertList.innerHTML += `<div class="admin-row" style="border-color:var(--neon-r); background:rgba(255,51,102,.05);"><div class="admin-row-info"><h4><i class="ph-fill ph-warning"></i> ${d.nome} (${d.perfil})</h4><p>Nota muito baixa: <strong>${mediaNum.toFixed(1)} estrelas</strong></p></div><div class="admin-row-actions"><button class="btn-icon" title="Enviar Mensagem" onclick="openMsgModal('${id}', '${encodeURIComponent(d.nome || '')}')"><i class="ph-fill ph-chat-text"></i></button><button class="btn-icon" style="color:var(--neon-r); border-color:var(--neon-r);" onclick="toggleBlockMoto('${id}', '${d.status}')"><i class="ph-bold ph-prohibit"></i> Banir</button></div></div>`;
            }
         }
 
@@ -477,8 +483,8 @@
                 </div>
                 <div class="admin-row-actions">
                   <button class="btn-icon" title="Forçar Redefinição de Senha" onclick="forcarResetSenha('${d.email}')"><i class="ph-bold ph-key"></i></button>
-                  <button class="btn-icon" title="Enviar Mensagem" onclick="openMsgModal('${id}', '${encodeURIComponent(d.nome)}')"><i class="ph-fill ph-chat-text"></i></button>
-                  <button class="btn-icon" title="Editar Dados" onclick="openEditUserModal('${id}', '${encodeURIComponent(d.nome)}', '${d.documento}', null)"><i class="ph-fill ph-pencil"></i></button>
+                  <button class="btn-icon" title="Enviar Mensagem" onclick="openMsgModal('${id}', '${encodeURIComponent(d.nome || '')}')"><i class="ph-fill ph-chat-text"></i></button>
+                  <button class="btn-icon" title="Editar Dados" onclick="openEditUserModal('${id}', '${encodeURIComponent(d.nome || '')}', '${d.documento}', null)"><i class="ph-fill ph-pencil"></i></button>
                   <button class="btn-icon" style="color:${isBlocked ? 'var(--neon-g)' : 'var(--neon-r)'}; border-color:${isBlocked ? 'var(--neon-g)' : 'var(--neon-r)'};" onclick="toggleBlockMoto('${id}', '${d.status}')">
                      ${isBlocked ? '<i class="ph-bold ph-check"></i>' : '<i class="ph-bold ph-prohibit"></i>'}
                   </button>
@@ -499,7 +505,7 @@
                     <p style="margin-top:6px;"><span class="status-badge status-pending">Aguardando Avaliação</span></p>
                   </div>
                   <div class="admin-row-actions">
-                    <button class="btn-icon" style="color:var(--neon-g); border-color:var(--neon-g);" onclick="aprovarMoto('${id}', '${d.whats || ''}', '${encodeURIComponent(d.nome)}')" title="Aprovar"><i class="ph-bold ph-check"></i></button>
+                    <button class="btn-icon" style="color:var(--neon-g); border-color:var(--neon-g);" onclick="aprovarMoto('${id}', '${d.whats || ''}', '${encodeURIComponent(d.nome || '')}')" title="Aprovar"><i class="ph-bold ph-check"></i></button>
                     <button class="btn-icon" style="color:var(--neon-r); border-color:var(--neon-r);" onclick="recusarMoto('${id}')" title="Recusar e Deletar"><i class="ph-bold ph-x"></i></button>
                   </div>
                 </div>`;
@@ -521,8 +527,8 @@
                   </div>
                   <div class="admin-row-actions">
                     <button class="btn-icon" title="Forçar Redefinição de Senha" onclick="forcarResetSenha('${d.email}')"><i class="ph-bold ph-key"></i></button>
-                    <button class="btn-icon" title="Enviar Mensagem" onclick="openMsgModal('${id}', '${encodeURIComponent(d.nome)}')"><i class="ph-fill ph-chat-text"></i></button>
-                    <button class="btn-icon" title="Editar Dados" onclick="openEditUserModal('${id}', '${encodeURIComponent(d.nome)}', '${d.documento}', '${d.placa}')"><i class="ph-fill ph-pencil"></i></button>
+                    <button class="btn-icon" title="Enviar Mensagem" onclick="openMsgModal('${id}', '${encodeURIComponent(d.nome || '')}')"><i class="ph-fill ph-chat-text"></i></button>
+                    <button class="btn-icon" title="Editar Dados" onclick="openEditUserModal('${id}', '${encodeURIComponent(d.nome || '')}', '${d.documento}', '${d.placa}')"><i class="ph-fill ph-pencil"></i></button>
                     <button class="btn-icon" style="color:var(--neon-b); border-color:var(--neon-b); width: auto; padding: 0 12px; font-size:12px; font-weight:bold;" onclick="editarSaldo('${id}', '${d.nome}')">
                        <i class="ph-bold ph-currency-dollar"></i> SALDO
                     </button>
@@ -699,7 +705,6 @@
            await updateDoc(doc(db, "usuarios", id), { status: 'offline' }); 
            showToast('<i class="ph-fill ph-check-circle"></i> Motoboy aprovado!'); 
            
-           // Se ele tiver WhatsApp cadastrado, abre o chat com a mensagem de aprovação
            if (whats && whats.trim() !== '') {
               const whatsNum = window.formatarWhats(whats);
               const msg = encodeURIComponent(`Olá ${nome}! 🎉 Seu cadastro no *TGS Delivery* foi APROVADO com sucesso! Você já pode acessar o aplicativo e começar a receber corridas. Boas entregas!`);
