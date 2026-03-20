@@ -47,13 +47,12 @@
 
   .neon-y { color: var(--neon-y); } .neon-g { color: var(--neon-g); } .neon-b { color: var(--neon-b); } .neon-r { color: var(--neon-r); }
 
+  /* ── SPLASH SCREEN ── */
   #splash { align-items: center; justify-content: center; background: radial-gradient(ellipse at center, #0f0f28 0%, #0a0a0f 70%); position: relative; overflow: hidden; }
-  .splash-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(0,200,255,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,200,255,.04) 1px, transparent 1px); background-size: 40px 40px; animation: gridPan 20s linear infinite; }
-  @keyframes gridPan { to { background-position: 40px 40px; } }
   .splash-logo { text-align: center; z-index: 2; }
-  .splash-bolt { font-size: 80px; display: block; animation: boltPulse 1.5s ease-in-out infinite; filter: drop-shadow(0 0 20px var(--neon-y)); color: var(--neon-y); }
-  @keyframes boltPulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.15); opacity: .85; } }
-  .splash-title { font-family: var(--font-head); font-size: clamp(24px, 6vw, 42px); font-weight: 900; letter-spacing: .15em; color: var(--neon-y); text-shadow: 0 0 30px var(--neon-y), 0 0 60px rgba(245,230,66,.3); margin-top: 12px; }
+  .splash-bolt { font-size: 70px; display: block; animation: boltPulse 1.5s ease-in-out infinite; color: var(--neon-y); filter: drop-shadow(0 0 20px var(--neon-y)); }
+  @keyframes boltPulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: .8; } }
+  .splash-title { font-family: var(--font-head); font-size: 28px; font-weight: 900; letter-spacing: .15em; color: var(--neon-y); text-shadow: 0 0 30px var(--neon-y), 0 0 60px rgba(245,230,66,.3); margin-top: 10px; }
   .splash-sub { font-family: var(--font-mono); font-size: 13px; color: var(--muted); letter-spacing: .2em; margin-top: 6px; }
   .splash-loader { margin-top: 48px; display: flex; gap: 8px; justify-content: center; }
   .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--neon-b); animation: dotBounce .9s ease-in-out infinite; }
@@ -61,24 +60,26 @@
   .dot:nth-child(3) { animation-delay: .3s; background: var(--neon-y); }
   @keyframes dotBounce { 0%,100% { transform: translateY(0); opacity:.4; } 50% { transform: translateY(-10px); opacity:1; } }
 
-  .login-card, .profile-card { width: 100%; max-width: 420px; background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 40px 32px; position: relative; box-shadow: 0 0 60px rgba(0,200,255,.05), inset 0 1px 0 rgba(255,255,255,.04); margin: auto; }
+  /* ── FORMS E CARDS DE LOGIN/ESCOLHA ── */
+  .login-card, .profile-card { width: 90%; max-width: 400px; background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 30px 24px; position: relative; box-shadow: 0 0 60px rgba(0,200,255,.05), inset 0 1px 0 rgba(255,255,255,.04); margin: auto; }
   .login-card::before, .profile-card::before { content: ''; position: absolute; top: -1px; left: 20%; right: 20%; height: 2px; background: linear-gradient(90deg, transparent, var(--neon-b), transparent); }
-  .login-logo { text-align: center; margin-bottom: 32px; }
-  .login-logo i { font-size: 36px; color: var(--neon-y); }
-  .login-logo h1 { font-family: var(--font-head); font-size: 20px; color: var(--neon-y); letter-spacing: .1em; margin-top: 8px;}
+  .login-logo { text-align: center; margin-bottom: 24px; }
+  .login-logo i { font-size: 32px; color: var(--neon-y); }
+  .login-logo h1 { font-family: var(--font-head); font-size: 18px; color: var(--neon-y); letter-spacing: .1em; margin-top: 6px;}
   
-  .form-group { margin-bottom: 16px; }
-  .form-group label { display: block; font-family: var(--font-mono); font-size: 11px; color: var(--muted); letter-spacing: .15em; text-transform: uppercase; margin-bottom: 6px; }
-  .form-group input, .form-group textarea { width: 100%; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; color: var(--text); font-family: var(--font-body); font-size: 16px; outline: none; transition: all .2s; resize: none; }
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display: block; font-family: var(--font-mono); font-size: 10px; color: var(--muted); letter-spacing: .15em; text-transform: uppercase; margin-bottom: 4px; }
+  .form-group input, .form-group textarea { width: 100%; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; color: var(--text); font-family: var(--font-body); font-size: 15px; outline: none; transition: all .2s; resize: none; }
   .form-group input:focus, .form-group textarea:focus { border-color: var(--neon-b); box-shadow: 0 0 0 3px rgba(0,200,255,.1); }
   .form-group input:disabled, .form-group textarea:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 16px; border-radius: 10px; border: none; cursor: pointer; font-family: var(--font-head); font-size: 14px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; transition: all .2s; position: relative; overflow: hidden; }
+  /* BOTÕES OTIMIZADOS PARA MOBILE */
+  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 14px; border-radius: 10px; border: none; cursor: pointer; font-family: var(--font-head); font-size: 14px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; transition: all .1s; }
   .btn:active { transform: scale(.97); }
   .btn-primary { background: linear-gradient(135deg, #d4c200, var(--neon-y)); color: #0a0a0f; box-shadow: 0 4px 20px rgba(245,230,66,.3); margin-top: 8px; }
   .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text); margin-top: 10px; }
   .btn-green { background: linear-gradient(135deg, #00cc6a, var(--neon-g)); color: #0a0a0f; box-shadow: 0 4px 20px rgba(0,255,136,.25); margin-top: 8px;}
-  .btn-blue { background: linear-gradient(135deg, #009acc, var(--neon-b)); color: #0a0a0f; box-shadow: 0 4px 20px rgba(0,200,255,.25); }
+  .btn-blue { background: linear-gradient(135deg, #009acc, var(--neon-b)); color: #fff; }
   .btn-red { background: linear-gradient(135deg, #cc1144, var(--neon-r)); color: #fff; box-shadow: 0 4px 20px rgba(255,51,102,.25); }
   .btn-sm { padding: 10px 16px; font-size: 12px; width: auto; }
   
@@ -119,42 +120,30 @@
   .checkbox-box-text h4 { font-family: var(--font-head); font-size: 14px; color: var(--text); letter-spacing: 0.05em; display:flex; align-items:center; gap:6px;}
   .checkbox-box-text p { font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-top: 4px; }
 
-  .stats-dash { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-bottom: 24px; }
-  .stat-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; text-align: center; }
-  .stat-box i { font-size: 20px; margin-bottom: 4px; display: block;}
-  .stat-box .val { font-family: var(--font-head); font-size: 20px; font-weight: 900; color: var(--text); line-height: 1; }
-  .stat-box .lbl { font-family: var(--font-mono); font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; margin-top: 6px; }
+  .stats-dash { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+  .stat-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 10px; text-align: center; }
+  .stat-box i { font-size: 18px; margin-bottom: 4px; display: block;}
+  .stat-box .val { font-family: var(--font-head); font-size: 18px; font-weight: 900; color: var(--text); line-height: 1; }
+  .stat-box .lbl { font-family: var(--font-mono); font-size: 8px; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; margin-top: 4px; }
 
-  .top-bar { background: var(--panel); border-bottom: 1px solid var(--border); padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+  /* ── NOVO DESIGN DE ABAS (TOPO) ── */
+  .tab-nav { display: flex; background: var(--bg2); border-bottom: 1px solid var(--border); overflow-x: auto; flex-shrink: 0; width: 100%; }
+  .tab-btn { flex: 1; padding: 12px 4px; color: var(--muted); cursor: pointer; text-align: center; font-family: var(--font-mono); font-size: 10px; font-weight: bold; letter-spacing: 1px; transition: 0.2s; border-bottom: 2px solid transparent; display: flex; flex-direction: column; align-items: center; gap: 4px; text-transform: uppercase; }
+  .tab-btn i { font-size: 22px; }
+  .moto-tab.active { color: var(--neon-y); border-bottom-color: var(--neon-y); }
+  .loja-tab.active { color: var(--neon-b); border-bottom-color: var(--neon-b); }
+  .tab-content { display: none; width: 100%; animation: fadeIn 0.3s; }
+  .tab-content.active { display: block; }
+
+  .top-bar { background: var(--panel); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
   .top-bar-logo { font-family: var(--font-head); font-size: 16px; color: var(--neon-y); letter-spacing: .1em; display:flex; align-items:center; gap:6px;}
-  .avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--neon-b), var(--neon-g)); display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; color: #000; overflow:hidden;}
-  .avatar img { width: 100%; height: 100%; object-fit: cover; }
 
-  .new-order-btn { background: linear-gradient(135deg, #d4c200, var(--neon-y)); border: none; border-radius: 16px; width: 100%; padding: 22px; display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer; box-shadow: 0 8px 30px rgba(245,230,66,.3), 0 0 0 1px rgba(245,230,66,.1); transition: all .2s; margin-bottom: 24px; }
-  .new-order-btn span { font-family: var(--font-head); font-size: 18px; font-weight: 900; color: #0a0a0f; letter-spacing: .08em; }
+  /* CARDS COMPACTADOS PARA MOBILE */
+  .new-order-btn { background: linear-gradient(135deg, #d4c200, var(--neon-y)); border: none; border-radius: 14px; width: 100%; padding: 16px; display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer; box-shadow: 0 8px 30px rgba(245,230,66,.3), 0 0 0 1px rgba(245,230,66,.1); transition: all .2s; margin-bottom: 24px; }
+  .new-order-btn span { font-family: var(--font-head); font-size: 16px; font-weight: 900; color: #0a0a0f; letter-spacing: .08em; }
   .section-title { font-family: var(--font-mono); font-size: 11px; color: var(--muted); letter-spacing: .2em; text-transform: uppercase; margin-bottom: 12px; display:flex; align-items:center; gap:6px; justify-content: space-between;}
 
-  /* ── CSS CIRÚRGICO: CARDS DE PEDIDOS COMPACTADOS PARA MOBILE ── */
-  .delivery-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; position: relative; overflow: hidden; animation: cardDrop .4s cubic-bezier(.34,1.56,.64,1); }
-  @keyframes cardDrop { from { transform: translateY(-20px); opacity:0; } to { transform: translateY(0); opacity:1; } }
-  
-  .delivery-card.new-arrival { border-color: var(--neon-y); box-shadow: 0 0 20px rgba(245,230,66,.15); }
-  .delivery-card.new-arrival::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--neon-y), transparent); animation: scanLine 2s linear infinite; }
-  @keyframes scanLine { 0%{transform:scaleX(0)}50%{transform:scaleX(1)}100%{transform:scaleX(0)} }
-  
-  .dc-store { font-family: var(--font-mono); font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .12em; margin-bottom: 6px; display:flex; align-items:center; gap:6px;}
-  .dc-store img { width: 18px; height: 18px; border-radius: 4px; object-fit: cover; }
-  .dc-bairro { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 2px; display:flex; align-items:center; gap:6px;}
-  .dc-fee { font-family: var(--font-head); font-size: 24px; font-weight: 900; color: var(--neon-g); line-height: 1; }
-  
-  .dc-actions { display: flex; gap: 8px; margin-top: 12px; align-items: stretch; }
-  .btn-accept { flex: 1; background: linear-gradient(135deg, #d4c200, var(--neon-y)); border: none; border-radius: 10px; padding: 14px; font-family: var(--font-head); font-size: 16px; font-weight: 900; color: #0a0a0f; letter-spacing: .05em; cursor: pointer; box-shadow: 0 0 20px rgba(245,230,66,.4); transition: all .15s; display: flex; align-items: center; justify-content: center; gap: 8px; text-transform: uppercase; }
-  .btn-accept i { font-size: 20px; }
-  .btn-accept:active { transform: scale(.95); box-shadow: 0 0 30px rgba(245,230,66,.6); }
-  .btn-pass { width: 50px; background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; transition: all .2s; flex-shrink: 0; color: var(--text); }
-  .btn-pass:hover { border-color: var(--neon-r); color: var(--neon-r); }
-
-  .order-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; position: relative; overflow: hidden; transition: all .2s; }
+  .order-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; position: relative; overflow: hidden; transition: all .2s; }
   .order-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; border-radius: 3px 0 0 3px; }
   .order-card.waiting::before { background: var(--neon-y); }
   .order-card.going::before   { background: var(--neon-b); }
@@ -162,21 +151,14 @@
   .order-card.done { cursor: pointer; border-color: rgba(255,255,255,0.05); background: rgba(22,22,31,0.6); }
   .order-card.done:hover { border-color: var(--neon-b); transform: translateY(-2px); }
 
-  .order-card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .order-card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
   .order-id { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
-  .order-fee { font-family: var(--font-head); font-size: 18px; color: var(--neon-g); }
-  .order-info { font-size: 14px; color: var(--text); margin-bottom: 6px; display:flex; gap:6px; align-items:flex-start;}
-  .order-info i { color: var(--neon-b); font-size: 18px; margin-top: 2px;}
-  .order-obs { font-size: 13px; color: var(--muted); font-style: italic; display:flex; gap:6px;}
-  .order-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
-  .pin-code { font-family: var(--font-mono); font-size: 18px; font-weight: bold; color: var(--neon-y); letter-spacing: 2px; background: rgba(245,230,66,.1); padding: 4px 10px; border-radius: 6px; border: 1px dashed var(--neon-y);}
-
-  .active-order { display: none; background: linear-gradient(135deg, rgba(0,200,255,.06), rgba(0,255,136,.04)); border: 1px solid rgba(0,200,255,.2); border-radius: 12px; padding: 14px; margin-bottom: 16px; position: relative; }
-  .active-order.visible { display: block; animation: fadeIn 0.3s ease; }
-  .active-order h3 { font-family: var(--font-head); font-size: 14px; color: var(--neon-b); letter-spacing: .08em; margin-bottom: 16px; display:flex; align-items:center; gap:6px;}
-  .address-box { background: var(--bg); padding: 12px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 12px;}
-  .address-box h4 { font-family: var(--font-mono); font-size: 10px; color: var(--muted); text-transform: uppercase; margin-bottom: 4px;}
-  .address-box p { font-size: 14px; color: var(--text); line-height: 1.4; display:flex; gap:6px;}
+  .order-fee { font-family: var(--font-head); font-size: 16px; color: var(--neon-g); }
+  .order-info { font-size: 13px; color: var(--text); margin-bottom: 6px; display:flex; gap:6px; align-items:flex-start;}
+  .order-info i { color: var(--neon-b); font-size: 16px; margin-top: 2px;}
+  .order-obs { font-size: 12px; color: var(--muted); font-style: italic; display:flex; gap:6px;}
+  .order-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+  .pin-code { font-family: var(--font-mono); font-size: 16px; font-weight: bold; color: var(--neon-y); letter-spacing: 2px; background: rgba(245,230,66,.1); padding: 4px 10px; border-radius: 6px; border: 1px dashed var(--neon-y);}
 
   .star-rating { display: flex; gap: 8px; font-size: 32px; color: var(--muted); cursor: pointer; justify-content: center; margin: 16px 0; }
   .star-rating i { transition: all 0.2s; }
@@ -186,9 +168,9 @@
   .modal-overlay.open { display: flex; animation: fadeIn .2s; }
   @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
   
-  .modal { background: var(--panel); border: 1px solid var(--border); border-radius: 20px 20px 0 0; padding: 32px 24px; width: 100%; max-width: 500px; animation: slideUp .3s ease-out; max-height: 90vh; overflow-y:auto;}
+  .modal { background: var(--panel); border: 1px solid var(--border); border-radius: 20px 20px 0 0; padding: 24px; width: 100%; max-width: 500px; animation: slideUp .3s ease-out; max-height: 90vh; overflow-y:auto; padding-bottom: 40px;}
   @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-  .modal h3 { font-family: var(--font-head); font-size: 16px; color: var(--neon-y); margin-bottom: 24px; letter-spacing: .08em; display:flex; align-items:center; gap:8px;}
+  .modal h3 { font-family: var(--font-head); font-size: 16px; color: var(--neon-y); margin-bottom: 20px; letter-spacing: .08em; display:flex; align-items:center; gap:8px;}
 
   /* ── MODAL AVISO GLOBAL E INDIVIDUAL ── */
   .admin-alert-box { background-color: #FFFFEB; width: 90%; max-width: 400px; padding: 40px 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); text-align: center; border: 1px solid rgba(255, 255, 255, 0.1); position: relative; animation: slideUp .3s ease-out; margin: auto;}
@@ -204,19 +186,34 @@
   .live-dot { width: 8px; height: 8px; background: var(--neon-g); border-radius: 50%; animation: livePulse 1s ease-in-out infinite; }
   @keyframes livePulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
   .live-text { font-family: var(--font-mono); font-size: 12px; color: var(--neon-g); font-weight: bold; letter-spacing: 1px; }
-
-  /* ── CSS CIRÚRGICO: ABAS NO TOPO ── */
-  .tab-nav { display: flex; background: var(--bg2); border-bottom: 1px solid var(--border); overflow-x: auto; flex-shrink: 0; width: 100%; }
-  .tab-btn { flex: 1; padding: 12px 4px; color: var(--muted); cursor: pointer; text-align: center; font-family: var(--font-mono); font-size: 10px; font-weight: bold; letter-spacing: 1px; transition: 0.2s; border-bottom: 2px solid transparent; display: flex; flex-direction: column; align-items: center; gap: 4px; text-transform: uppercase; }
-  .tab-btn i { font-size: 22px; }
-  .moto-tab.active { color: var(--neon-y); border-bottom-color: var(--neon-y); }
-  .loja-tab.active { color: var(--neon-b); border-bottom-color: var(--neon-b); }
-  .tab-content { display: none; width: 100%; animation: fadeIn 0.3s; }
-  .tab-content.active { display: block; }
-
-  .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 20px; font-family: var(--font-mono); font-size: 13px; z-index: 99999 !important; white-space: nowrap; animation: toastIn .3s ease-out; box-shadow: 0 8px 24px rgba(0,0,0,.4); display:flex; align-items:center; gap:8px;}
-  @keyframes toastIn { from { transform: translateX(-50%) translateY(-10px); opacity:0; } to { transform: translateX(-50%) translateY(0); opacity:1; } }
   
+  /* ── CSS CIRÚRGICO: CARDS DE PEDIDOS COMPACTADOS PARA MOBILE ── */
+  .delivery-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; position: relative; overflow: hidden; animation: cardDrop .4s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes cardDrop { from { transform: translateY(-20px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+  
+  .delivery-card.new-arrival { border-color: var(--neon-y); box-shadow: 0 0 15px rgba(245,230,66,.15); }
+  .delivery-card.new-arrival::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--neon-y), transparent); animation: scanLine 2s linear infinite; }
+  @keyframes scanLine { 0%{transform:scaleX(0)}50%{transform:scaleX(1)}100%{transform:scaleX(0)} }
+  
+  .dc-store { font-family: var(--font-mono); font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .12em; margin-bottom: 6px; display:flex; align-items:center; gap:6px;}
+  .dc-store img { width: 18px; height: 18px; border-radius: 4px; object-fit: cover; }
+  .dc-bairro { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 2px; display:flex; align-items:center; gap:6px;}
+  .dc-fee { font-family: var(--font-head); font-size: 24px; font-weight: 900; color: var(--neon-g); line-height: 1; }
+  
+  .dc-actions { display: flex; gap: 8px; margin-top: 12px; align-items: stretch; }
+  .btn-accept { flex: 1; background: linear-gradient(135deg, #d4c200, var(--neon-y)); border: none; border-radius: 10px; padding: 14px; font-family: var(--font-head); font-size: 16px; font-weight: 900; color: #0a0a0f; letter-spacing: .05em; cursor: pointer; box-shadow: 0 0 20px rgba(245,230,66,.4); transition: all .15s; display: flex; align-items: center; justify-content: center; gap: 8px; text-transform: uppercase; }
+  .btn-accept i { font-size: 20px; }
+  .btn-accept:active { transform: scale(.95); box-shadow: 0 0 30px rgba(245,230,66,.6); }
+  .btn-pass { width: 50px; background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; transition: all .2s; flex-shrink: 0; color: var(--text); }
+  .btn-pass:hover { border-color: var(--neon-r); color: var(--neon-r); }
+
+  .active-order { display: none; background: linear-gradient(135deg, rgba(0,200,255,.06), rgba(0,255,136,.04)); border: 1px solid rgba(0,200,255,.2); border-radius: 12px; padding: 14px; margin-bottom: 16px; position: relative; }
+  .active-order.visible { display: block; animation: fadeIn 0.3s ease; }
+  .active-order h3 { font-family: var(--font-head); font-size: 13px; color: var(--neon-b); letter-spacing: .08em; margin-bottom: 12px; display:flex; align-items:center; gap:6px;}
+  .address-box { background: var(--bg); padding: 12px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 12px;}
+  .address-box h4 { font-family: var(--font-mono); font-size: 10px; color: var(--muted); text-transform: uppercase; margin-bottom: 4px;}
+  .address-box p { font-size: 14px; color: var(--text); line-height: 1.4; display:flex; gap:6px;}
+
   .lightning-overlay { position: fixed; inset: 0; z-index: 200; pointer-events: none; display: flex; align-items: center; justify-content: center; opacity: 0; }
   .lightning-overlay.flash { animation: lightningFlash .5s ease-out forwards; }
   @keyframes lightningFlash { 0%{opacity:0; background:rgba(245,230,66,0);} 10%{opacity:1; background:rgba(245,230,66,.15);} 30%{opacity:1; background:rgba(245,230,66,.2);} 100%{opacity:0; background:rgba(245,230,66,0);} }
@@ -224,11 +221,14 @@
   .lightning-bolt-big { font-size: 120px; animation: boltGrow .5s ease-out forwards; filter: drop-shadow(0 0 40px var(--neon-y)); color: var(--neon-y);}
   @keyframes boltGrow { 0%{transform:scale(0) rotate(-10deg);opacity:0;} 50%{transform:scale(1.2) rotate(5deg);opacity:1;} 100%{transform:scale(0.8) rotate(0deg);opacity:0;} }
 
-  /* OVERLAY KILL SWITCH */
   #killSwitchOverlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:9999; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:24px; }
+  
+  .btn-icon-sm { width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 16px; background: var(--bg2); border: 1px solid var(--border); cursor: pointer; transition: all .2s; color: var(--text); }
 </style>
 </head>
 <body>
+
+<audio id="alertSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
 
 <div id="killSwitchOverlay">
    <i class="ph-fill ph-warning-octagon" style="font-size:80px; color:var(--neon-r); margin-bottom:20px;"></i>
@@ -326,7 +326,7 @@
     </div>
     <div class="form-group"><label>Nome da Loja</label><input type="text" id="lojaNome" placeholder="Ex: Pizzaria Volt"></div>
     <div class="form-group"><label>CNPJ / CPF</label><input type="text" id="lojaCnpj" placeholder="Apenas números"></div>
-    <div class="form-group"><label>WhatsApp com DDD</label><input type="tel" id="lojaWhats" placeholder="(99) 99999-9999"></div>
+    <div class="form-group"><label>WhatsApp com DDD</label><input type="tel" id="lojaWhats" placeholder="(91) 99999-9999" oninput="mascaraTelefone(this)"></div>
     <div style="display:flex; gap:10px;">
       <div class="form-group" style="flex:2"><label>Rua / Av</label><input type="text" id="lojaRua" placeholder="Rua principal"></div>
       <div class="form-group" style="flex:1"><label>Número</label><input type="text" id="lojaNum" placeholder="123"></div>
@@ -351,7 +351,7 @@
     <div class="form-group"><label>CPF</label><input type="text" id="motoCpf" placeholder="Apenas números"></div>
     <div class="form-group"><label>Data de Nascimento</label><input type="date" id="motoData"></div>
     <div class="form-group"><label>Placa da Moto</label><input type="text" id="motoPlaca" placeholder="ABC-1D23" style="text-transform:uppercase"></div>
-    <div class="form-group"><label>WhatsApp com DDD</label><input type="tel" id="motoWhats" placeholder="(99) 99999-9999"></div>
+    <div class="form-group"><label>WhatsApp com DDD</label><input type="tel" id="motoWhats" placeholder="(91) 99999-9999" oninput="mascaraTelefone(this)"></div>
     <div class="form-group">
       <label>Foto da Placa (Obrigatório para aprovação)</label>
       <input type="file" id="motoPlacaFoto" accept="image/*" style="padding: 10px; font-size: 13px;">
@@ -422,7 +422,7 @@
         <div class="login-divider"><span>Dados Editáveis</span></div>
         <div class="form-group"><label>Nova Logo (Opcional)</label><input type="file" id="editLojaLogo" accept="image/*" style="padding: 10px; font-size: 13px;"></div>
         <div class="form-group"><label>Nome da Loja</label><input type="text" id="editLojaNome"></div>
-        <div class="form-group"><label>WhatsApp</label><input type="tel" id="editLojaWhats"></div>
+        <div class="form-group"><label>WhatsApp</label><input type="tel" id="editLojaWhats" oninput="mascaraTelefone(this)"></div>
         <div style="display:flex; gap:10px;">
           <div class="form-group" style="flex:2"><label>Rua / Av</label><input type="text" id="editLojaRua"></div>
           <div class="form-group" style="flex:1"><label>Número</label><input type="text" id="editLojaNum"></div>
@@ -435,6 +435,41 @@
         <div class="login-divider" style="margin-top: 30px;"><span>Segurança</span></div>
         <button class="btn btn-secondary" onclick="solicitarRedefinicaoSenha()"><i class="ph-fill ph-lock-key"></i> REDEFINIR SENHA</button>
      </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="newOrderModal">
+  <div class="modal">
+    <h3><i class="ph-fill ph-lightning"></i> NOVO PEDIDO</h3>
+    
+    <div id="destinosContainer">
+      <div class="destino-item" style="background:var(--bg2); padding:12px; border-radius:8px; border:1px solid var(--border); margin-bottom:12px;">
+         <p style="font-size:11px; color:var(--neon-b); margin-bottom:8px; font-weight:bold;">ENTREGA 1</p>
+         <div class="form-group"><label>Bairro (Obrigatório)</label><input type="text" class="dest-bairro" placeholder="Ex: Centro"></div>
+         <div style="display:flex; gap:10px;">
+            <div class="form-group" style="flex:2; margin-bottom:0;"><label>Rua do Cliente (Obrigatório)</label><input type="text" class="dest-rua" placeholder="Ex: Rua X"></div>
+            <div class="form-group" style="flex:1; margin-bottom:0;"><label>Nº (Obrigatório)</label><input type="text" class="dest-num" placeholder="Ex: 10 ou S/N"></div>
+         </div>
+      </div>
+    </div>
+    
+    <button class="btn btn-secondary btn-sm" style="margin-bottom:20px; width:100%; border-style:dashed;" onclick="adicionarDestinoUI()">+ ADICIONAR OUTRA ENTREGA NESTA ROTA</button>
+
+    <div class="form-group">
+        <label>Taxa por Entrega (R$)</label>
+        <input type="number" placeholder="Ex: 8,00" id="newFee" style="font-family:var(--font-head);font-size:22px;color:var(--neon-g)" oninput="calcularTaxaTotal()">
+    </div>
+    <div style="text-align: right; margin-bottom: 12px; font-family: var(--font-head); font-size: 18px; color: var(--neon-y);">
+        TOTAL DA ROTA: <span id="displayTotalFee">R$ 0,00</span>
+    </div>
+
+    <div class="checkbox-box" onclick="document.getElementById('newBagGrande').click()">
+      <input type="checkbox" id="newBagGrande" onclick="event.stopPropagation()">
+      <div class="checkbox-box-text"><h4 style="color: var(--neon-orange);"><i class="ph-fill ph-package"></i> EXIGE BAG GRANDE</h4><p>Marque para lanches maiores ou pizzas.</p></div>
+    </div>
+    <div class="form-group"><label>Observação Geral (Opcional)</label><input type="text" placeholder="Ex: Chamar no interfone..." id="newObs"></div>
+    <button class="btn btn-primary" style="margin-top:8px" onclick="publishOrderReal()"><i class="ph-fill ph-paper-plane-tilt"></i> PUBLICAR NO MURAL</button>
+    <button class="btn btn-secondary" onclick="closeNewOrderModal()"><i class="ph ph-x"></i> CANCELAR</button>
   </div>
 </div>
 
@@ -476,7 +511,7 @@
         <div class="stat-box" style="background: rgba(0,255,136,.05); border-color: rgba(0,255,136,.2);"><i class="ph-fill ph-check-circle" style="color:var(--neon-g)"></i><div class="val" id="dashMotoHoje">0</div><div class="lbl">Suas Corridas</div></div>
       </div>
 
-      <div class="active-order" id="activeOrder" style="padding: 14px;">
+      <div class="active-order" id="activeOrderBox" style="padding: 14px;">
         <h3><i class="ph-fill ph-motorcycle"></i> EM ANDAMENTO</h3>
         <div class="address-box" style="border-color: var(--neon-y); padding: 10px;">
           <h4 style="color:var(--neon-y)">📍 1. RETIRADA (LOJA)</h4>
@@ -491,8 +526,8 @@
           </div>
         </div>
         <div class="address-box" style="border-color: var(--neon-b); padding: 10px;">
-          <h4 style="color:var(--neon-b)">🚩 2. ENTREGA (CLIENTE)</h4>
-          <p><i class="ph-fill ph-map-pin"></i> <span id="activeClienteEnd">—</span></p>
+          <h4 style="color:var(--neon-b)">🚩 2. ROTA DE ENTREGA</h4>
+          <div id="activeClienteEnd" style="font-size:13px; color:var(--text); line-height:1.6; margin-top:6px;">—</div>
           <p style="color: var(--neon-g); font-family: var(--font-head); font-size: 20px; margin-top:8px;" id="activeFee">—</p>
           <div id="activeObs" style="font-size:13px;color:var(--muted);margin-top:6px"></div>
         </div>
@@ -523,7 +558,7 @@
        <div class="login-divider"><span>Dados Editáveis</span></div>
        <div class="form-group"><label>Nome Completo</label><input type="text" id="editMotoNome"></div>
        <div class="form-group"><label>Placa da Moto</label><input type="text" id="editMotoPlaca" style="text-transform:uppercase"></div>
-       <div class="form-group"><label>WhatsApp</label><input type="tel" id="editMotoWhats"></div>
+       <div class="form-group"><label>WhatsApp</label><input type="tel" id="editMotoWhats" oninput="mascaraTelefone(this)"></div>
        <div class="form-group"><label>Data de Nascimento</label><input type="date" id="editMotoData"></div>
        <div class="checkbox-box" onclick="document.getElementById('editMotoBag').click()">
          <input type="checkbox" id="editMotoBag" onclick="event.stopPropagation()">
@@ -537,25 +572,6 @@
        <button class="btn btn-secondary" onclick="solicitarRedefinicaoSenha()"><i class="ph-fill ph-lock-key"></i> REDEFINIR SENHA</button>
     </div>
 
-  </div>
-</div>
-
-<div class="modal-overlay" id="newOrderModal">
-  <div class="modal">
-    <h3><i class="ph-fill ph-lightning"></i> NOVO PEDIDO</h3>
-    <div style="display:flex; gap:10px;">
-      <div class="form-group" style="flex:2"><label>Rua do Cliente</label><input type="text" placeholder="Ex: Travessa Mauriti" id="newRua"></div>
-      <div class="form-group" style="flex:1"><label>Nº</label><input type="text" placeholder="1050" id="newNum"></div>
-    </div>
-    <div class="form-group"><label>Bairro</label><input type="text" placeholder="Ex: Marco" id="newBairro"></div>
-    <div class="form-group"><label>Taxa de Entrega (R$)</label><input type="number" placeholder="8,00" id="newFee" style="font-family:var(--font-head);font-size:22px;color:var(--neon-g)"></div>
-    <div class="checkbox-box" onclick="document.getElementById('newBagGrande').click()">
-      <input type="checkbox" id="newBagGrande" onclick="event.stopPropagation()">
-      <div class="checkbox-box-text"><h4 style="color: var(--neon-orange);"><i class="ph-fill ph-package"></i> EXIGE BAG GRANDE</h4><p>Marque para lanches maiores ou pizzas.</p></div>
-    </div>
-    <div class="form-group"><label>Observação (opcional)</label><input type="text" placeholder="Ex: Chamar no interfone..." id="newObs"></div>
-    <button class="btn btn-primary" style="margin-top:8px" onclick="publishOrderReal()"><i class="ph-fill ph-paper-plane-tilt"></i> PUBLICAR NO MURAL</button>
-    <button class="btn btn-secondary" onclick="closeNewOrderModal()"><i class="ph ph-x"></i> CANCELAR</button>
   </div>
 </div>
 
@@ -601,7 +617,7 @@
     <div style="background-color: #A52A2A; width: 60px; height: 60px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin: 0 auto 20px; box-shadow: 0 4px 10px rgba(165, 42, 42, 0.3); color: #FFFFEB; font-size: 32px; font-weight: bold;">!</div>
     <h2 style="color: #A52A2A; font-size: 16px; font-family: var(--font-body); font-weight: 600; margin: 0 0 10px; letter-spacing: normal;">Aviso do Admin</h2>
     <p id="adminAlertText" style="color: #A52A2A; font-size: 28px; font-weight: bold; margin: 0 0 30px; line-height: 1.2; font-family: var(--font-body);"></p>
-    <button style="display: inline-flex; align-items: center; justify-content: center; background-color: #FFFFFF; color: #A52A2A; border: none; padding: 12px 30px; border-radius: 25px; font-size: 16px; font-weight: 600; cursor: pointer; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08); width:100%" onclick="document.getElementById('adminAlertModal').classList.remove('open')">
+    <button style="display: inline-flex; align-items: center; justify-content: center; background-color: #FFFFFF; color: #A52A2A; border: none; padding: 12px 30px; border-radius: 25px; font-size: 16px; font-weight: 600; cursor: pointer; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08); width:100%" onclick="fecharAvisoGlobal()">
       <i class="ph-bold ph-check" style="margin-right: 8px;"></i> Ciente
     </button>
   </div>
@@ -646,6 +662,38 @@
 </div>
 
 <script type="module">
+  // BLINDAGEM DO ÁUDIO (Desbloqueia o som no primeiro toque do usuário)
+  window.audioUnlocked = false;
+  document.body.addEventListener('click', function() {
+      if(!window.audioUnlocked) {
+          const aud = document.getElementById('alertSound');
+          if(aud) { aud.load(); window.audioUnlocked = true; }
+      }
+  }, {once: true});
+
+  window.isRegistering = false;
+
+  window.mascaraTelefone = function(obj) {
+      let v = obj.value.replace(/\D/g, '');
+      if (v.startsWith('0')) v = v.substring(1); 
+      if (v.length > 11) v = v.substring(0, 11);
+      let formatado = v;
+      if (v.length > 2 && v.length <= 7) {
+          formatado = `(${v.substring(0,2)}) ${v.substring(2)}`;
+      } else if (v.length > 7) {
+          formatado = `(${v.substring(0,2)}) ${v.substring(2,7)}-${v.substring(7)}`;
+      }
+      obj.value = formatado;
+  }
+
+  window.formatarWhats = function(numero) {
+      if (!numero) return '';
+      let limpo = numero.replace(/\D/g, '');
+      if (limpo.startsWith('0')) limpo = limpo.substring(1);
+      if (!limpo.startsWith('55')) limpo = '55' + limpo;
+      return limpo;
+  }
+
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
   import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, onAuthStateChanged, deleteUser } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
   import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, where, setDoc, doc, updateDoc, deleteDoc, getDoc, getDocs, increment, limit } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
@@ -667,17 +715,18 @@
   let userDataGlobal = null; 
   let userListenerUnsubscribe = null;
   let currentConfig = { taxaApp: 0.40, isPaused: false };
+  let lastPendentesCount = 0; // Para o toque do áudio
   
   window.allOrdersMemory = {};
   let currentModalOrderId = null;
   let currentStarRating = 0;
+  let destinosContador = 1;
 
   window.showScreen = function(id) { 
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); 
     document.getElementById(id).classList.add('active'); 
   };
 
-  // ── LÓGICA DE ABAS (NOVO) ──
   window.switchMotoTab = function(tabId) {
      document.querySelectorAll('#painel-moto .tab-btn').forEach(btn => btn.classList.remove('active'));
      document.querySelectorAll('#painel-moto .tab-content').forEach(tab => tab.classList.remove('active'));
@@ -692,8 +741,65 @@
      document.getElementById(tabId).classList.add('active');
   }
 
+  window.calcularTaxaTotal = function() {
+     const feeInput = parseFloat(document.getElementById('newFee').value.replace(',', '.'));
+     const qtdDestinos = document.querySelectorAll('.destino-item').length;
+     const display = document.getElementById('displayTotalFee');
+     
+     if (isNaN(feeInput) || feeInput <= 0) {
+         display.textContent = 'R$ 0,00';
+     } else {
+         const total = feeInput * qtdDestinos;
+         display.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
+     }
+  }
+
+  window.adicionarDestinoUI = function() {
+     destinosContador++;
+     const container = document.getElementById('destinosContainer');
+     const div = document.createElement('div');
+     div.className = 'destino-item';
+     div.style.cssText = 'background:var(--bg2); padding:12px; border-radius:8px; border:1px solid var(--border); margin-bottom:12px; position:relative;';
+     
+     div.innerHTML = `
+        <button class="btn-icon" style="position:absolute; right:10px; top:10px; width:24px; height:24px; font-size:12px; color:var(--neon-r); border-color:transparent;" onclick="removerDestinoUI(this)"><i class="ph-bold ph-x"></i></button>
+        <p style="font-size:11px; color:var(--neon-b); margin-bottom:8px; font-weight:bold;">ENTREGA ${destinosContador}</p>
+        <div class="form-group"><label>Bairro (Obrigatório)</label><input type="text" class="dest-bairro" placeholder="Ex: Centro"></div>
+        <div style="display:flex; gap:10px;">
+           <div class="form-group" style="flex:2; margin-bottom:0;"><label>Rua do Cliente (Obrigatório)</label><input type="text" class="dest-rua" placeholder="Ex: Rua X"></div>
+           <div class="form-group" style="flex:1; margin-bottom:0;"><label>Nº (Obrigatório)</label><input type="text" class="dest-num" placeholder="Ex: 10 ou S/N"></div>
+        </div>
+     `;
+     container.appendChild(div);
+     calcularTaxaTotal(); 
+  }
+
+  window.removerDestinoUI = function(btn) {
+     btn.closest('.destino-item').remove();
+     calcularTaxaTotal(); 
+  }
+
+  window.resetDestinosUI = function() {
+     destinosContador = 1;
+     document.getElementById('destinosContainer').innerHTML = `
+        <div class="destino-item" style="background:var(--bg2); padding:12px; border-radius:8px; border:1px solid var(--border); margin-bottom:12px;">
+           <p style="font-size:11px; color:var(--neon-b); margin-bottom:8px; font-weight:bold;">ENTREGA 1</p>
+           <div class="form-group"><label>Bairro (Obrigatório)</label><input type="text" class="dest-bairro" placeholder="Ex: Centro"></div>
+           <div style="display:flex; gap:10px;">
+              <div class="form-group" style="flex:2; margin-bottom:0;"><label>Rua do Cliente (Obrigatório)</label><input type="text" class="dest-rua" placeholder="Ex: Travessa Mauriti"></div>
+              <div class="form-group" style="flex:1; margin-bottom:0;"><label>Nº (Obrigatório)</label><input type="text" class="dest-num" placeholder="Ex: 10 ou S/N"></div>
+           </div>
+        </div>
+     `;
+     calcularTaxaTotal();
+  }
+
   window.openNewOrderModal = function() { 
     document.getElementById('newBagGrande').checked = false; 
+    resetDestinosUI();
+    document.getElementById('newFee').value = '';
+    document.getElementById('newObs').value = '';
+    document.getElementById('displayTotalFee').textContent = 'R$ 0,00';
     document.getElementById('newOrderModal').classList.add('open'); 
   };
 
@@ -711,19 +817,9 @@
     setTimeout(() => el.remove(), 3000);
   };
 
-  window.forceRefresh = function() {
-     showToast('<i class="ph ph-spinner ph-spin"></i> Atualizando dados...');
-  }
-
-  window.formatarWhats = function(numero) {
-      if (!numero) return '';
-      let limpo = numero.replace(/\D/g, '');
-      if (limpo.startsWith('55')) return limpo;
-      return '55' + limpo;
-  }
-
   async function setOnlineStatus() {
      if(auth.currentUser && userDataGlobal && !currentConfig.isPaused) {
+        if(userDataGlobal.status === 'pendente' || userDataGlobal.status === 'bloqueado') return;
         try {
            if(userDataGlobal.perfil === 'loja' || (userDataGlobal.perfil === 'motoboy' && userDataGlobal.status !== 'em_rota')) {
               await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { status: 'online' });
@@ -737,6 +833,7 @@
 
   window.addEventListener('beforeunload', () => {
       if(auth.currentUser && userDataGlobal) {
+          if(userDataGlobal.status === 'pendente' || userDataGlobal.status === 'bloqueado') return;
           updateDoc(doc(db, "usuarios", auth.currentUser.uid), { status: 'offline' });
       }
   });
@@ -787,6 +884,14 @@
   let lastAvisoId = null;
   let msgIndivUnsubscribe = null;
 
+  // ── FUNÇÃO DE FECHAR AVISO E SALVAR NA MEMÓRIA ──
+  window.fecharAvisoGlobal = function() {
+     document.getElementById('adminAlertModal').classList.remove('open');
+     if(window.currentAvisoId) {
+         localStorage.setItem('lastAvisoId', window.currentAvisoId);
+     }
+  }
+
   function listenConfigAndAlerts() {
      onSnapshot(doc(db, "config", "geral"), (docSnap) => {
         if(docSnap.exists()) {
@@ -800,27 +905,43 @@
         }
      });
 
+     // ── ALERTA GLOBAL (COM MEMÓRIA E EXPIRAÇÃO DE 24H) ──
      const qGlobal = query(collection(db, "avisos"), orderBy("timestamp", "desc"), limit(1));
      onSnapshot(qGlobal, (snap) => {
-        snap.forEach(docAlerta => {
-           if(lastAvisoId !== null && lastAvisoId !== docAlerta.id) {
-               document.getElementById('adminAlertText').textContent = docAlerta.data().msg;
+        if(!snap.empty) {
+           const docAlerta = snap.docs[0];
+           const data = docAlerta.data();
+           const savedId = localStorage.getItem('lastAvisoId');
+           
+           // Verifica se o alerta tem mais de 24 horas (24 * 60 * 60 * 1000 milissegundos)
+           let isExpired = false;
+           if (data.timestamp) {
+               const alertTime = data.timestamp.toMillis ? data.timestamp.toMillis() : (data.timestamp.seconds * 1000);
+               if ((Date.now() - alertTime) > 86400000) {
+                   isExpired = true;
+               }
+           }
+
+           if(docAlerta.id !== savedId && !isExpired) {
+               window.currentAvisoId = docAlerta.id;
+               document.getElementById('adminAlertText').textContent = data.msg;
                document.getElementById('adminAlertModal').classList.add('open');
            }
-           lastAvisoId = docAlerta.id;
-        });
+        }
      });
      
+     // ── ALERTA INDIVIDUAL (PUXA O PRIMEIRO NÃO LIDO) ──
      if(auth.currentUser) {
         const qMsg = query(collection(db, "mensagens"), where("to", "==", auth.currentUser.uid), where("status", "==", "enviado"));
         msgIndivUnsubscribe = onSnapshot(qMsg, (snap) => {
-           snap.forEach(docMsg => {
+           if(!snap.empty) {
+              const docMsg = snap.docs[0];
               const d = docMsg.data();
               document.getElementById('indivAlertText').textContent = `"${d.text}"`;
               document.getElementById('indivAlertMsgId').value = docMsg.id;
               document.getElementById('indivAlertReply').value = '';
               document.getElementById('indivAlertModal').classList.add('open');
-           });
+           }
         });
      }
   }
@@ -889,6 +1010,8 @@
 
   let initialAuthChecked = false;
   onAuthStateChanged(auth, async (user) => {
+    if (window.isRegistering) return;
+
     if (user) {
       try {
         const userDoc = await getDoc(doc(db, "usuarios", user.uid));
@@ -943,7 +1066,11 @@
   window.deslogar = async function() {
     if(userListenerUnsubscribe) userListenerUnsubscribe();
     if(msgIndivUnsubscribe) msgIndivUnsubscribe();
-    if(auth.currentUser) { try { await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { status: 'offline' }); } catch(e){} }
+    if(auth.currentUser && userDataGlobal) { 
+        if(userDataGlobal.status !== 'pendente' && userDataGlobal.status !== 'bloqueado') {
+           try { await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { status: 'offline' }); } catch(e){} 
+        }
+    }
     await signOut(auth); userDataGlobal = null; showToast('<i class="ph-fill ph-sign-out"></i> Você saiu.'); window.showScreen('login');
   }
 
@@ -985,13 +1112,17 @@
     
     try {
       showToast('<i class="ph ph-spinner ph-spin"></i> Criando loja...');
+      window.isRegistering = true; 
       let logoBase64 = null; if (fileInput.files.length > 0) { logoBase64 = await getBase64(fileInput.files[0]); }
       
       const uc = await createUserWithEmailAndPassword(auth, email, senha);
       const newData = { nome, perfil: 'loja', email, documento, rua, num, bairro, ref, whats, logo: logoBase64, status: 'online', pedidosCriados: 0, ratingSum: 0, ratingCount: 0, dataCriacao: Date.now() };
       await setDoc(doc(db, "usuarios", uc.user.uid), newData);
+      
+      window.isRegistering = false; 
       showToast('<i class="ph-fill ph-check-circle"></i> Bem-vindo!');
-    } catch (e) { showToast(handleAuthError(e)); }
+      window.location.reload(); 
+    } catch (e) { window.isRegistering = false; showToast(handleAuthError(e)); }
   };
 
   window.cadastrarMoto = async function() {
@@ -1005,6 +1136,7 @@
     
     try {
       showToast('<i class="ph ph-spinner ph-spin"></i> Criando conta...');
+      window.isRegistering = true; 
       let placaFotoBase64 = null; if (fotoPlacaInput.files.length > 0) { placaFotoBase64 = await getBase64(fotoPlacaInput.files[0]); }
       
       const uc = await createUserWithEmailAndPassword(auth, email, senha);
@@ -1026,9 +1158,11 @@
         nome, perfil: 'motoboy', email, documento, dataNasc, placa, whats, bagGrande: temBag, placaFoto: placaFotoBase64, status: 'pendente', saldo: saldoInicial, entregasFeitas: 0, ratingSum: 0, ratingCount: 0, dataCriacao: Date.now() 
       });
       
+      await signOut(auth); 
+      window.isRegistering = false; 
       showToast('<i class="ph-fill ph-check-circle"></i> Conta criada! Aguarde aprovação do Admin.');
-      await signOut(auth); window.showScreen('login');
-    } catch (e) { showToast(handleAuthError(e)); }
+      window.showScreen('login');
+    } catch (e) { window.isRegistering = false; showToast(handleAuthError(e)); }
   };
 
   window.abrirPerfilLoja = function() {
@@ -1081,23 +1215,54 @@
 
   window.publishOrderReal = async function() {
     if(currentConfig.isPaused) return showToast("<i class='ph-fill ph-prohibit'></i> Plataforma em manutenção.");
-    const rua = document.getElementById('newRua').value.trim(); const num = document.getElementById('newNum').value.trim();
-    const bairro = document.getElementById('newBairro').value.trim(); const fee = document.getElementById('newFee').value;
-    const obs = document.getElementById('newObs').value.trim(); const bagGrande = document.getElementById('newBagGrande').checked; 
     
-    if(!bairro || !fee || !rua) return showToast('<i class="ph-fill ph-warning"></i> Rua, Bairro e Taxa são obrigatórios');
+    const feeInput = parseFloat(document.getElementById('newFee').value.replace(',', '.'));
+    const obs = document.getElementById('newObs').value.trim(); 
+    const bagGrande = document.getElementById('newBagGrande').checked; 
+    
+    const destItems = document.querySelectorAll('.destino-item');
+    let entregas = [];
+    let bairrosArr = [];
+    
+    for(let item of destItems) {
+        let b = item.querySelector('.dest-bairro').value.trim();
+        let r = item.querySelector('.dest-rua').value.trim();
+        let n = item.querySelector('.dest-num').value.trim();
+        
+        if(b || r || n) {
+            if(!b || !r || !n) {
+                return showToast('<i class="ph-fill ph-warning"></i> Bairro, Rua e Nº são obrigatórios. (Use "S/N" se não houver número)');
+            }
+            entregas.push({ bairro: b, rua: r, num: n });
+            bairrosArr.push(b);
+        }
+    }
+
+    if(entregas.length === 0 || isNaN(feeInput) || feeInput <= 0) return showToast('<i class="ph-fill ph-warning"></i> Adicione Bairro e a Taxa por Entrega!');
+    
+    const totalFee = feeInput * entregas.length;
     const pin = Math.floor(1000 + Math.random() * 9000).toString();
+    const bairrosResumo = bairrosArr.join(', ');
+    const clienteEnd = entregas.length === 1 ? `${entregas[0].rua}, ${entregas[0].num} - ${entregas[0].bairro}`.trim() : `Rota com ${entregas.length} entregas`;
     
     try {
       await addDoc(collection(db, "pedidos"), {
         lojaId: auth.currentUser.uid, lojaNome: userDataGlobal.nome || 'Loja', lojaLogo: userDataGlobal.logo || null, lojaWhats: userDataGlobal.whats || '',
         lojaEnd: `${userDataGlobal.rua}, ${userDataGlobal.num} - ${userDataGlobal.bairro} (${userDataGlobal.ref})`,
-        clienteEnd: `${rua}, ${num} - ${bairro}`, bairro: bairro, taxa: `R$ ${fee}`, obs: obs, pin: pin, bagGrande: bagGrande, status: 'aguardando', timestamp: Date.now()
+        clienteEnd: clienteEnd, 
+        bairro: bairrosResumo, 
+        taxa: `R$ ${totalFee.toFixed(2).replace('.', ',')}`, obs: obs, pin: pin, bagGrande: bagGrande, status: 'aguardando', timestamp: Date.now(),
+        qtdEntregas: entregas.length,
+        entregas: entregas
       });
       await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { pedidosCriados: increment(1) });
 
-      window.closeNewOrderModal(); document.getElementById('newRua').value = ''; document.getElementById('newNum').value = ''; document.getElementById('newBairro').value = ''; document.getElementById('newObs').value = '';
-      showToast('<i class="ph-fill ph-lightning"></i> Pedido no mural!');
+      window.closeNewOrderModal(); 
+      window.resetDestinosUI(); 
+      document.getElementById('newFee').value = ''; 
+      document.getElementById('newObs').value = '';
+      document.getElementById('displayTotalFee').textContent = 'R$ 0,00';
+      showToast('<i class="ph-fill ph-lightning"></i> Rota no mural!');
     } catch(e) { showToast("Erro: " + e.message); }
   };
 
@@ -1135,16 +1300,18 @@
     if(isDone) div.setAttribute('onclick', `abrirDetalhesPedido('${id}')`); 
     
     let statusHtml = isWaiting ? `<span class="status-badge status-pending"><i class="ph-fill ph-hourglass-high"></i> Aguardando Moto</span>` : (isDone ? `<span class="status-badge" style="background:var(--muted); color:#000;"><i class="ph-fill ph-check-circle"></i> Concluído</span>` : `<span class="status-badge status-going"><i class="ph-fill ph-motorcycle"></i> Em Rota</span>`);
-    const deleteBtn = isWaiting ? `<button class="btn-icon-sm" style="background:transparent; color:var(--neon-r); border:1px solid var(--border);" onclick="event.stopPropagation(); deleteOrder('${id}')"><i class="ph ph-trash"></i></button>` : '';
+    const deleteBtn = isWaiting ? `<button class="btn-icon-sm" style="background:transparent; color:var(--neon-r); border:1px solid var(--border);" onclick="event.stopPropagation(); deleteOrder('${id}')" title="Cancelar Pedido"><i class="ph ph-trash"></i></button>` : '';
     
     let whatsBtn = '';
     if(!isWaiting && data.motoboyWhats && data.motoboyWhats.trim() !== '') {
         const whatsNum = window.formatarWhats(data.motoboyWhats);
-        const whatsMsg = encodeURIComponent("Olá, sou a loja " + (userDataGlobal.nome || 'Loja') + " que enviou o pedido PIN " + data.pin);
-        whatsBtn = `<button class="btn-icon-sm" style="background:#25D366; color:white; border:none;" onclick="event.stopPropagation(); window.open('https://wa.me/${whatsNum}?text=${whatsMsg}', '_blank')"><i class="ph-bold ph-whatsapp-logo"></i></button>`;
+        const whatsMsg = encodeURIComponent("Olá, sou a loja " + (userDataGlobal.nome || 'Loja') + " que enviou a rota PIN " + data.pin);
+        whatsBtn = `<button class="btn-icon-sm" style="background:#25D366; color:white; border:none;" onclick="event.stopPropagation(); window.open('https://wa.me/${whatsNum}?text=${whatsMsg}', '_blank')" title="Chamar Motoboy no Whats"><i class="ph-bold ph-whatsapp-logo"></i></button>`;
     }
+    
+    let badgeRotas = data.qtdEntregas > 1 ? `<div style="color:var(--neon-y); font-size:11px; font-weight:bold; margin-bottom:4px; font-family:var(--font-head);"><i class="ph-fill ph-package"></i> ROTA COM ${data.qtdEntregas} ENTREGAS</div>` : '';
 
-    div.innerHTML = `<div class="order-card-top"><span class="order-id">#${id.substring(0,6).toUpperCase()} ${isDone ? '' : `· PIN: <strong style="color:var(--neon-y)">${data.pin}</strong>`}</span><div style="display:flex; gap:10px; align-items:center;"><span class="order-fee">${data.taxa}</span>${deleteBtn}${whatsBtn}</div></div><div class="order-info"><i class="ph-fill ph-map-pin"></i> <span>${data.clienteEnd}</span></div>${data.bagGrande ? `<div style="font-size:11px; font-weight:bold; color:var(--neon-orange); margin-bottom:6px;"><i class="ph-fill ph-package"></i> EXIGE BAG GRANDE</div>` : ''}<div class="order-footer">${statusHtml}</div>`;
+    div.innerHTML = `<div class="order-card-top"><span class="order-id">#${id.substring(0,6).toUpperCase()} ${isDone ? '' : `· PIN: <strong style="color:var(--neon-y)">${data.pin}</strong>`}</span><div style="display:flex; gap:10px; align-items:center;"><span class="order-fee">${data.taxa}</span>${deleteBtn}${whatsBtn}</div></div>${badgeRotas}<div class="order-info"><i class="ph-fill ph-map-pin"></i> <span>${data.clienteEnd}</span></div>${data.bagGrande ? `<div style="font-size:11px; font-weight:bold; color:var(--neon-orange); margin-bottom:6px;"><i class="ph-fill ph-package"></i> EXIGE BAG GRANDE</div>` : ''}<div class="order-footer">${statusHtml}</div>`;
     return div;
   }
 
@@ -1196,14 +1363,34 @@
              activeOrderId = docSnap.id;
              document.getElementById('activeLojaNome').textContent = data.lojaNome;
              document.getElementById('activeLojaEnd').textContent = data.lojaEnd;
-             document.getElementById('activeClienteEnd').textContent = data.clienteEnd;
+             
+             if(data.entregas && data.entregas.length > 0) {
+                 let destHtml = '';
+                 data.entregas.forEach((ent, idx) => {
+                     let enderecoCompleto = `${ent.rua}, ${ent.num} - ${ent.bairro}, Paragominas - PA`;
+                     let mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(enderecoCompleto)}`;
+                     
+                     destHtml += `
+                     <div style="margin-bottom:12px; padding-bottom:12px; border-bottom:1px dashed var(--border);">
+                         <strong style="color:var(--text); font-size:14px;">Entrega ${idx+1}:</strong><br>
+                         <span style="color:var(--muted); font-size:13px;">${ent.rua}, ${ent.num} - ${ent.bairro}</span>
+                         <button class="btn btn-sm" style="margin-top:6px; background:rgba(0,200,255,.1); color:var(--neon-b); border:1px solid var(--neon-b); width:100%; display:flex; justify-content:center; align-items:center; gap:6px;" onclick="window.open('${mapsLink}', '_blank')">
+                            <i class="ph-fill ph-navigation-arrow"></i> ABRIR GPS
+                         </button>
+                     </div>`;
+                 });
+                 document.getElementById('activeClienteEnd').innerHTML = destHtml;
+             } else {
+                 document.getElementById('activeClienteEnd').textContent = data.clienteEnd;
+             }
+             
              document.getElementById('activeFee').textContent = data.taxa;
              document.getElementById('activePin').textContent = data.pin;
              document.getElementById('activeObs').innerHTML = data.obs ? `<i class="ph-fill ph-warning"></i> ${data.obs}` : '';
              
              if (data.lojaWhats && data.lojaWhats.trim() !== '') {
                 const whatsNum = window.formatarWhats(data.lojaWhats);
-                const msgM = encodeURIComponent(`Olá, sou o motoboy responsável pelo pedido PIN ${data.pin}.`);
+                const msgM = encodeURIComponent(`Olá, sou o motoboy responsável pela rota PIN ${data.pin}.`);
                 document.getElementById('activeWhatsLojaDiv').style.display = 'block';
                 document.getElementById('activeBtnWhatsLoja').onclick = () => window.open(`https://wa.me/${whatsNum}?text=${msgM}`, '_blank');
              } else {
@@ -1220,15 +1407,27 @@
              let whatsBtn = '';
              if(data.lojaWhats && data.lojaWhats.trim() !== '') {
                  const whatsNum = window.formatarWhats(data.lojaWhats);
-                 const msgM = encodeURIComponent("Olá, sou o motoboy responsável pelo pedido PIN " + data.pin);
-                 whatsBtn = `<button class="btn-icon-sm" style="background:#25D366; color:white; border:none;" onclick="event.stopPropagation(); window.open('https://wa.me/${whatsNum}?text=${msgM}', '_blank')"><i class="ph-bold ph-whatsapp-logo"></i></button>`;
+                 const msgM = encodeURIComponent("Olá, sou o motoboy responsável pela rota PIN " + data.pin);
+                 whatsBtn = `<button class="btn-icon-sm" style="background:#25D366; color:white; border:none;" onclick="event.stopPropagation(); window.open('https://wa.me/${whatsNum}?text=${msgM}', '_blank')" title="Chamar Loja no Whats"><i class="ph-bold ph-whatsapp-logo"></i></button>`;
              }
-
-             hDiv.innerHTML = `<div class="order-card-top"><span class="order-id">${data.lojaNome}</span><div style="display:flex; gap:8px; align-items:center;"><span class="order-fee">${data.taxa}</span>${whatsBtn}</div></div><div class="order-info"><i class="ph-fill ph-map-pin"></i> ${data.bairro}</div>`;
+             let badgeRotas = data.qtdEntregas > 1 ? `<div style="color:var(--neon-y); font-size:10px; font-weight:bold; margin-bottom:4px; font-family:var(--font-head);"><i class="ph-fill ph-package"></i> ROTA DE ${data.qtdEntregas} ENTREGAS</div>` : '';
+             hDiv.innerHTML = `<div class="order-card-top"><span class="order-id">${data.lojaNome}</span><div style="display:flex; gap:10px; align-items:center;"><span class="order-fee">${data.taxa}</span>${whatsBtn}</div></div>${badgeRotas}<div class="order-info"><i class="ph-fill ph-map-pin"></i> ${data.bairro}</div>`;
              histContainer.appendChild(hDiv);
           }
         } catch(e) {}
       });
+      
+      if(pendentes > lastPendentesCount && !encontrouAtivo) {
+          try { 
+             const aud = document.getElementById('alertSound');
+             aud.currentTime = 0;
+             let playPromise = aud.play(); 
+             if (playPromise !== undefined) {
+                 playPromise.catch(error => { console.log('Áudio bloqueado pelo navegador'); });
+             }
+          } catch(err) { }
+      }
+      lastPendentesCount = pendentes;
       
       if(!encontrouAtivo) {
          document.getElementById('activeOrderBox').classList.remove('visible'); 
@@ -1245,13 +1444,16 @@
 
   function buildCardReal(id, data) {
     const div = document.createElement('div'); div.className = 'delivery-card new-arrival';
-    const logoHtml = data.lojaLogo ? `<img src="${data.lojaLogo}" style="width:16px; height:16px; border-radius:4px; object-fit:cover;">` : `<i class="ph-fill ph-storefront"></i>`;
-    div.innerHTML = `<div class="dc-store">${logoHtml} ${data.lojaNome || 'Loja'}</div><div class="dc-bairro"><i class="ph-fill ph-map-pin" style="color:var(--neon-b)"></i> ${data.bairro}</div><div class="dc-fee">${data.taxa}</div>${data.bagGrande ? `<div class="status-badge" style="background: rgba(255,153,0,0.1); color: var(--neon-orange); border: 1px solid rgba(255,153,0,0.2); margin-top: 2px; margin-bottom: 6px;"><i class="ph-fill ph-package"></i> EXIGE BAG GRANDE</div>` : ''}<div class="dc-actions"><button class="btn-accept" onclick="acceptOrderReal('${id}', encodeURIComponent('${data.lojaNome}'), encodeURIComponent('${data.lojaEnd}'), encodeURIComponent('${data.clienteEnd}'), '${data.taxa}', '${data.pin}', encodeURIComponent('${data.obs}'), '${data.lojaWhats || ''}')"><i class="ph-fill ph-lightning"></i> ACEITAR</button><button class="btn-pass-sm" onclick="this.closest('.delivery-card').remove()"><i class="ph-bold ph-arrow-right"></i></button></div>`;
+    const logoHtml = data.lojaLogo ? `<img src="${data.lojaLogo}" style="width:18px; height:18px; border-radius:4px; object-fit:cover;">` : `<i class="ph-fill ph-storefront"></i>`;
+    
+    let badgeRotas = data.qtdEntregas > 1 ? `<div style="color:var(--neon-y); font-size:12px; font-weight:bold; margin-bottom:4px; font-family:var(--font-head);"><i class="ph-fill ph-package"></i> ROTA COM ${data.qtdEntregas} ENTREGAS</div>` : '';
+    
+    div.innerHTML = `<div class="dc-store">${logoHtml} ${data.lojaNome || 'Loja'}</div>${badgeRotas}<div class="dc-bairro"><i class="ph-fill ph-map-pin" style="color:var(--neon-b)"></i> ${data.bairro}</div><div class="dc-fee">${data.taxa}</div>${data.bagGrande ? `<div class="status-badge" style="background: rgba(255,153,0,0.1); color: var(--neon-orange); border: 1px solid rgba(255,153,0,0.2); margin-top: 2px; margin-bottom: 6px;"><i class="ph-fill ph-package"></i> EXIGE BAG GRANDE</div>` : ''}<div class="dc-actions"><button class="btn-accept" onclick="acceptOrderReal('${id}', encodeURIComponent('${data.lojaNome}'), encodeURIComponent('${data.lojaEnd}'), encodeURIComponent('${data.clienteEnd}'), '${data.taxa}', '${data.pin}', encodeURIComponent('${data.obs}'), '${data.lojaWhats || ''}')"><i class="ph-fill ph-lightning"></i> ACEITAR</button><button class="btn-pass" onclick="this.closest('.delivery-card').remove()"><i class="ph-bold ph-arrow-right"></i></button></div>`;
     return div;
   }
 
   window.acceptOrderReal = async function(id, lNome, lEnd, cEnd, taxa, pin, obs, lWhats) {
-    if(currentConfig.isPaused) return showToast("Plataforma em manutenção.");
+    if(currentConfig.isPaused) return showToast("<i class='ph-fill ph-prohibit'></i> Plataforma em manutenção.");
     
     const taxaCobranca = currentConfig.taxaApp || 0.40;
     if(userDataGlobal.saldo < taxaCobranca) return showToast(`Saldo insuficiente (Mínimo R$ ${taxaCobranca.toFixed(2).replace('.',',')}).`);
@@ -1260,23 +1462,8 @@
       await updateDoc(doc(db, "pedidos", id), { status: 'aceito', motoboyId: auth.currentUser.uid, motoboyNome: userDataGlobal.nome, motoboyWhats: userDataGlobal.whats || '' });
       await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { status: 'em_rota' });
 
-      document.getElementById('activeLojaNome').textContent = decodeURIComponent(lNome); document.getElementById('activeLojaEnd').textContent = decodeURIComponent(lEnd); 
-      document.getElementById('activeClienteEnd').textContent = decodeURIComponent(cEnd); document.getElementById('activeFee').textContent = taxa; document.getElementById('activePin').textContent = pin;
-      
-      const decObs = decodeURIComponent(obs); document.getElementById('activeObs').innerHTML = decObs ? `<i class="ph-fill ph-warning"></i> ${decObs}` : '';
-      
-      if (lWhats && lWhats !== 'undefined' && lWhats.trim() !== '') {
-         const whatsNum = window.formatarWhats(lWhats);
-         const msgM = encodeURIComponent(`Olá, sou o motoboy responsável pelo pedido PIN ${pin}.`);
-         document.getElementById('activeWhatsLojaDiv').style.display = 'block';
-         document.getElementById('activeBtnWhatsLoja').onclick = () => window.open(`https://wa.me/${whatsNum}?text=${msgM}`, '_blank');
-      } else {
-         document.getElementById('activeWhatsLojaDiv').style.display = 'none';
-      }
-
-      document.getElementById('activeOrderBox').classList.add('visible'); document.getElementById('muralTitle').style.display = 'none'; activeOrderId = id;
-      triggerLightning(); showToast('Aceito! Vá para a Loja.');
-    } catch(e) { showToast('Alguém foi mais rápido ou ocorreu um erro!'); }
+      triggerLightning(); showToast('<i class="ph-fill ph-lightning"></i> Rota aceita! Vá para a Loja.');
+    } catch(e) { showToast('<i class="ph-fill ph-warning"></i> Alguém foi mais rápido ou ocorreu um erro!'); }
   };
 
   window.completeOrder = async function() {
@@ -1321,7 +1508,16 @@
     currentModalOrderId = id; currentStarRating = 0; window.selecionarEstrela(0); document.getElementById('ratingComment').value = '';
     const contentDiv = document.getElementById('histModalContent'); const isLoja = userDataGlobal.perfil === 'loja';
     
-    let html = `<div class="address-box"><h4>CÓDIGO # ${id.substring(0,6).toUpperCase()}</h4><p style="margin-top:8px;"><i class="ph-fill ph-map-pin"></i> Destino: ${pedido.clienteEnd}</p><p style="margin-top:8px;"><i class="ph-fill ph-money"></i> Taxa: <strong style="color:var(--neon-g)">${pedido.taxa}</strong></p>`;
+    let destinosHtml = '';
+    if(pedido.entregas && pedido.entregas.length > 0) {
+        pedido.entregas.forEach((e, idx) => {
+            destinosHtml += `<div style="margin-top:6px; padding-left:10px; border-left:2px solid var(--neon-b);"><strong>Entrega ${idx+1}:</strong><br> ${e.rua}, ${e.num} - ${e.bairro}</div>`;
+        });
+    } else {
+        destinosHtml = pedido.clienteEnd;
+    }
+
+    let html = `<div class="address-box"><h4>CÓDIGO # ${id.substring(0,6).toUpperCase()}</h4><div style="margin-top:8px; font-size:12px;"><i class="ph-fill ph-map-pin"></i> Destinos: ${destinosHtml}</div><p style="margin-top:12px;"><i class="ph-fill ph-money"></i> Taxa Total: <strong style="color:var(--neon-g)">${pedido.taxa}</strong></p>`;
     if(isLoja) { html += `<p style="margin-top:8px;"><i class="ph-fill ph-motorcycle"></i> Entregador: <strong style="color:var(--neon-b)">${pedido.motoboyNome || 'Não registrado'}</strong></p></div>`; document.getElementById('ratingPromptText').textContent = "Avalie o entregador desta corrida:"; } 
     else { html += `<p style="margin-top:8px;"><i class="ph-fill ph-storefront"></i> Loja: <strong style="color:var(--neon-b)">${pedido.lojaNome}</strong></p></div>`; document.getElementById('ratingPromptText').textContent = "Avalie a loja responsável por este pedido:"; }
     contentDiv.innerHTML = html;
