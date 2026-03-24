@@ -77,6 +77,16 @@
   .form-group input:focus, .form-group textarea:focus { border-color: var(--neon-b); box-shadow: 0 0 0 3px rgba(0,200,255,.1); }
   .form-group input:disabled { opacity: 0.5; cursor: not-allowed; }
   
+  /* ESTILOS PARA O BOTÃO DE MOSTRAR SENHA */
+  .password-wrapper { position: relative; width: 100%; }
+  .password-wrapper input { padding-right: 45px; } /* Espaço para o ícone */
+  .toggle-pw-btn { 
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%); 
+      background: transparent; border: none; color: var(--muted); 
+      font-size: 20px; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center; transition: 0.2s;
+  }
+  .toggle-pw-btn:hover { color: var(--neon-b); }
+
   .search-box { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; color: var(--text); font-size: 13px; outline: none; font-family: var(--font-body); transition: 0.2s;}
   .search-box:focus { border-color: var(--neon-y); }
 
@@ -200,7 +210,12 @@
   .delivery-card.new-arrival::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--neon-y), transparent); animation: scanLine 2s linear infinite; }
   @keyframes scanLine { 0%{transform:scaleX(0)}50%{transform:scaleX(1)}100%{transform:scaleX(0)} }
   .dc-store { font-family: var(--font-mono); font-size: 11px; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; display:flex; align-items:center; gap:6px;}
-  .dc-store img { width: 18px; height: 18px; border-radius: 4px; object-fit: cover; }
+  
+  /* ESTILOS DA LOGO NO MURAL DO MOTOBOY (AUMENTADA) */
+  .dc-logo-container { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-right: 6px;}
+  .dc-logo-container img { width: 45px; height: 45px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border); }
+  .dc-logo-container .dc-placeholder { width: 45px; height: 45px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--neon-b); }
+
   .dc-bairro { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 2px; display:flex; align-items:center; gap:6px;}
   .dc-fee { font-family: var(--font-head); font-size: 24px; font-weight: 900; color: var(--neon-g); line-height: 1; }
   .dc-actions { display: flex; gap: 8px; margin-top: 12px; align-items: stretch; }
@@ -232,6 +247,14 @@
   .list-item-avatar.moto { border-radius: 50%; color: var(--neon-y); }
   .list-item-info { flex: 1; }
   .list-item-name { font-weight:bold; font-size:14px; color:var(--text); margin-bottom: 2px; }
+
+  /* ALERTAS NOTURNOS E AVISOS */
+  .night-alert {
+      display: none; background: rgba(0, 200, 255, 0.1); border: 1px solid var(--neon-b); 
+      color: var(--neon-b); padding: 12px; border-radius: 8px; margin-bottom: 16px; 
+      font-size: 12px; font-family: var(--font-body); align-items: center; gap: 8px;
+  }
+  .night-alert.visible { display: flex; }
 </style>
 </head>
 <body>
@@ -278,7 +301,12 @@
     </div>
     <div class="form-group">
       <label>Senha</label>
-      <input type="password" placeholder="••••••••" id="loginPass">
+      <div class="password-wrapper">
+         <input type="password" placeholder="••••••••" id="loginPass">
+         <button type="button" class="toggle-pw-btn" onclick="togglePassword('loginPass', this)">
+            <i class="ph-bold ph-eye"></i>
+         </button>
+      </div>
     </div>
     <button class="btn btn-primary" onclick="doLogin()"><i class="ph-fill ph-lightning"></i> ENTRAR</button>
     <div class="login-link">
@@ -347,7 +375,13 @@
       <div class="form-group" style="flex:1"><label>Referência</label><input type="text" id="lojaRef" placeholder="Ao lado de..."></div>
     </div>
     <div class="form-group"><label>E-mail</label><input type="email" id="lojaEmail" placeholder="loja@email.com"></div>
-    <div class="form-group"><label>Senha</label><input type="password" id="lojaSenha" placeholder="Mínimo 8 caracteres"></div>
+    <div class="form-group">
+       <label>Senha</label>
+       <div class="password-wrapper">
+          <input type="password" id="lojaSenha" placeholder="Mínimo 8 caracteres">
+          <button type="button" class="toggle-pw-btn" onclick="togglePassword('lojaSenha', this)"><i class="ph-bold ph-eye"></i></button>
+       </div>
+    </div>
     <button class="btn btn-blue" onclick="cadastrarLoja()"><i class="ph-fill ph-check-circle"></i> CRIAR CONTA</button>
   </div>
 </div>
@@ -379,15 +413,23 @@
       </div>
     </div>
     <div class="form-group"><label>E-mail</label><input type="email" id="motoEmail" placeholder="moto@email.com"></div>
-    <div class="form-group"><label>Senha</label><input type="password" id="motoSenha" placeholder="Mínimo 8 caracteres"></div>
+    <div class="form-group">
+       <label>Senha</label>
+       <div class="password-wrapper">
+          <input type="password" id="motoSenha" placeholder="Mínimo 8 caracteres">
+          <button type="button" class="toggle-pw-btn" onclick="togglePassword('motoSenha', this)"><i class="ph-bold ph-eye"></i></button>
+       </div>
+    </div>
     <button class="btn btn-primary" onclick="cadastrarMoto()"><i class="ph-fill ph-lightning"></i> ENVIAR CADASTRO</button>
   </div>
 </div>
 
 <div class="screen" id="painel-loja">
   <div class="top-bar" style="position: relative; flex-wrap: wrap; gap: 10px; padding: 12px 16px;">
-     <div style="font-family: var(--font-head); font-size: 16px; color: var(--neon-b); letter-spacing: 1px; display: flex; align-items: center; gap: 6px;">
-       <i class="ph-fill ph-storefront"></i> PAINEL DA LOJA
+     <div id="lojaHeaderLogoTextContainer" style="font-family: var(--font-head); font-size: 16px; color: var(--neon-b); letter-spacing: 1px; display: flex; align-items: center; gap: 8px;">
+       <img id="lojaHeaderLogo" src="" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid var(--neon-b); display: none;">
+       <i id="lojaHeaderPlaceholder" class="ph-fill ph-storefront" style="font-size: 24px; display: block;"></i>
+       PAINEL DA LOJA
      </div>
   </div>
   <div class="moto-status-bar" style="justify-content: space-between; padding: 8px 16px; background: var(--bg2); border-bottom: 1px solid var(--border);">
@@ -462,7 +504,7 @@
           <div class="form-group" style="flex:1"><label>Bairro</label><input type="text" id="editLojaBairro"></div>
           <div class="form-group" style="flex:1"><label>Referência</label><input type="text" id="editLojaRef"></div>
         </div>
-        <button class="btn btn-green" onclick="salvarPerfilLoja()"><i class="ph-fill ph-floppy-disk"></i> SALVAR ALTERAÇÕES</button>
+        <button class="btn-green" onclick="salvarPerfilLoja()"><i class="ph-fill ph-floppy-disk"></i> SALVAR ALTERAÇÕES</button>
         <div class="login-divider" style="margin-top: 30px;"><span>Segurança</span></div>
         <button class="btn btn-secondary" onclick="solicitarRedefinicaoSenha()"><i class="ph-fill ph-lock-key"></i> REDEFINIR SENHA</button>
      </div>
@@ -472,10 +514,22 @@
 <div class="modal-overlay" id="newOrderModal">
   <div class="modal">
     <h3><i class="ph-fill ph-lightning"></i> NOVO PEDIDO</h3>
+    
+    <div class="night-alert" id="nightAlertBanner">
+        <i class="ph-fill ph-moon-stars" style="font-size: 24px;"></i>
+        <div>
+            <strong>TARIFA NOTURNA ATIVA</strong><br>
+            A taxa mínima base para entregas agora é de R$ <span id="nightAlertValue">0,00</span>.
+        </div>
+    </div>
+
     <div id="destinosContainer">
       <div class="destino-item" style="background:var(--bg2); padding:12px; border-radius:8px; border:1px solid var(--border); margin-bottom:12px;">
          <p style="font-size:11px; color:var(--neon-b); margin-bottom:8px; font-weight:bold;">ENTREGA 1</p>
-         <div class="form-group"><label>Bairro (Obrigatório)</label><input type="text" class="dest-bairro" placeholder="Ex: Centro"></div>
+         <div class="form-group">
+            <label>Bairro (Obrigatório)</label>
+            <input type="text" class="dest-bairro" placeholder="Ex: Centro" onblur="verificarBairro(this)">
+         </div>
          <div style="display:flex; gap:10px;">
             <div class="form-group" style="flex:2; margin-bottom:0;"><label>Rua (Obrigatório)</label><input type="text" class="dest-rua" placeholder="Ex: Rua X"></div>
             <div class="form-group" style="flex:1; margin-bottom:0;"><label>Nº</label><input type="text" class="dest-num" placeholder="Ex: 10"></div>
@@ -483,8 +537,15 @@
       </div>
     </div>
     <button class="btn btn-secondary btn-sm" style="margin-bottom:20px; width:100%; border-style:dashed;" onclick="adicionarDestinoUI()">+ ADICIONAR OUTRA ENTREGA NESTA ROTA</button>
-    <div class="form-group"><label>Taxa por Entrega (R$)</label><input type="number" placeholder="Ex: 8,00" id="newFee" style="font-family:var(--font-head);font-size:22px;color:var(--neon-g)" oninput="calcularTaxaTotal()"></div>
+    
+    <div class="form-group">
+        <label>Taxa por Entrega (R$)</label>
+        <input type="number" placeholder="Ex: 8,00" id="newFee" style="font-family:var(--font-head);font-size:22px;color:var(--neon-g)" oninput="calcularTaxaTotal()">
+        <p id="feeHint" style="font-size: 11px; color: var(--muted); margin-top: 4px; display: none;">Valor travado pela tabela de Bairros.</p>
+    </div>
+
     <div style="text-align: right; margin-bottom: 12px; font-family: var(--font-head); font-size: 18px; color: var(--neon-y);">TOTAL DA ROTA: <span id="displayTotalFee">R$ 0,00</span></div>
+    
     <div class="checkbox-box" onclick="document.getElementById('newBagGrande').click()"><input type="checkbox" id="newBagGrande" onclick="event.stopPropagation()"><div class="checkbox-box-text"><h4 style="color: var(--neon-orange);"><i class="ph-fill ph-package"></i> EXIGE BAG GRANDE</h4><p>Marque para pizzas/fardos.</p></div></div>
     <div class="form-group"><label>Observação Geral (Opcional)</label><input type="text" placeholder="Ex: Chamar no interfone..." id="newObs"></div>
     <button class="btn btn-primary" style="margin-top:8px" onclick="publishOrderReal()"><i class="ph-fill ph-paper-plane-tilt"></i> PUBLICAR NO MURAL</button>
@@ -674,7 +735,22 @@
 
   window.isRegistering = false;
 
-  // FUNÇÕES DE BLOQUEIO DE TELA (LOADER)
+  // FUNÇÃO DO BOTÃO "MOSTRAR/OCULTAR SENHA"
+  window.togglePassword = function(inputId, btnElement) {
+      const input = document.getElementById(inputId);
+      const icon = btnElement.querySelector('i');
+      if (input.type === 'password') {
+          input.type = 'text';
+          icon.classList.replace('ph-eye', 'ph-eye-slash');
+          icon.style.color = 'var(--neon-b)';
+      } else {
+          input.type = 'password';
+          icon.classList.replace('ph-eye-slash', 'ph-eye');
+          icon.style.color = 'var(--muted)';
+      }
+  };
+
+  // FUNÇÕES DE BLOQUEIO DE TELA (LOADER E VIBRAÇÃO DE ERRO)
   window.showLoading = function(msg) {
       document.getElementById('globalLoaderText').textContent = msg;
       document.getElementById('globalLoader').style.display = 'flex';
@@ -682,6 +758,15 @@
   window.hideLoading = function() {
       document.getElementById('globalLoader').style.display = 'none';
   };
+  function triggerErrorFeedback() {
+      if (navigator.vibrate) navigator.vibrate(200); // Faz o celular vibrar se errar
+      const card = document.querySelector('#login .login-card');
+      if(card) {
+          card.style.transform = 'translateY(-5px)';
+          card.style.borderColor = 'var(--neon-r)';
+          setTimeout(() => { card.style.transform = 'translateY(0)'; card.style.borderColor = 'var(--border)'; }, 300);
+      }
+  }
 
   window.mascaraTelefone = function(obj) {
       let v = obj.value.replace(/\D/g, '');
@@ -759,6 +844,28 @@
   let currentConfig = { taxaApp: 0.40, isPaused: false };
   let lastPendentesCount = 0; 
   
+  // -- VARIÁVEIS DE REGRAS DE NEGÓCIO E LISTA DE BAIRROS --
+  window.regrasTaxaGlobais = { taxaDia: 8.00, taxaNoite: 10.00, horaVirada: "23:00" };
+  window.bairrosExcecao = [];
+  let currentMinFee = 8.00; 
+
+  window.bairrosPadraoComuns = [
+      "CENTRO", "PROMISSÃO I", "PROMISSÃO II", "PROMISSÃO III",
+      "JADERLÂNDIA", "JK", "FLAMBOYANT", "GUANABARA",
+      "URAIM I", "URAIM II", "URAIM III", "JARDIM BELA VISTA",
+      "VILA RICA", "MORADA DO SOL", "TIÃO MINEIRO", "TROPICAL",
+      "LAÉRCIO", "SIDNEY ROSA", "HELENA COUTINHO", "NAGIB DEMACHKI",
+      "ANGELIM", "IPÊ", "CÉLIO MIRANDA", "JARDIM ATLÂNTICO",
+      "PARQUE DOS IPÊS", "OURO PRETO", "CIDADE NOVA", "MORADA DO VENTO",
+      "SIDILÂNDIA", "NOVA CONQUISTA", "MORADA VERDE", "CAMBOATÃ",
+      "JUPARANÃ", "MERCADO MUNICIPAL", "AÇAIZAL", "ANDRADINA",
+      "PRESIDENTE JUSCELINO KUBITSCHEK", "ARAGÃO", "RESIDENCIAL TURQUESA",
+      "RESIDENCIAL AMETISTA", "RESIDENCIAL SAFIRA", "RESIDENCIAL ANTÔNIO ALUÍSIO",
+      "CONDOMÍNIO ÁGUAS DO PARICÁ", "CONDOMÍNIO BRISAS DO PARICÁ",
+      "CONDOMÍNIO VALE DAS ÁGUAS", "FLORAPLAC INDUSTRIAL", "BAIRRO INDUSTRIAL",
+      "CONDOMÍNIO ALTO DO LAGO"
+  ];
+  
   window.allOrdersMemory = {};
   let currentModalOrderId = null;
   let currentStarRating = 0;
@@ -784,6 +891,137 @@
      if(event && event.currentTarget) event.currentTarget.classList.add('active');
      document.getElementById(tabId).classList.add('active');
      if(tabId === 'tab-loja-pagamentos') renderLojaPagamentos();
+  }
+
+  // ── FUNÇÕES DE LOGÍSTICA (BAIRROS E TAXAS FUZZY MATCH) ──
+  
+  // 1. Limpeza de texto: tira acento, caracteres especiais e minúsculo
+  function formatarTextoBusca(texto) {
+      if(!texto) return "";
+      return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  }
+
+  // 2. Calcula a "distância" entre a digitação errada e a palavra certa
+  function levenshtein(a, b) {
+      if (a.length === 0) return b.length;
+      if (b.length === 0) return a.length;
+      const matrix = [];
+      for (let i = 0; i <= b.length; i++) { matrix[i] = [i]; }
+      for (let j = 0; j <= a.length; j++) { matrix[0][j] = j; }
+      for (let i = 1; i <= b.length; i++) {
+          for (let j = 1; j <= a.length; j++) {
+              if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                  matrix[i][j] = matrix[i - 1][j - 1];
+              } else {
+                  matrix[i][j] = Math.min(
+                      matrix[i - 1][j - 1] + 1, // substituição
+                      matrix[i][j - 1] + 1,     // inserção
+                      matrix[i - 1][j] + 1      // deleção
+                  );
+              }
+          }
+      }
+      return matrix[b.length][a.length];
+  }
+
+  // 3. Função que varre a lista pra achar quem é o mais parecido
+  function encontrarBairroAproximado(digitado, lista, isObjectList = false) {
+      const dig = formatarTextoBusca(digitado);
+      if(!dig) return null;
+      
+      let melhorMatch = null;
+      let menorDistancia = Infinity;
+
+      for (let item of lista) {
+          const nomeItem = isObjectList ? item.nome : item;
+          const b = formatarTextoBusca(nomeItem);
+          if (dig === b) return item; // Se bateu exatamente igual, já retorna.
+
+          const dist = levenshtein(dig, b);
+          // A tolerância de erro aumenta um pouco para palavras muito grandes
+          const maxErros = Math.floor(b.length * 0.3) + 1; 
+          
+          if (dist <= maxErros && dist < menorDistancia) {
+              menorDistancia = dist;
+              melhorMatch = item;
+          }
+      }
+      return melhorMatch;
+  }
+
+  function listenTaxasGlobais() {
+      onSnapshot(doc(db, "config", "taxasGlobais"), (docSnap) => {
+          if (docSnap.exists()) {
+              window.regrasTaxaGlobais = docSnap.data();
+          }
+      });
+  }
+
+  function listenBairrosCadastrados() {
+      onSnapshot(collection(db, "bairros"), (snapshot) => {
+          window.bairrosExcecao = [];
+          snapshot.forEach(docSnap => {
+              window.bairrosExcecao.push({ id: docSnap.id, ...docSnap.data() });
+          });
+      });
+  }
+
+  function isHorarioNoturno() {
+      const agora = new Date();
+      const horaAtual = agora.getHours();
+      const minAtual = agora.getMinutes();
+      
+      const [horaVirada, minVirada] = (window.regrasTaxaGlobais.horaVirada || "23:00").split(':').map(Number);
+      
+      if (horaAtual > horaVirada) return true;
+      if (horaAtual === horaVirada && minAtual >= minVirada) return true;
+      if (horaAtual >= 0 && horaAtual < 6) return true;
+      
+      return false;
+  }
+
+  // FUNÇÃO VERIFICAR BAIRRO (COM A INTELIGÊNCIA DA LISTA NOVA)
+  window.verificarBairro = function(inputBairroElement) {
+      let nomeDigitado = inputBairroElement.value.trim().toUpperCase();
+      
+      // Converte números digitados (1, 2, 3) para algarismos romanos (I, II, III) no fim da palavra
+      nomeDigitado = nomeDigitado.replace(/\s+1$/, " I").replace(/\s+2$/, " II").replace(/\s+3$/, " III");
+
+      const isNoite = isHorarioNoturno();
+      const inputTaxa = document.getElementById('newFee');
+      const feeHint = document.getElementById('feeHint');
+      
+      if (!nomeDigitado) return;
+
+      // 1. Tenta achar na Tabela de Bairros Exceções (Admin - Taxa Alta)
+      const bairroExcecao = encontrarBairroAproximado(nomeDigitado, window.bairrosExcecao, true);
+
+      if (bairroExcecao) {
+          inputBairroElement.value = bairroExcecao.nome; // Corrige o nome na tela
+          currentMinFee = isNoite ? parseFloat(bairroExcecao.taxaNoite) : parseFloat(bairroExcecao.taxaDia);
+          inputTaxa.value = currentMinFee.toFixed(2);
+          feeHint.textContent = `Bairro identificado: ${bairroExcecao.nome}. Taxa base: R$ ${currentMinFee.toFixed(2)}.`;
+          feeHint.style.display = 'block';
+          feeHint.style.color = "var(--neon-b)";
+      } else {
+          // 2. Se não achou nas exceções, procura na nossa Lista Padrão de Paragominas
+          const bairroPadrao = encontrarBairroAproximado(nomeDigitado, window.bairrosPadraoComuns, false);
+          
+          if (bairroPadrao) {
+              inputBairroElement.value = bairroPadrao; // Corrige o texto pro padrão bonito!
+          } else {
+              inputBairroElement.value = nomeDigitado; // Mantém o texto que a pessoa digitou, já que é desconhecido
+          }
+
+          // Como não é bairro de exceção, puxa a taxa mínima global
+          currentMinFee = isNoite ? parseFloat(window.regrasTaxaGlobais.taxaNoite) : parseFloat(window.regrasTaxaGlobais.taxaDia);
+          if (!inputTaxa.value || parseFloat(inputTaxa.value.replace(',', '.')) < currentMinFee) {
+             inputTaxa.value = currentMinFee.toFixed(2);
+          }
+          feeHint.style.display = 'none';
+      }
+      
+      calcularTaxaTotal();
   }
 
   window.abrirListaMotos = function(filtro) {
@@ -839,7 +1077,7 @@
   window.adicionarDestinoUI = function() {
      destinosContador++; const container = document.getElementById('destinosContainer'); const div = document.createElement('div');
      div.className = 'destino-item'; div.style.cssText = 'background:var(--bg2); padding:12px; border-radius:8px; border:1px solid var(--border); margin-bottom:12px; position:relative;';
-     div.innerHTML = `<button class="btn-icon" style="position:absolute; right:10px; top:10px; width:24px; height:24px; font-size:12px; color:var(--neon-r); border-color:transparent;" onclick="removerDestinoUI(this)"><i class="ph-bold ph-x"></i></button><p style="font-size:11px; color:var(--neon-b); margin-bottom:8px; font-weight:bold;">ENTREGA ${destinosContador}</p><div class="form-group"><label>Bairro (Obrigatório)</label><input type="text" class="dest-bairro" placeholder="Ex: Centro"></div><div style="display:flex; gap:10px;"><div class="form-group" style="flex:2; margin-bottom:0;"><label>Rua (Obrigatório)</label><input type="text" class="dest-rua" placeholder="Ex: Rua X"></div><div class="form-group" style="flex:1; margin-bottom:0;"><label>Nº (Obrigatório)</label><input type="text" class="dest-num" placeholder="Ex: 10 ou S/N"></div></div>`;
+     div.innerHTML = `<button class="btn-icon" style="position:absolute; right:10px; top:10px; width:24px; height:24px; font-size:12px; color:var(--neon-r); border-color:transparent;" onclick="removerDestinoUI(this)"><i class="ph-bold ph-x"></i></button><p style="font-size:11px; color:var(--neon-b); margin-bottom:8px; font-weight:bold;">ENTREGA ${destinosContador}</p><div class="form-group"><label>Bairro (Obrigatório)</label><input type="text" class="dest-bairro" placeholder="Ex: Centro" onblur="verificarBairro(this)"></div><div style="display:flex; gap:10px;"><div class="form-group" style="flex:2; margin-bottom:0;"><label>Rua (Obrigatório)</label><input type="text" class="dest-rua" placeholder="Ex: Rua X"></div><div class="form-group" style="flex:1; margin-bottom:0;"><label>Nº (Obrigatório)</label><input type="text" class="dest-num" placeholder="Ex: 10 ou S/N"></div></div>`;
      container.appendChild(div); calcularTaxaTotal(); 
   }
 
@@ -847,12 +1085,28 @@
 
   window.resetDestinosUI = function() {
      destinosContador = 1;
-     document.getElementById('destinosContainer').innerHTML = `<div class="destino-item" style="background:var(--bg2); padding:12px; border-radius:8px; border:1px solid var(--border); margin-bottom:12px;"><p style="font-size:11px; color:var(--neon-b); margin-bottom:8px; font-weight:bold;">ENTREGA 1</p><div class="form-group"><label>Bairro (Obrigatório)</label><input type="text" class="dest-bairro" placeholder="Ex: Centro"></div><div style="display:flex; gap:10px;"><div class="form-group" style="flex:2; margin-bottom:0;"><label>Rua (Obrigatório)</label><input type="text" class="dest-rua" placeholder="Ex: Travessa Mauriti"></div><div class="form-group" style="flex:1; margin-bottom:0;"><label>Nº (Obrigatório)</label><input type="text" class="dest-num" placeholder="Ex: 10 ou S/N"></div></div></div>`;
+     document.getElementById('destinosContainer').innerHTML = `<div class="destino-item" style="background:var(--bg2); padding:12px; border-radius:8px; border:1px solid var(--border); margin-bottom:12px;"><p style="font-size:11px; color:var(--neon-b); margin-bottom:8px; font-weight:bold;">ENTREGA 1</p><div class="form-group"><label>Bairro (Obrigatório)</label><input type="text" class="dest-bairro" placeholder="Ex: Centro" onblur="verificarBairro(this)"></div><div style="display:flex; gap:10px;"><div class="form-group" style="flex:2; margin-bottom:0;"><label>Rua (Obrigatório)</label><input type="text" class="dest-rua" placeholder="Ex: Travessa Mauriti"></div><div class="form-group" style="flex:1; margin-bottom:0;"><label>Nº (Obrigatório)</label><input type="text" class="dest-num" placeholder="Ex: 10 ou S/N"></div></div></div>`;
      calcularTaxaTotal();
   }
 
   window.openNewOrderModal = function() { 
-    document.getElementById('newBagGrande').checked = false; resetDestinosUI(); document.getElementById('newFee').value = ''; document.getElementById('newObs').value = ''; document.getElementById('displayTotalFee').textContent = 'R$ 0,00';
+    document.getElementById('newBagGrande').checked = false; 
+    resetDestinosUI(); 
+    document.getElementById('newObs').value = ''; 
+    document.getElementById('displayTotalFee').textContent = 'R$ 0,00';
+    document.getElementById('feeHint').style.display = 'none';
+    
+    const isNoite = isHorarioNoturno();
+    currentMinFee = isNoite ? parseFloat(window.regrasTaxaGlobais.taxaNoite) : parseFloat(window.regrasTaxaGlobais.taxaDia);
+    document.getElementById('newFee').value = currentMinFee.toFixed(2);
+    
+    if (isNoite) {
+        document.getElementById('nightAlertValue').textContent = currentMinFee.toFixed(2);
+        document.getElementById('nightAlertBanner').classList.add('visible');
+    } else {
+        document.getElementById('nightAlertBanner').classList.remove('visible');
+    }
+
     document.getElementById('newOrderModal').classList.add('open'); 
   };
   window.closeNewOrderModal = function() { document.getElementById('newOrderModal').classList.remove('open'); };
@@ -873,10 +1127,18 @@
       }
   });
 
+  // NOVA TRADUÇÃO DE ERROS DE LOGIN COM ALERTA VISUAL VERMELHO E VIBRAÇÃO
   function handleAuthError(error) {
-    if(error.code === 'auth/email-already-in-use') return '<i class="ph-fill ph-warning"></i> E-mail já cadastrado!';
-    if(error.code === 'auth/invalid-credential') return '<i class="ph-fill ph-warning"></i> Senha incorreta!';
-    return '<i class="ph-fill ph-warning"></i> Erro: ' + error.message;
+    triggerErrorFeedback(); // Vibra a tela e pisca
+    
+    if(error.code === 'auth/email-already-in-use') return '<i class="ph-fill ph-warning-octagon"></i> E-mail já está em uso!';
+    if(error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        return '<i class="ph-fill ph-warning-octagon"></i> E-mail ou senha incorretos!';
+    }
+    if(error.code === 'auth/invalid-email') return '<i class="ph-fill ph-warning-octagon"></i> E-mail inválido!';
+    if(error.code === 'auth/weak-password') return '<i class="ph-fill ph-warning-octagon"></i> A senha deve ter 6+ caracteres!';
+    
+    return '<i class="ph-fill ph-warning-octagon"></i> Erro: ' + error.message;
   }
 
   function getBase64(file) {
@@ -899,6 +1161,12 @@
     userListenerUnsubscribe = onSnapshot(doc(db, "usuarios", uid), (docSnap) => {
       if (docSnap.exists()) {
         userDataGlobal = docSnap.data();
+        
+        // Atualiza a logo no cabeçalho se for loja
+        if (userDataGlobal.perfil === 'loja' || userDataGlobal.perfil === 'pf') {
+            updateStoreHeaderLogo();
+        }
+
         if (userDataGlobal.perfil === 'motoboy') {
           const saldo = userDataGlobal.saldo !== undefined ? userDataGlobal.saldo : 0;
           document.getElementById('creditDisplay').textContent = `R$ ${saldo.toFixed(2).replace('.',',')}`;
@@ -906,6 +1174,20 @@
         }
       }
     });
+  }
+
+  // NOVA FUNÇÃO PARA ATUALIZAR A LOGO NO CABEÇALHO DA LOJA
+  window.updateStoreHeaderLogo = function() {
+      const imgEl = document.getElementById('lojaHeaderLogo');
+      const phEl = document.getElementById('lojaHeaderPlaceholder');
+      if (userDataGlobal && userDataGlobal.logo) {
+          imgEl.src = userDataGlobal.logo;
+          imgEl.style.display = 'block';
+          phEl.style.display = 'none';
+      } else {
+          imgEl.style.display = 'none';
+          phEl.style.display = 'block';
+      }
   }
 
   window.fecharAvisoGlobal = function() {
@@ -977,7 +1259,13 @@
           if (userDataGlobal.perfil === 'loja' || userDataGlobal.perfil === 'pf') {
             await updateDoc(doc(db, "usuarios", user.uid), { status: 'online' });
             document.getElementById('lojaFiltroInicio').value = getTodayStr(); document.getElementById('lojaFiltroFim').value = getTodayStr();
-            window.showScreen('painel-loja'); startLojaListener(); listenStoreDashStats();
+            window.showScreen('painel-loja'); 
+            // Atualiza a logo no login
+            updateStoreHeaderLogo();
+            startLojaListener(); 
+            listenStoreDashStats();
+            listenTaxasGlobais();
+            listenBairrosCadastrados();
           } else if(userDataGlobal.perfil === 'motoboy') {
             if(userDataGlobal.status === 'pendente') {
                showToast('<i class="ph-fill ph-warning"></i> Cadastro em análise!'); await signOut(auth); window.showScreen('login');
@@ -1006,7 +1294,10 @@
       const userDoc = await getDoc(doc(db, "usuarios", uc.user.uid));
       if (!userDoc.exists()) { await deleteUser(uc.user); hideLoading(); showToast('<i class="ph-fill ph-broom"></i> Cadastro corrompido limpo!'); return; }
       hideLoading();
-    } catch (e) { hideLoading(); showToast(handleAuthError(e)); }
+    } catch (e) { 
+      hideLoading(); 
+      showToast(handleAuthError(e)); 
+    }
   };
 
   window.deslogar = async function() {
@@ -1396,14 +1687,21 @@
     });
   }
 
+  // BOTÃO FINAL DE PUBLICAR NO MURAL
   window.publishOrderReal = async function() {
     if(currentConfig.isPaused) return showToast("<i class='ph-fill ph-prohibit'></i> Manutenção.");
     const feeInput = parseFloat(document.getElementById('newFee').value.replace(',', '.'));
     const obs = document.getElementById('newObs').value.trim(); const bagGrande = document.getElementById('newBagGrande').checked; 
     
+    // VERIFICA SE O VALOR É MENOR QUE O PISO MÍNIMO (TRAVA DE SEGURANÇA)
+    if (feeInput < currentMinFee) {
+        return showToast(`<i class="ph-fill ph-warning"></i> A taxa mínima atual para este destino é R$ ${currentMinFee.toFixed(2).replace('.',',')}`);
+    }
+
     const destItems = document.querySelectorAll('.destino-item'); let entregas = []; let bairrosArr = [];
     for(let item of destItems) {
-        let b = item.querySelector('.dest-bairro').value.trim(); let r = item.querySelector('.dest-rua').value.trim(); let n = item.querySelector('.dest-num').value.trim();
+        let b = item.querySelector('.dest-bairro').value.trim().toUpperCase(); 
+        let r = item.querySelector('.dest-rua').value.trim(); let n = item.querySelector('.dest-num').value.trim();
         if(b || r || n) {
             if(!b || !r || !n) return showToast('<i class="ph-fill ph-warning"></i> Bairro, Rua e Nº são obrigatórios. (Use "S/N")');
             entregas.push({ bairro: b, rua: r, num: n }); bairrosArr.push(b);
@@ -1428,10 +1726,27 @@
 
   function buildCardReal(id, data) {
     const div = document.createElement('div'); div.className = 'delivery-card new-arrival';
-    const logoHtml = data.lojaLogo ? `<img src="${data.lojaLogo}" style="width:18px; height:18px; border-radius:4px; object-fit:cover;">` : `<i class="ph-fill ph-storefront"></i>`;
+    
+    // CONSTRUÇÃO DA LOGO AUMENTADA NO MURAL DO MOTOBOY
+    const logoOrPhHtml = data.lojaLogo 
+        ? `<img src="${data.lojaLogo}" alt="Logo ${data.lojaNome}">` 
+        : `<div class="dc-placeholder"><i class="ph-fill ph-storefront"></i></div>`;
+    
     let badgeRotas = data.qtdEntregas > 1 ? `<div style="color:var(--neon-y); font-size:12px; font-weight:bold; margin-bottom:4px; font-family:var(--font-head);"><i class="ph-fill ph-package"></i> ROTA COM ${data.qtdEntregas} ENTREGAS</div>` : '';
     
-    div.innerHTML = `<div class="dc-store">${logoHtml} ${data.lojaNome || 'Loja'}</div>${badgeRotas}<div class="dc-bairro"><i class="ph-fill ph-map-pin" style="color:var(--neon-b)"></i> ${data.bairro}</div><div class="dc-fee">${data.taxa}</div>${data.bagGrande ? `<div class="status-badge" style="background: rgba(255,153,0,0.1); color: var(--neon-orange); border: 1px solid rgba(255,153,0,0.2); margin-top: 2px; margin-bottom: 6px;"><i class="ph-fill ph-package"></i> EXIGE BAG GRANDE</div>` : ''}<div class="dc-actions"><button class="btn-accept" onclick="acceptOrderReal('${id}')"><i class="ph-fill ph-lightning"></i> ACEITAR</button><button class="btn-pass" onclick="this.closest('.delivery-card').remove()"><i class="ph-bold ph-arrow-right"></i></button></div>`;
+    div.innerHTML = `
+        <div class="dc-store" style="margin-bottom: 10px;">
+            <div class="dc-logo-container">${logoOrPhHtml}</div>
+            <div style="font-weight:bold; font-size: 14px; color: var(--text);">${data.lojaNome || 'Loja desconhecida'}</div>
+        </div>
+        ${badgeRotas}
+        <div class="dc-bairro"><i class="ph-fill ph-map-pin" style="color:var(--neon-b)"></i> ${data.bairro}</div>
+        <div class="dc-fee">${data.taxa}</div>
+        ${data.bagGrande ? `<div class="status-badge" style="background: rgba(255,153,0,0.1); color: var(--neon-orange); border: 1px solid rgba(255,153,0,0.2); margin-top: 2px; margin-bottom: 6px;"><i class="ph-fill ph-package"></i> EXIGE BAG GRANDE</div>` : ''}
+        <div class="dc-actions">
+            <button class="btn-accept" onclick="acceptOrderReal('${id}')"><i class="ph-fill ph-lightning"></i> ACEITAR</button>
+            <button class="btn-pass" onclick="this.closest('.delivery-card').remove()"><i class="ph-bold ph-arrow-right"></i></button>
+        </div>`;
     return div;
   }
 
@@ -1517,6 +1832,11 @@
       showToast('Avaliação enviada!'); window.fecharModalHistory();
     } catch(e) { showToast('Erro ao enviar.'); } finally { hideLoading(); }
   };
+
+  function triggerLightning() {
+      const overlay = document.getElementById('lightningOverlay');
+      overlay.classList.remove('flash'); void overlay.offsetWidth; overlay.classList.add('flash');
+  }
 </script>
 </body>
 </html>
