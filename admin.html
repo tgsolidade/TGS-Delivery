@@ -222,6 +222,33 @@
   </div>
 
   <div class="tab-content" id="tab-config">
+    
+    <div style="background:var(--bg2); border:1px solid var(--border); padding:24px; border-radius:12px; margin-bottom:24px;">
+       <p class="section-title" style="color:var(--neon-b)"><i class="ph-fill ph-clock"></i> REGRAS DE TAXA E HORÁRIO NOTURNO</p>
+       <p style="font-size: 12px; color: var(--muted); margin-bottom: 16px;">Defina o valor mínimo da entrega e a partir de que horas o valor noturno entra em vigor.</p>
+       <div style="display:flex; gap:10px; align-items:end; flex-wrap:wrap;">
+          <div class="form-group" style="flex:1; margin-bottom:0;"><label>Taxa Mínima (Dia)</label><input type="number" id="taxaDia" placeholder="Ex: 8.00" step="0.50"></div>
+          <div class="form-group" style="flex:1; margin-bottom:0;"><label>Taxa Mínima (Noite)</label><input type="number" id="taxaNoite" placeholder="Ex: 10.00" step="0.50"></div>
+          <div class="form-group" style="flex:1; margin-bottom:0;"><label>Início Adicional Noturno</label><input type="time" id="horaVirada" value="23:00"></div>
+          <button class="btn btn-primary" style="width:auto; margin:0;" onclick="salvarTaxasGlobais()"><i class="ph-fill ph-floppy-disk"></i> SALVAR</button>
+       </div>
+    </div>
+
+    <div style="background:var(--bg2); border:1px solid var(--border); padding:24px; border-radius:12px; margin-bottom:24px;">
+       <p class="section-title" style="color:var(--neon-r)"><i class="ph-fill ph-map-pin"></i> BAIRROS DISTANTES (TABELA FIXA)</p>
+       <p style="font-size: 12px; color: var(--muted); margin-bottom: 16px;">Cadastre aqui os bairros afastados. Os valores definidos bloqueiam a edição livre no app da loja.</p>
+       
+       <div style="display:flex; gap:10px; align-items:end; flex-wrap:wrap; margin-bottom: 20px; background:var(--bg); padding:16px; border-radius:8px; border:1px dashed var(--border);">
+          <div class="form-group" style="flex:2; margin-bottom:0;"><label>Nome do Bairro</label><input type="text" id="novoBairroNome" placeholder="Ex: Jaderlândia"></div>
+          <div class="form-group" style="flex:1; margin-bottom:0;"><label>Taxa Dia (R$)</label><input type="number" id="novoBairroDia" placeholder="Ex: 10" step="0.50"></div>
+          <div class="form-group" style="flex:1; margin-bottom:0;"><label>Taxa Noite (R$)</label><input type="number" id="novoBairroNoite" placeholder="Ex: 13" step="0.50"></div>
+          <button class="btn btn-green" style="width:auto; margin:0;" onclick="adicionarBairro()"><i class="ph-bold ph-plus"></i> ADC</button>
+       </div>
+
+       <div id="listaBairrosAdmin">
+          </div>
+    </div>
+
     <div style="background:var(--bg2); border:1px solid var(--border); padding:24px; border-radius:12px; margin-bottom:24px;">
        <p class="section-title" style="color:var(--neon-g)"><i class="ph-fill ph-coin"></i> TAXA DE INTERMEDIAÇÃO (LUCRO DO APP)</p>
        <p style="font-size: 12px; color: var(--muted); margin-bottom: 16px;">Valor a ser descontado do saldo do motoboy em cada entrega concluída.</p>
@@ -442,10 +469,55 @@
   window.deslogar = async function() { showLoading('SAINDO...'); await signOut(auth); hideLoading(); window.showScreen('login-admin'); }
 
   let adminUnsubscribe = null; let promoUnsubscribe = null; let ordersUnsubscribe = null; let inboxUnsubscribe = null; let recargasUnsubscribe = null;
+  let bairrosUnsubscribe = null; let taxasGlobaisUnsubscribe = null;
   
   function startAdminListener() {
     if(!auth.currentUser) return;
     
+    // Listener das Taxas Globais (Dia/Noite/Virada)
+    if(taxasGlobaisUnsubscribe) taxasGlobaisUnsubscribe();
+    taxasGlobaisUnsubscribe = onSnapshot(doc(db, "config", "taxasGlobais"), (docSnap) => {
+        if(docSnap.exists()) {
+            const d = docSnap.data();
+            document.getElementById('taxaDia').value = d.taxaDia || 8;
+            document.getElementById('taxaNoite').value = d.taxaNoite || 10;
+            document.getElementById('horaVirada').value = d.horaVirada || "23:00";
+        }
+    });
+
+    // Listener da Tabela de Bairros (CRUD)
+    if(bairrosUnsubscribe) bairrosUnsubscribe();
+    bairrosUnsubscribe = onSnapshot(collection(db, "bairros"), (snapshot) => {
+        const list = document.getElementById('listaBairrosAdmin');
+        list.innerHTML = '';
+        let cont = 0;
+        let bairrosHTML = '';
+        
+        // Criar array para ordenar alfabeticamente
+        let bairrosArray = [];
+        snapshot.forEach(docSnap => { bairrosArray.push({ id: docSnap.id, ...docSnap.data() }); });
+        bairrosArray.sort((a, b) => a.nome.localeCompare(b.nome));
+
+        bairrosArray.forEach(b => {
+            cont++;
+            bairrosHTML += `
+            <div class="admin-row" style="padding: 12px 16px; margin-bottom:8px;">
+                <div class="admin-row-info" style="display:flex; align-items:center; gap: 16px; width:100%;">
+                    <div style="flex:2;"><i class="ph-fill ph-map-pin" style="color:var(--muted)"></i> <strong style="color:var(--text); text-transform:uppercase;">${b.nome}</strong></div>
+                    <div style="flex:1; font-family:var(--font-mono); font-size:12px; color:var(--neon-y)">DIA: R$ ${parseFloat(b.taxaDia).toFixed(2).replace('.',',')}</div>
+                    <div style="flex:1; font-family:var(--font-mono); font-size:12px; color:var(--neon-b)">NOITE: R$ ${parseFloat(b.taxaNoite).toFixed(2).replace('.',',')}</div>
+                    <button class="btn-icon-sm" style="color:var(--neon-r)" onclick="removerBairro('${b.id}')"><i class="ph-bold ph-trash"></i></button>
+                </div>
+            </div>`;
+        });
+        
+        if(cont === 0) {
+            list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px; border:1px dashed var(--border); border-radius:8px;">Nenhum bairro distante cadastrado.</div>';
+        } else {
+            list.innerHTML = bairrosHTML;
+        }
+    });
+
     if(recargasUnsubscribe) recargasUnsubscribe();
     const qRecargas = query(collection(db, "recargas"));
     recargasUnsubscribe = onSnapshot(qRecargas, (snapshot) => {
@@ -662,6 +734,53 @@
        });
        if(contMsg === 0) inList.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;border:1px dashed var(--border);border-radius:12px;">Nenhuma mensagem enviada ainda.</div>';
     });
+  }
+
+  // ── NOVAS FUNÇÕES: TAXAS E BAIRROS ──
+  window.salvarTaxasGlobais = async function() {
+      const dia = parseFloat(document.getElementById('taxaDia').value);
+      const noite = parseFloat(document.getElementById('taxaNoite').value);
+      const hora = document.getElementById('horaVirada').value;
+      
+      if(isNaN(dia) || isNaN(noite) || !hora) return showToast("<i class='ph-fill ph-warning'></i> Preencha todos os campos da taxa.");
+      
+      showLoading('SALVANDO REGRAS...');
+      try {
+          await setDoc(doc(db, "config", "taxasGlobais"), { taxaDia: dia, taxaNoite: noite, horaVirada: hora }, { merge: true });
+          showToast('<i class="ph-fill ph-check-circle"></i> Regras atualizadas com sucesso!');
+      } catch(e) { alert("Erro: " + e.message); } finally { hideLoading(); }
+  }
+
+  window.adicionarBairro = async function() {
+      const nome = document.getElementById('novoBairroNome').value.trim();
+      const dia = parseFloat(document.getElementById('novoBairroDia').value);
+      const noite = parseFloat(document.getElementById('novoBairroNoite').value);
+      
+      if(!nome || isNaN(dia) || isNaN(noite)) return showToast("<i class='ph-fill ph-warning'></i> Preencha nome e taxas do bairro.");
+      
+      showLoading('ADICIONANDO...');
+      try {
+          // Salva o nome em maiúsculo para facilitar a busca no lado do lojista
+          await addDoc(collection(db, "bairros"), { 
+              nome: nome.toUpperCase(), 
+              taxaDia: dia, 
+              taxaNoite: noite 
+          });
+          document.getElementById('novoBairroNome').value = '';
+          document.getElementById('novoBairroDia').value = '';
+          document.getElementById('novoBairroNoite').value = '';
+          showToast('<i class="ph-fill ph-check-circle"></i> Bairro inserido na tabela!');
+      } catch(e) { alert("Erro: " + e.message); } finally { hideLoading(); }
+  }
+
+  window.removerBairro = async function(id) {
+      if(confirm('Tem certeza que deseja remover este bairro da tabela de exceções?')) {
+          showLoading('REMOVENDO...');
+          try {
+              await deleteDoc(doc(db, "bairros", id));
+              showToast('<i class="ph-fill ph-trash"></i> Bairro apagado.');
+          } catch(e) { alert("Erro: " + e.message); } finally { hideLoading(); }
+      }
   }
 
   // ── FUNÇÕES DE AÇÃO DO ADMIN ──
