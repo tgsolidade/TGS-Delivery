@@ -834,6 +834,13 @@
   window.fecharModalHistory = function() { document.getElementById('historyModal').classList.remove('open'); }
   window.fecharListaModal = function() { document.getElementById('listModal').classList.remove('open'); }
 
+  // INJEÇÃO DA PERMISSÃO DE NOTIFICAÇÃO
+  window.pedirPermissaoNotificacao = function() {
+      if ("Notification" in window && Notification.permission === "default") {
+          Notification.requestPermission();
+      }
+  };
+
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
   import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, onAuthStateChanged, deleteUser } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
   import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, where, setDoc, doc, updateDoc, deleteDoc, getDoc, getDocs, increment, limit } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
@@ -1267,6 +1274,7 @@
           if (userDataGlobal.perfil === 'loja' || userDataGlobal.perfil === 'pf') {
             await updateDoc(doc(db, "usuarios", user.uid), { status: 'online' });
             document.getElementById('lojaFiltroInicio').value = getTodayStr(); document.getElementById('lojaFiltroFim').value = getTodayStr();
+            window.pedirPermissaoNotificacao();
             window.showScreen('painel-loja'); 
             updateStoreHeaderLogo();
             startLojaListener(); 
@@ -1281,6 +1289,7 @@
             } else {
                await updateDoc(doc(db, "usuarios", user.uid), { status: 'online' });
                document.getElementById('motoFiltroInicio').value = getTodayStr(); document.getElementById('motoFiltroFim').value = getTodayStr();
+               window.pedirPermissaoNotificacao();
                window.showScreen('painel-moto'); startMuralListener(); listenMotoDashStats();
             }
           }
@@ -1499,6 +1508,8 @@
     const uid = auth.currentUser.uid;
     const q = query(collection(db, "pedidos"), orderBy("timestamp", "desc"));
     
+    if (!window.lastLojaOrdersState) window.lastLojaOrdersState = {};
+
     lojaUnsubscribe = onSnapshot(q, (snapshot) => {
       const contAtivos = document.getElementById('lojaOrdersContainer');
       const contHist = document.getElementById('lojaHistoryContainer');
@@ -1509,6 +1520,14 @@
         try {
           const data = docSnap.data(); data.id = docSnap.id; window.allOrdersMemory[docSnap.id] = data; 
           if(data.lojaId === uid) {
+            
+            // INJEÇÃO 3: NOTIFICAÇÃO QUANDO MOTOBOY ACEITA
+            const oldState = window.lastLojaOrdersState[docSnap.id];
+            if (oldState === 'aguardando' && data.status === 'aceito' && document.hidden && "Notification" in window && Notification.permission === "granted") {
+                try { new Notification("TGS Delivery ⚡", { body: `O motoboy ${data.motoboyNome} aceitou sua rota!`, icon: "icon.png" }); } catch(e) {}
+            }
+            window.lastLojaOrdersState[docSnap.id] = data.status;
+
             if(data.status !== 'concluido') { ativos++; contAtivos.appendChild(buildLojaCard(docSnap.id, data)); } 
             else { hist++; contHist.appendChild(buildLojaCard(docSnap.id, data)); window.lojaHistoryData.push(data); }
           }
@@ -1690,6 +1709,21 @@
       
       if(pendentes > lastPendentesCount && !encontrouAtivo) {
           try { const aud = document.getElementById('alertSound'); aud.currentTime = 0; let playPromise = aud.play(); if (playPromise !== undefined) playPromise.catch(error => { }); } catch(err) { }
+          
+          // INJEÇÃO 4: DISPARA NOTIFICAÇÃO NATIVA SE O APP ESTIVER EM SEGUNDO PLANO
+          if (document.hidden && "Notification" in window && Notification.permission === "granted") {
+              try {
+                  new Notification("TGS Delivery ⚡", {
+                      body: "Nova corrida disponível no mural!",
+                      icon: "icon.png"
+                  });
+              } catch(e) {
+                  // Fallback para Android Chrome
+                  navigator.serviceWorker.getRegistrations().then(regs => {
+                      if(regs.length > 0) regs[0].showNotification("TGS Delivery ⚡", { body: "Nova corrida no mural!", icon: "icon.png", vibrate: [200, 100, 200] });
+                  });
+              }
+          }
       }
       lastPendentesCount = pendentes;
       
@@ -1803,10 +1837,9 @@
     const taxaCobranca = currentConfig.taxaApp || 0.40;
     const currentSaldo = userDataGlobal.saldo !== undefined ? parseFloat(userDataGlobal.saldo) : 0;
     
-    // BLOQUEIO MATADOR SE O SALDO FOR MENOR
     if(currentSaldo < taxaCobranca) { 
         window.isProcessingClick = false; 
-        window.triggerErrorFeedback(); // Vibra a tela do motoboy
+        window.triggerErrorFeedback(); 
         return showToast(`<i class="ph-fill ph-warning"></i> Saldo insuficiente! Você precisa de no mínimo R$ ${taxaCobranca.toFixed(2).replace('.',',')} (Taxa do App) para aceitar.`); 
     }
     
