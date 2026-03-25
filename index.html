@@ -52,6 +52,9 @@
   @keyframes spin { 100% { transform: rotate(360deg); } }
   .ph-spin { animation: spin 1s linear infinite; }
 
+  /* ── BANNER DE INTERNET ── */
+  #netStatusBanner { display:none; position:fixed; top:0; left:0; right:0; z-index:999999; padding:12px 16px; text-align:center; font-size:12px; font-family:var(--font-head); letter-spacing: 1px; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.5); align-items:center; gap:10px; }
+
   /* ── SPLASH SCREEN ── */
   #splash { align-items: center; justify-content: center; background: radial-gradient(ellipse at center, #0f0f28 0%, #0a0a0f 70%); position: relative; overflow: hidden; }
   .splash-logo { text-align: center; z-index: 2; }
@@ -261,6 +264,11 @@
 <body>
 
 <audio id="alertSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+
+<div id="netStatusBanner">
+   <span id="netStatusText"></span>
+   <button id="netStatusClose" onclick="document.getElementById('netStatusBanner').style.display='none'"><i class="ph-bold ph-x"></i></button>
+</div>
 
 <div id="globalLoader" style="display:none; position:fixed; inset:0; background:rgba(10,10,15,0.9); z-index:99999; flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px);">
   <i class="ph-bold ph-spinner ph-spin" style="font-size: 50px; color: var(--neon-y); margin-bottom: 16px;"></i>
@@ -735,6 +743,7 @@
   }, {once: true});
 
   window.isRegistering = false;
+  window.isProcessingClick = false; // TRAVA DE CLIQUE DUPLO
 
   // FUNÇÃO DO BOTÃO "MOSTRAR/OCULTAR SENHA"
   window.togglePassword = function(inputId, btnElement) {
@@ -896,13 +905,11 @@
 
   // ── FUNÇÕES DE LOGÍSTICA (BAIRROS E TAXAS FUZZY MATCH) ──
   
-  // 1. Limpeza de texto: tira acento, caracteres especiais e minúsculo
   function formatarTextoBusca(texto) {
       if(!texto) return "";
       return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
   }
 
-  // 2. Calcula a "distância" entre a digitação errada e a palavra certa
   function levenshtein(a, b) {
       if (a.length === 0) return b.length;
       if (b.length === 0) return a.length;
@@ -915,9 +922,9 @@
                   matrix[i][j] = matrix[i - 1][j - 1];
               } else {
                   matrix[i][j] = Math.min(
-                      matrix[i - 1][j - 1] + 1, // substituição
-                      matrix[i][j - 1] + 1,     // inserção
-                      matrix[i - 1][j] + 1      // deleção
+                      matrix[i - 1][j - 1] + 1,
+                      matrix[i][j - 1] + 1,
+                      matrix[i - 1][j] + 1
                   );
               }
           }
@@ -925,7 +932,6 @@
       return matrix[b.length][a.length];
   }
 
-  // 3. Função que varre a lista pra achar quem é o mais parecido
   function encontrarBairroAproximado(digitado, lista, isObjectList = false) {
       const dig = formatarTextoBusca(digitado);
       if(!dig) return null;
@@ -936,10 +942,9 @@
       for (let item of lista) {
           const nomeItem = isObjectList ? item.nome : item;
           const b = formatarTextoBusca(nomeItem);
-          if (dig === b) return item; // Se bateu exatamente igual, já retorna.
+          if (dig === b) return item;
 
           const dist = levenshtein(dig, b);
-          // A tolerância de erro aumenta um pouco para palavras muito grandes
           const maxErros = Math.floor(b.length * 0.3) + 1; 
           
           if (dist <= maxErros && dist < menorDistancia) {
@@ -981,11 +986,8 @@
       return false;
   }
 
-  // FUNÇÃO VERIFICAR BAIRRO (COM A INTELIGÊNCIA DA LISTA NOVA)
   window.verificarBairro = function(inputBairroElement) {
       let nomeDigitado = inputBairroElement.value.trim().toUpperCase();
-      
-      // Converte números digitados (1, 2, 3) para algarismos romanos (I, II, III) no fim da palavra
       nomeDigitado = nomeDigitado.replace(/\s+1$/, " I").replace(/\s+2$/, " II").replace(/\s+3$/, " III");
 
       const isNoite = isHorarioNoturno();
@@ -994,27 +996,24 @@
       
       if (!nomeDigitado) return;
 
-      // 1. Tenta achar na Tabela de Bairros Exceções (Admin - Taxa Alta)
       const bairroExcecao = encontrarBairroAproximado(nomeDigitado, window.bairrosExcecao, true);
 
       if (bairroExcecao) {
-          inputBairroElement.value = bairroExcecao.nome; // Corrige o nome na tela
+          inputBairroElement.value = bairroExcecao.nome;
           currentMinFee = isNoite ? parseFloat(bairroExcecao.taxaNoite) : parseFloat(bairroExcecao.taxaDia);
           inputTaxa.value = currentMinFee.toFixed(2);
           feeHint.textContent = `Bairro identificado: ${bairroExcecao.nome}. Taxa base: R$ ${currentMinFee.toFixed(2)}.`;
           feeHint.style.display = 'block';
           feeHint.style.color = "var(--neon-b)";
       } else {
-          // 2. Se não achou nas exceções, procura na nossa Lista Padrão de Paragominas
           const bairroPadrao = encontrarBairroAproximado(nomeDigitado, window.bairrosPadraoComuns, false);
           
           if (bairroPadrao) {
-              inputBairroElement.value = bairroPadrao; // Corrige o texto pro padrão bonito!
+              inputBairroElement.value = bairroPadrao;
           } else {
-              inputBairroElement.value = nomeDigitado; // Mantém o texto que a pessoa digitou, já que é desconhecido
+              inputBairroElement.value = nomeDigitado;
           }
 
-          // Como não é bairro de exceção, puxa a taxa mínima global
           currentMinFee = isNoite ? parseFloat(window.regrasTaxaGlobais.taxaNoite) : parseFloat(window.regrasTaxaGlobais.taxaDia);
           if (!inputTaxa.value || parseFloat(inputTaxa.value.replace(',', '.')) < currentMinFee) {
              inputTaxa.value = currentMinFee.toFixed(2);
@@ -1113,10 +1112,19 @@
   window.closeNewOrderModal = function() { document.getElementById('newOrderModal').classList.remove('open'); };
   window.showToast = function(msg) { const existing = document.querySelector('.toast'); if (existing) existing.remove(); const el = document.createElement('div'); el.className = 'toast'; el.innerHTML = msg; document.body.appendChild(el); setTimeout(() => el.remove(), 3000); };
 
+  // INJEÇÃO 1: GRAVAR sessionStart sem sobrescrever a cada 15 segundos
   async function setOnlineStatus() {
      if(auth.currentUser && userDataGlobal && !currentConfig.isPaused) {
         if(userDataGlobal.status === 'pendente' || userDataGlobal.status === 'bloqueado') return;
-        try { if(userDataGlobal.perfil === 'loja' || (userDataGlobal.perfil === 'motoboy' && userDataGlobal.status !== 'em_rota')) { await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { status: 'online' }); } } catch(e) {}
+        try { 
+            if(userDataGlobal.perfil === 'loja' || (userDataGlobal.perfil === 'motoboy' && userDataGlobal.status !== 'em_rota')) { 
+                let updateObj = { status: 'online' };
+                if (!userDataGlobal.sessionStart) {
+                    updateObj.sessionStart = Date.now();
+                }
+                await updateDoc(doc(db, "usuarios", auth.currentUser.uid), updateObj); 
+            } 
+        } catch(e) {}
      }
   }
 
@@ -1128,9 +1136,8 @@
       }
   });
 
-  // NOVA TRADUÇÃO DE ERROS DE LOGIN COM ALERTA VISUAL VERMELHO E VIBRAÇÃO
   function handleAuthError(error) {
-    triggerErrorFeedback(); // Vibra a tela e pisca
+    triggerErrorFeedback(); 
     
     if(error.code === 'auth/email-already-in-use') return '<i class="ph-fill ph-warning-octagon"></i> E-mail já está em uso!';
     if(error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
@@ -1163,7 +1170,6 @@
       if (docSnap.exists()) {
         userDataGlobal = docSnap.data();
         
-        // Atualiza a logo no cabeçalho se for loja
         if (userDataGlobal.perfil === 'loja' || userDataGlobal.perfil === 'pf') {
             updateStoreHeaderLogo();
         }
@@ -1177,7 +1183,6 @@
     });
   }
 
-  // NOVA FUNÇÃO PARA ATUALIZAR A LOGO NO CABEÇALHO DA LOJA
   window.updateStoreHeaderLogo = function() {
       const imgEl = document.getElementById('lojaHeaderLogo');
       const phEl = document.getElementById('lojaHeaderPlaceholder');
@@ -1261,7 +1266,6 @@
             await updateDoc(doc(db, "usuarios", user.uid), { status: 'online' });
             document.getElementById('lojaFiltroInicio').value = getTodayStr(); document.getElementById('lojaFiltroFim').value = getTodayStr();
             window.showScreen('painel-loja'); 
-            // Atualiza a logo no login
             updateStoreHeaderLogo();
             startLojaListener(); 
             listenStoreDashStats();
@@ -1605,6 +1609,24 @@
           
           if(data.status === 'aguardando') {
             if(data.bagGrande === true && userDataGlobal && !userDataGlobal.bagGrande) return; 
+
+            // INJEÇÃO 2: TRAVA DE PUNIÇÃO (ATRASO DE 5s)
+            if (userDataGlobal.punishedUntil && userDataGlobal.punishedUntil > Date.now()) {
+                const tempoDecorrido = Date.now() - data.timestamp;
+                if (tempoDecorrido < 5000) {
+                    setTimeout(() => {
+                        getDoc(doc(db, "pedidos", docSnap.id)).then(checkSnap => {
+                            if(checkSnap.exists() && checkSnap.data().status === 'aguardando') {
+                                pendentes++; 
+                                container.appendChild(buildCardReal(docSnap.id, checkSnap.data()));
+                                document.getElementById('emptyMural').style.display = 'none';
+                            }
+                        });
+                    }, 5000 - tempoDecorrido);
+                    return; 
+                }
+            }
+
             pendentes++; container.appendChild(buildCardReal(docSnap.id, data));
           }
           
@@ -1688,14 +1710,18 @@
     });
   }
 
-  // BOTÃO FINAL DE PUBLICAR NO MURAL
+  // BOTÃO FINAL DE PUBLICAR NO MURAL (COM PREVENÇÃO DE CLIQUE DUPLO)
   window.publishOrderReal = async function() {
-    if(currentConfig.isPaused) return showToast("<i class='ph-fill ph-prohibit'></i> Manutenção.");
+    if(window.isProcessingClick) return; 
+    window.isProcessingClick = true;
+
+    if(currentConfig.isPaused) { window.isProcessingClick = false; return showToast("<i class='ph-fill ph-prohibit'></i> Manutenção."); }
+    
     const feeInput = parseFloat(document.getElementById('newFee').value.replace(',', '.'));
     const obs = document.getElementById('newObs').value.trim(); const bagGrande = document.getElementById('newBagGrande').checked; 
     
-    // VERIFICA SE O VALOR É MENOR QUE O PISO MÍNIMO (TRAVA DE SEGURANÇA)
     if (feeInput < currentMinFee) {
+        window.isProcessingClick = false;
         return showToast(`<i class="ph-fill ph-warning"></i> A taxa mínima atual para este destino é R$ ${currentMinFee.toFixed(2).replace('.',',')}`);
     }
 
@@ -1704,12 +1730,12 @@
         let b = item.querySelector('.dest-bairro').value.trim().toUpperCase(); 
         let r = item.querySelector('.dest-rua').value.trim(); let n = item.querySelector('.dest-num').value.trim();
         if(b || r || n) {
-            if(!b || !r || !n) return showToast('<i class="ph-fill ph-warning"></i> Bairro, Rua e Nº são obrigatórios. (Use "S/N")');
+            if(!b || !r || !n) { window.isProcessingClick = false; return showToast('<i class="ph-fill ph-warning"></i> Bairro, Rua e Nº são obrigatórios. (Use "S/N")'); }
             entregas.push({ bairro: b, rua: r, num: n }); bairrosArr.push(b);
         }
     }
 
-    if(entregas.length === 0 || isNaN(feeInput) || feeInput <= 0) return showToast('<i class="ph-fill ph-warning"></i> Adicione Bairro e Taxa!');
+    if(entregas.length === 0 || isNaN(feeInput) || feeInput <= 0) { window.isProcessingClick = false; return showToast('<i class="ph-fill ph-warning"></i> Adicione Bairro e Taxa!'); }
     showLoading('PUBLICANDO...');
     const totalFee = feeInput * entregas.length; const pin = Math.floor(1000 + Math.random() * 9000).toString(); const bairrosResumo = bairrosArr.join(', ');
     const clienteEnd = entregas.length === 1 ? `${entregas[0].rua}, ${entregas[0].num} - ${entregas[0].bairro}`.trim() : `Rota com ${entregas.length} entregas`;
@@ -1722,13 +1748,12 @@
       await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { pedidosCriados: increment(1) });
       window.closeNewOrderModal(); window.resetDestinosUI(); document.getElementById('newFee').value = ''; document.getElementById('newObs').value = ''; document.getElementById('displayTotalFee').textContent = 'R$ 0,00';
       showToast('<i class="ph-fill ph-lightning"></i> Rota no mural!');
-    } catch(e) { showToast("Erro: " + e.message); } finally { hideLoading(); }
+    } catch(e) { showToast("Erro: " + e.message); } finally { hideLoading(); window.isProcessingClick = false; }
   };
 
   function buildCardReal(id, data) {
     const div = document.createElement('div'); div.className = 'delivery-card new-arrival';
     
-    // CONSTRUÇÃO DA LOGO AUMENTADA NO MURAL DO MOTOBOY
     const logoOrPhHtml = data.lojaLogo 
         ? `<img src="${data.lojaLogo}" alt="Logo ${data.lojaNome}">` 
         : `<div class="dc-placeholder"><i class="ph-fill ph-storefront"></i></div>`;
@@ -1751,16 +1776,21 @@
     return div;
   }
 
+  // ACEITAR PEDIDO COM PREVENÇÃO DE CLIQUE DUPLO
   window.acceptOrderReal = async function(id) {
-    if(currentConfig.isPaused) return showToast("<i class='ph-fill ph-prohibit'></i> Manutenção.");
+    if(window.isProcessingClick) return;
+    window.isProcessingClick = true;
+
+    if(currentConfig.isPaused) { window.isProcessingClick = false; return showToast("<i class='ph-fill ph-prohibit'></i> Manutenção."); }
     const taxaCobranca = currentConfig.taxaApp || 0.40;
-    if(userDataGlobal.saldo < taxaCobranca) return showToast(`Saldo insuficiente (Mínimo R$ ${taxaCobranca.toFixed(2).replace('.',',')}).`);
+    if(userDataGlobal.saldo < taxaCobranca) { window.isProcessingClick = false; return showToast(`Saldo insuficiente (Mínimo R$ ${taxaCobranca.toFixed(2).replace('.',',')}).`); }
+    
     showLoading('ACEITANDO...');
     try {
       await updateDoc(doc(db, "pedidos", id), { status: 'aceito', motoboyId: auth.currentUser.uid, motoboyNome: userDataGlobal.nome, motoboyWhats: userDataGlobal.whats || '', motoboyPix: userDataGlobal.chavePix || '' });
       await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { status: 'em_rota' });
       triggerLightning(); showToast('<i class="ph-fill ph-lightning"></i> Rota aceita! Vá para a Loja.');
-    } catch(e) { showToast('<i class="ph-fill ph-warning"></i> Alguém foi mais rápido ou ocorreu um erro!'); } finally { hideLoading(); }
+    } catch(e) { showToast('<i class="ph-fill ph-warning"></i> Alguém foi mais rápido ou ocorreu um erro!'); } finally { hideLoading(); window.isProcessingClick = false; }
   };
 
   window.completeOrder = async function() {
@@ -1837,6 +1867,71 @@
   function triggerLightning() {
       const overlay = document.getElementById('lightningOverlay');
       overlay.classList.remove('flash'); void overlay.offsetWidth; overlay.classList.add('flash');
+  }
+
+  // ── SISTEMA DE MONITORAMENTO DE INTERNET (NET MONITOR) ──
+  let oscillationCount = 0;
+  let oscillationTimer = null;
+
+  function showNetBanner(msg, type, persistent = false) {
+      const banner = document.getElementById('netStatusBanner');
+      const text = document.getElementById('netStatusText');
+      const closeBtn = document.getElementById('netStatusClose');
+
+      text.innerHTML = msg;
+      banner.style.display = 'flex';
+
+      if(type === 'offline') {
+          banner.style.background = 'var(--neon-r)';
+          banner.style.color = '#fff';
+      } else if (type === 'slow' || type === 'oscilating') {
+          banner.style.background = 'var(--neon-orange)';
+          banner.style.color = '#fff';
+      }
+
+      if(persistent) {
+          closeBtn.style.display = 'inline-block';
+      } else {
+          closeBtn.style.display = 'none';
+          setTimeout(() => { if(!persistent && banner.style.display !== 'none') banner.style.display = 'none'; }, 4000);
+      }
+  }
+
+  window.addEventListener('offline', () => {
+      oscillationCount++;
+      checkOscillation();
+      showNetBanner("<i class='ph-bold ph-wifi-slash'></i> VOCÊ ESTÁ SEM INTERNET", 'offline', true);
+  });
+
+  window.addEventListener('online', () => {
+      oscillationCount++;
+      checkOscillation();
+      document.getElementById('netStatusBanner').style.display = 'none';
+      window.showToast("<i class='ph-bold ph-wifi-high'></i> Conexão restabelecida!");
+      checkNetworkSpeed();
+  });
+
+  function checkOscillation() {
+      if(oscillationCount > 3) {
+          showNetBanner("<i class='ph-bold ph-warning'></i> SUA INTERNET ESTÁ OSCILANDO", 'oscilating', false);
+          oscillationCount = 0;
+      }
+      clearTimeout(oscillationTimer);
+      oscillationTimer = setTimeout(() => { oscillationCount = 0; }, 20000); // Janela de 20 segundos
+  }
+
+  function checkNetworkSpeed() {
+      if (navigator.connection) {
+          const type = navigator.connection.effectiveType;
+          if (type === 'slow-2g' || type === '2g') {
+              showNetBanner("<i class='ph-bold ph-hourglass'></i> SUA INTERNET ESTÁ LENTA", 'slow', false);
+          }
+      }
+  }
+
+  if (navigator.connection) {
+      navigator.connection.addEventListener('change', checkNetworkSpeed);
+      checkNetworkSpeed();
   }
 </script>
 </body>
