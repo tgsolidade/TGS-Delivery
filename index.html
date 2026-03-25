@@ -743,9 +743,8 @@
   }, {once: true});
 
   window.isRegistering = false;
-  window.isProcessingClick = false; // TRAVA DE CLIQUE DUPLO
+  window.isProcessingClick = false; 
 
-  // FUNÇÃO DO BOTÃO "MOSTRAR/OCULTAR SENHA"
   window.togglePassword = function(inputId, btnElement) {
       const input = document.getElementById(inputId);
       const icon = btnElement.querySelector('i');
@@ -760,7 +759,6 @@
       }
   };
 
-  // FUNÇÕES DE BLOQUEIO DE TELA E VIBRAÇÃO DE ERRO DE LOGIN/SALDO
   window.showLoading = function(msg) {
       document.getElementById('globalLoaderText').textContent = msg;
       document.getElementById('globalLoader').style.display = 'flex';
@@ -834,10 +832,28 @@
   window.fecharModalHistory = function() { document.getElementById('historyModal').classList.remove('open'); }
   window.fecharListaModal = function() { document.getElementById('listModal').classList.remove('open'); }
 
-  // INJEÇÃO DA PERMISSÃO DE NOTIFICAÇÃO
   window.pedirPermissaoNotificacao = function() {
       if ("Notification" in window && Notification.permission === "default") {
           Notification.requestPermission();
+      }
+  };
+
+  // FUNÇÃO ROBUSTA DE NOTIFICAÇÃO 
+  window.dispararNotificacao = function(titulo, corpo) {
+      if ("Notification" in window && Notification.permission === "granted") {
+          if ('serviceWorker' in navigator) {
+              navigator.serviceWorker.getRegistrations().then(function(regs) {
+                  if (regs.length > 0) {
+                      regs[0].showNotification(titulo, { body: corpo, icon: "icon.png", vibrate: [200, 100, 200, 100, 200] });
+                  } else {
+                      new Notification(titulo, { body: corpo, icon: "icon.png" });
+                  }
+              }).catch(function() {
+                  new Notification(titulo, { body: corpo, icon: "icon.png" });
+              });
+          } else {
+              new Notification(titulo, { body: corpo, icon: "icon.png" });
+          }
       }
   };
 
@@ -913,8 +929,6 @@
      if(tabId === 'tab-loja-pagamentos') renderLojaPagamentos();
   }
 
-  // ── FUNÇÕES DE LOGÍSTICA (BAIRROS E TAXAS FUZZY MATCH) ──
-  
   function formatarTextoBusca(texto) {
       if(!texto) return "";
       return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -1145,7 +1159,6 @@
       }
   });
 
-  // MENSAGEM CLARA DE ERRO DE LOGIN COM VIBRAÇÃO
   function handleAuthError(error) {
     triggerErrorFeedback(); 
     if(error.code === 'auth/email-already-in-use') return '<i class="ph-fill ph-warning-octagon"></i> E-mail já está em uso!';
@@ -1508,6 +1521,7 @@
     const uid = auth.currentUser.uid;
     const q = query(collection(db, "pedidos"), orderBy("timestamp", "desc"));
     
+    // INJEÇÃO DA MEMÓRIA LOCAL DA LOJA
     if (!window.lastLojaOrdersState) window.lastLojaOrdersState = {};
 
     lojaUnsubscribe = onSnapshot(q, (snapshot) => {
@@ -1521,10 +1535,9 @@
           const data = docSnap.data(); data.id = docSnap.id; window.allOrdersMemory[docSnap.id] = data; 
           if(data.lojaId === uid) {
             
-            // INJEÇÃO 3: NOTIFICAÇÃO QUANDO MOTOBOY ACEITA
             const oldState = window.lastLojaOrdersState[docSnap.id];
-            if (oldState === 'aguardando' && data.status === 'aceito' && document.hidden && "Notification" in window && Notification.permission === "granted") {
-                try { new Notification("TGS Delivery ⚡", { body: `O motoboy ${data.motoboyNome} aceitou sua rota!`, icon: "icon.png" }); } catch(e) {}
+            if (oldState === 'aguardando' && data.status === 'aceito' && document.hidden) {
+                window.dispararNotificacao("TGS Delivery ⚡", `O motoboy ${data.motoboyNome} aceitou sua rota!`);
             }
             window.lastLojaOrdersState[docSnap.id] = data.status;
 
@@ -1710,19 +1723,8 @@
       if(pendentes > lastPendentesCount && !encontrouAtivo) {
           try { const aud = document.getElementById('alertSound'); aud.currentTime = 0; let playPromise = aud.play(); if (playPromise !== undefined) playPromise.catch(error => { }); } catch(err) { }
           
-          // INJEÇÃO 4: DISPARA NOTIFICAÇÃO NATIVA SE O APP ESTIVER EM SEGUNDO PLANO
-          if (document.hidden && "Notification" in window && Notification.permission === "granted") {
-              try {
-                  new Notification("TGS Delivery ⚡", {
-                      body: "Nova corrida disponível no mural!",
-                      icon: "icon.png"
-                  });
-              } catch(e) {
-                  // Fallback para Android Chrome
-                  navigator.serviceWorker.getRegistrations().then(regs => {
-                      if(regs.length > 0) regs[0].showNotification("TGS Delivery ⚡", { body: "Nova corrida no mural!", icon: "icon.png", vibrate: [200, 100, 200] });
-                  });
-              }
+          if (document.hidden) {
+              window.dispararNotificacao("TGS Delivery ⚡", "Nova corrida disponível no mural!");
           }
       }
       lastPendentesCount = pendentes;
@@ -1827,7 +1829,6 @@
     return div;
   }
 
-  // TRAVA DE SALDO REFORÇADA E CLARA
   window.acceptOrderReal = async function(id) {
     if(window.isProcessingClick) return;
     window.isProcessingClick = true;
@@ -1857,6 +1858,7 @@
     } catch(e) { showToast('<i class="ph-fill ph-warning"></i> Alguém foi mais rápido ou ocorreu um erro!'); } finally { hideLoading(); window.isProcessingClick = false; }
   };
 
+  // AMORTECEDOR DE CONCLUSÃO: Garante o update na loja
   window.completeOrder = async function() {
     if(!activeOrderId) return;
     showLoading('CONCLUINDO...');
