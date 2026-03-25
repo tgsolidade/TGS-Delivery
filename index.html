@@ -69,7 +69,7 @@
   @keyframes dotBounce { 0%,100% { transform: translateY(0); opacity:.4; } 50% { transform: translateY(-10px); opacity:1; } }
 
   /* ── FORMS E CARDS DE LOGIN/ESCOLHA ── */
-  .login-card, .profile-card { width: 90%; max-width: 400px; background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 30px 24px; position: relative; box-shadow: 0 0 60px rgba(0,200,255,.05), inset 0 1px 0 rgba(255,255,255,.04); margin: auto; }
+  .login-card, .profile-card { width: 90%; max-width: 400px; background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 30px 24px; position: relative; box-shadow: 0 0 60px rgba(0,200,255,.05), inset 0 1px 0 rgba(255,255,255,.04); margin: auto; transition: transform 0.3s ease, border-color 0.3s ease; }
   .login-card::before, .profile-card::before { content: ''; position: absolute; top: -1px; left: 20%; right: 20%; height: 2px; background: linear-gradient(90deg, transparent, var(--neon-b), transparent); }
   .login-logo { text-align: center; margin-bottom: 24px; }
   .login-logo i { font-size: 32px; color: var(--neon-y); }
@@ -760,7 +760,7 @@
       }
   };
 
-  // FUNÇÕES DE BLOQUEIO DE TELA (LOADER E VIBRAÇÃO DE ERRO)
+  // FUNÇÕES DE BLOQUEIO DE TELA E VIBRAÇÃO DE ERRO DE LOGIN/SALDO
   window.showLoading = function(msg) {
       document.getElementById('globalLoaderText').textContent = msg;
       document.getElementById('globalLoader').style.display = 'flex';
@@ -768,13 +768,16 @@
   window.hideLoading = function() {
       document.getElementById('globalLoader').style.display = 'none';
   };
-  function triggerErrorFeedback() {
-      if (navigator.vibrate) navigator.vibrate(200); // Faz o celular vibrar se errar
-      const card = document.querySelector('#login .login-card');
+  
+  window.triggerErrorFeedback = function() {
+      if (navigator.vibrate) navigator.vibrate([200, 100, 200]); 
+      const card = document.querySelector('.screen.active .login-card') || document.querySelector('.screen.active');
       if(card) {
-          card.style.transform = 'translateY(-5px)';
-          card.style.borderColor = 'var(--neon-r)';
-          setTimeout(() => { card.style.transform = 'translateY(0)'; card.style.borderColor = 'var(--border)'; }, 300);
+          card.style.transition = "transform 0.1s ease";
+          card.style.transform = 'translateX(-10px)';
+          setTimeout(() => { card.style.transform = 'translateX(10px)'; }, 100);
+          setTimeout(() => { card.style.transform = 'translateX(-10px)'; }, 200);
+          setTimeout(() => { card.style.transform = 'translateX(0)'; }, 300);
       }
   }
 
@@ -1112,7 +1115,6 @@
   window.closeNewOrderModal = function() { document.getElementById('newOrderModal').classList.remove('open'); };
   window.showToast = function(msg) { const existing = document.querySelector('.toast'); if (existing) existing.remove(); const el = document.createElement('div'); el.className = 'toast'; el.innerHTML = msg; document.body.appendChild(el); setTimeout(() => el.remove(), 3000); };
 
-  // INJEÇÃO 1: GRAVAR sessionStart sem sobrescrever a cada 15 segundos
   async function setOnlineStatus() {
      if(auth.currentUser && userDataGlobal && !currentConfig.isPaused) {
         if(userDataGlobal.status === 'pendente' || userDataGlobal.status === 'bloqueado') return;
@@ -1136,12 +1138,12 @@
       }
   });
 
+  // MENSAGEM CLARA DE ERRO DE LOGIN COM VIBRAÇÃO
   function handleAuthError(error) {
     triggerErrorFeedback(); 
-    
     if(error.code === 'auth/email-already-in-use') return '<i class="ph-fill ph-warning-octagon"></i> E-mail já está em uso!';
     if(error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-        return '<i class="ph-fill ph-warning-octagon"></i> E-mail ou senha incorretos!';
+        return '<i class="ph-fill ph-warning-octagon"></i> E-mail ou senha incorretos! Tente novamente.';
     }
     if(error.code === 'auth/invalid-email') return '<i class="ph-fill ph-warning-octagon"></i> E-mail inválido!';
     if(error.code === 'auth/weak-password') return '<i class="ph-fill ph-warning-octagon"></i> A senha deve ter 6+ caracteres!';
@@ -1603,6 +1605,9 @@
       const offset = new Date().getTimezoneOffset() * 60000;
       const hojeStr = new Date(Date.now() - offset).toISOString().split('T')[0];
 
+      if (!window.seenOrderIds) window.seenOrderIds = new Set();
+      if (!window.pendingDelayedOrders) window.pendingDelayedOrders = new Set();
+
       snapshot.forEach((docSnap) => {
         try {
           const data = docSnap.data(); data.id = docSnap.id; window.allOrdersMemory[docSnap.id] = data;
@@ -1610,20 +1615,31 @@
           if(data.status === 'aguardando') {
             if(data.bagGrande === true && userDataGlobal && !userDataGlobal.bagGrande) return; 
 
-            // INJEÇÃO 2: TRAVA DE PUNIÇÃO (ATRASO DE 5s)
-            if (userDataGlobal.punishedUntil && userDataGlobal.punishedUntil > Date.now()) {
-                const tempoDecorrido = Date.now() - data.timestamp;
-                if (tempoDecorrido < 5000) {
-                    setTimeout(() => {
-                        getDoc(doc(db, "pedidos", docSnap.id)).then(checkSnap => {
-                            if(checkSnap.exists() && checkSnap.data().status === 'aguardando') {
-                                pendentes++; 
-                                container.appendChild(buildCardReal(docSnap.id, checkSnap.data()));
-                                document.getElementById('emptyMural').style.display = 'none';
-                            }
-                        });
-                    }, 5000 - tempoDecorrido);
+            const isNewOrderToThisDevice = !window.seenOrderIds.has(docSnap.id);
+            
+            if (isNewOrderToThisDevice) {
+                if (userDataGlobal.punishedUntil && userDataGlobal.punishedUntil > Date.now()) {
+                    if (!window.pendingDelayedOrders.has(docSnap.id)) {
+                        window.pendingDelayedOrders.add(docSnap.id);
+                        
+                        setTimeout(() => {
+                            window.pendingDelayedOrders.delete(docSnap.id);
+                            window.seenOrderIds.add(docSnap.id);
+                            
+                            getDoc(doc(db, "pedidos", docSnap.id)).then(checkSnap => {
+                                if(checkSnap.exists() && checkSnap.data().status === 'aguardando') {
+                                    if(!document.getElementById('card-' + docSnap.id)) {
+                                        pendentes++; 
+                                        container.appendChild(buildCardReal(docSnap.id, checkSnap.data()));
+                                        document.getElementById('emptyMural').style.display = 'none';
+                                    }
+                                }
+                            });
+                        }, 5000); 
+                    }
                     return; 
+                } else {
+                    window.seenOrderIds.add(docSnap.id);
                 }
             }
 
@@ -1710,7 +1726,6 @@
     });
   }
 
-  // BOTÃO FINAL DE PUBLICAR NO MURAL (COM PREVENÇÃO DE CLIQUE DUPLO)
   window.publishOrderReal = async function() {
     if(window.isProcessingClick) return; 
     window.isProcessingClick = true;
@@ -1752,7 +1767,9 @@
   };
 
   function buildCardReal(id, data) {
-    const div = document.createElement('div'); div.className = 'delivery-card new-arrival';
+    const div = document.createElement('div'); 
+    div.className = 'delivery-card new-arrival'; 
+    div.id = 'card-' + id; 
     
     const logoOrPhHtml = data.lojaLogo 
         ? `<img src="${data.lojaLogo}" alt="Logo ${data.lojaNome}">` 
@@ -1776,18 +1793,32 @@
     return div;
   }
 
-  // ACEITAR PEDIDO COM PREVENÇÃO DE CLIQUE DUPLO
+  // TRAVA DE SALDO REFORÇADA E CLARA
   window.acceptOrderReal = async function(id) {
     if(window.isProcessingClick) return;
     window.isProcessingClick = true;
 
     if(currentConfig.isPaused) { window.isProcessingClick = false; return showToast("<i class='ph-fill ph-prohibit'></i> Manutenção."); }
+    
     const taxaCobranca = currentConfig.taxaApp || 0.40;
-    if(userDataGlobal.saldo < taxaCobranca) { window.isProcessingClick = false; return showToast(`Saldo insuficiente (Mínimo R$ ${taxaCobranca.toFixed(2).replace('.',',')}).`); }
+    const currentSaldo = userDataGlobal.saldo !== undefined ? parseFloat(userDataGlobal.saldo) : 0;
+    
+    // BLOQUEIO MATADOR SE O SALDO FOR MENOR
+    if(currentSaldo < taxaCobranca) { 
+        window.isProcessingClick = false; 
+        window.triggerErrorFeedback(); // Vibra a tela do motoboy
+        return showToast(`<i class="ph-fill ph-warning"></i> Saldo insuficiente! Você precisa de no mínimo R$ ${taxaCobranca.toFixed(2).replace('.',',')} (Taxa do App) para aceitar.`); 
+    }
     
     showLoading('ACEITANDO...');
     try {
-      await updateDoc(doc(db, "pedidos", id), { status: 'aceito', motoboyId: auth.currentUser.uid, motoboyNome: userDataGlobal.nome, motoboyWhats: userDataGlobal.whats || '', motoboyPix: userDataGlobal.chavePix || '' });
+      const orderRef = doc(db, "pedidos", id);
+      const orderSnap = await getDoc(orderRef);
+      if(!orderSnap.exists() || orderSnap.data().status !== 'aguardando') {
+          throw new Error("Pedido não está mais disponível.");
+      }
+
+      await updateDoc(orderRef, { status: 'aceito', motoboyId: auth.currentUser.uid, motoboyNome: userDataGlobal.nome, motoboyWhats: userDataGlobal.whats || '', motoboyPix: userDataGlobal.chavePix || '' });
       await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { status: 'em_rota' });
       triggerLightning(); showToast('<i class="ph-fill ph-lightning"></i> Rota aceita! Vá para a Loja.');
     } catch(e) { showToast('<i class="ph-fill ph-warning"></i> Alguém foi mais rápido ou ocorreu um erro!'); } finally { hideLoading(); window.isProcessingClick = false; }
@@ -1797,11 +1828,18 @@
     if(!activeOrderId) return;
     showLoading('CONCLUINDO...');
     try {
+      const taxaCobranca = currentConfig.taxaApp || 0.40; 
+      const currentSaldo = userDataGlobal.saldo !== undefined ? parseFloat(userDataGlobal.saldo) : 0;
+      const novoSaldo = currentSaldo - taxaCobranca;
+
       await updateDoc(doc(db, "pedidos", activeOrderId), { status: 'concluido' });
-      const taxaCobranca = currentConfig.taxaApp || 0.40; const novoSaldo = userDataGlobal.saldo - taxaCobranca;
       await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { saldo: novoSaldo, status: 'online', entregasFeitas: increment(1) });
-      document.getElementById('activeOrderBox').classList.remove('visible'); document.getElementById('muralTitle').style.display = 'flex'; activeOrderId = null; showToast(`Corrida concluída! -R$ ${taxaCobranca.toFixed(2).replace('.',',')}`);
-    } catch(e) {} finally { hideLoading(); }
+      
+      document.getElementById('activeOrderBox').classList.remove('visible'); document.getElementById('muralTitle').style.display = 'flex'; activeOrderId = null; 
+      showToast(`Corrida concluída! -R$ ${taxaCobranca.toFixed(2).replace('.',',')}`);
+    } catch(e) {
+      showToast("Erro ao concluir: " + e.message);
+    } finally { hideLoading(); }
   };
 
   window.returnOrder = async function() {
