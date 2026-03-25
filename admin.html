@@ -17,6 +17,7 @@
     --neon-g:    #00ff88;
     --neon-b:    #00c8ff;
     --neon-r:    #ff3366;
+    --neon-orange: #ff9900;
     --text:      #e8e8f0;
     --muted:     #6b6b8a;
     --font-head: 'Orbitron', monospace;
@@ -46,6 +47,7 @@
   .form-group label { display: block; font-family: var(--font-mono); font-size: 11px; color: var(--muted); letter-spacing: .15em; text-transform: uppercase; margin-bottom: 6px; }
   .form-group input { width: 100%; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; color: var(--text); font-family: var(--font-body); font-size: 16px; outline: none; transition: all .2s; }
   .form-group input:focus { border-color: var(--neon-r); box-shadow: 0 0 0 3px rgba(255,51,102,.1); }
+  .form-group select { width: 100%; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; color: var(--text); font-family: var(--font-body); font-size: 14px; outline: none; transition: all .2s; }
   .form-group textarea { width: 100%; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; color: var(--text); font-family: var(--font-body); font-size: 16px; outline: none; transition: all .2s; resize: vertical; }
 
   .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 16px; border-radius: 10px; border: none; cursor: pointer; font-family: var(--font-head); font-size: 14px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; transition: all .2s; }
@@ -73,6 +75,9 @@
   .tab-content.active { display: block; }
 
   @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  .filter-bar { background: var(--bg2); border: 1px dashed var(--border); border-radius: 12px; padding: 16px; margin-bottom: 24px; display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; }
+  .filter-group { flex: 1; min-width: 150px; margin-bottom: 0; }
 
   /* CARDS CLICÁVEIS DO DASHBOARD */
   .stats-dash { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; margin-bottom: 32px; }
@@ -106,7 +111,6 @@
   .kill-switch h3 { font-family: var(--font-head); font-size: 16px; margin-bottom: 4px;}
   .kill-switch p { font-size: 12px; color: var(--muted);}
 
-  /* ANIMAÇÕES E MODAIS */
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.8); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(4px);}
   .modal-overlay.open { display: flex; animation: fadeIn .2s; }
   .modal-overlay.top-align { align-items: flex-start; padding-top: 4vh; }
@@ -117,25 +121,21 @@
   .modal.modal-top { border-radius: 20px; animation: slideDown .3s ease-out; max-height: 80vh; padding-bottom: 24px; }
   .modal h3 { font-family: var(--font-head); font-size: 16px; margin-bottom: 24px; display:flex; align-items:center; gap:8px;}
 
-  /* Search Input */
   .search-box { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; color: var(--text); font-size: 14px; outline: none; margin-bottom: 20px; font-family: var(--font-body); transition: 0.2s;}
   .search-box:focus { border-color: var(--neon-y); }
   
-  /* Inbox Message Card */
   .inbox-card { background: var(--bg2); border: 1px solid var(--border); padding: 16px; border-radius: 12px; margin-bottom: 12px; }
   .inbox-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12px; color: var(--muted); font-family: var(--font-mono); }
   .inbox-msg { color: var(--text); font-size: 14px; margin-bottom: 12px; }
   .inbox-reply { background: rgba(0,255,136,.05); border-left: 3px solid var(--neon-g); padding: 12px; border-radius: 4px; font-size: 13px; color: var(--text); }
   .inbox-reply strong { color: var(--neon-g); font-family: var(--font-mono); font-size: 11px; display: block; margin-bottom: 4px; }
 
-  /* MODO DE LISTA NO MODAL (PARA AS ESTATÍSTICAS) */
   .list-item-user { display:flex; align-items:center; gap:12px; padding:12px; border-bottom:1px solid var(--border); }
   .list-item-avatar { width:40px; height:40px; border-radius:8px; background:var(--bg2); display:flex; justify-content:center; align-items:center; font-size:20px; color:var(--neon-b); object-fit:cover; }
   .list-item-avatar.moto { border-radius: 50%; color: var(--neon-y); }
   .list-item-info { flex: 1; }
   .list-item-name { font-weight:bold; font-size:14px; color:var(--text); margin-bottom: 2px; }
 
-  /* GIRA-GIRA DO CARREGAMENTO */
   @keyframes spin { 100% { transform: rotate(360deg); } }
   .ph-spin { animation: spin 1s linear infinite; }
 </style>
@@ -172,13 +172,13 @@
   <div class="tab-nav">
     <div class="tab-btn active" onclick="switchTab('tab-dash')"><i class="ph-fill ph-squares-four"></i> DASHBOARD</div>
     <div class="tab-btn" onclick="switchTab('tab-users')"><i class="ph-fill ph-users"></i> USUÁRIOS <span id="badgePendente" style="background:var(--neon-r); color:#fff; padding:2px 6px; border-radius:10px; font-size:10px; display:none; margin-left:4px;">0</span></div>
+    <div class="tab-btn" onclick="switchTab('tab-ranking')"><i class="ph-fill ph-trophy"></i> RANKING</div>
     <div class="tab-btn" onclick="switchTab('tab-orders')"><i class="ph-fill ph-package"></i> PEDIDOS AO VIVO</div>
     <div class="tab-btn" onclick="switchTab('tab-config')"><i class="ph-fill ph-gear"></i> CONFIGURAÇÕES</div>
     <div class="tab-btn" onclick="switchTab('tab-msg')"><i class="ph-fill ph-chats"></i> COMUNICAÇÃO</div>
   </div>
 
   <div class="tab-content active" id="tab-dash">
-    
     <div class="kill-switch" id="killSwitchBox">
        <div>
          <h3><i class="ph-fill ph-power"></i> STATUS DA PLATAFORMA</h3>
@@ -187,9 +187,26 @@
        <button class="btn btn-red" style="width: auto; margin: 0;" onclick="togglePlataforma()" id="btnKillSwitch">PAUSAR APLICATIVO</button>
     </div>
 
+    <div class="filter-bar">
+      <div class="form-group filter-group">
+        <label>Data Início</label>
+        <input type="date" id="dashDataInicio">
+      </div>
+      <div class="form-group filter-group">
+        <label>Data Fim</label>
+        <input type="date" id="dashDataFim">
+      </div>
+      <button class="btn btn-primary" style="width: auto; margin:0;" onclick="aplicarFiltroDash()">
+        <i class="ph-bold ph-funnel"></i> FILTRAR
+      </button>
+      <button class="btn btn-secondary" style="width: auto; margin:0;" onclick="resetarFiltroDash()">
+        LIMPAR
+      </button>
+    </div>
+
     <div class="stats-dash">
-      <div class="stat-box" style="cursor:default; border-color:var(--border);"><i class="ph-fill ph-money" style="color:var(--neon-g)"></i><div class="val" id="dashFaturamentoHoje">R$ 0,00</div><div class="lbl">Faturamento (Hoje)</div></div>
-      <div class="stat-box" style="cursor:default; border-color:var(--border);"><i class="ph-fill ph-check-circle" style="color:var(--neon-b)"></i><div class="val" id="dashEntregasHoje">0</div><div class="lbl">Entregas Concluídas</div></div>
+      <div class="stat-box" style="cursor:default; border-color:var(--border);"><i class="ph-fill ph-money" style="color:var(--neon-g)"></i><div class="val" id="dashFaturamentoHoje">R$ 0,00</div><div class="lbl" id="lblFaturamento">Faturamento (Hoje)</div></div>
+      <div class="stat-box" style="cursor:default; border-color:var(--border);"><i class="ph-fill ph-check-circle" style="color:var(--neon-b)"></i><div class="val" id="dashEntregasHoje">0</div><div class="lbl" id="lblEntregas">Entregas Concluídas</div></div>
       
       <div class="stat-box" onclick="abrirListaLojasAdmin()" style="border-color: rgba(245,230,66,.2); background: rgba(245,230,66,.05);"><i class="ph-fill ph-storefront" style="color:var(--neon-y)"></i><div class="val" id="dashLojas">0</div><div class="lbl">Lojas Ativas</div></div>
       <div class="stat-box" onclick="abrirListaMotosAdmin()" style="border-color: rgba(245,230,66,.2); background: rgba(245,230,66,.05);"><i class="ph-fill ph-motorcycle" style="color:var(--neon-y)"></i><div class="val" id="dashMotos">0</div><div class="lbl">Motos Ativas</div></div>
@@ -199,6 +216,15 @@
     <div id="alertasList">
       <div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;border:1px dashed var(--border);border-radius:12px;">Todos os usuários estão com boa pontuação.</div>
     </div>
+  </div>
+
+  <div class="tab-content" id="tab-ranking">
+    <p class="section-title"><i class="ph-fill ph-trophy" style="color:var(--neon-y)"></i> RANKING E HORAS TRABALHADAS</p>
+    <p style="font-size:12px; color:var(--muted); margin-bottom:20px;">
+       Acompanhe quem mais faz entregas e monitore a jornada para evitar acidentes por fadiga.<br>
+       * O tempo da sessão conta a partir do momento que o motoboy fica Online.
+    </p>
+    <div id="adminRankingList"></div>
   </div>
 
   <div class="tab-content" id="tab-users">
@@ -216,13 +242,26 @@
 
   <div class="tab-content" id="tab-orders">
     <p class="section-title"><i class="ph-fill ph-crosshair"></i> MONITORAMENTO DE PEDIDOS</p>
+    <div class="filter-bar">
+        <div class="form-group filter-group">
+            <label>Status do Pedido</label>
+            <select id="filterOrderStatus" onchange="window.renderListaPedidosAdmin()">
+                <option value="todos">Todos</option>
+                <option value="aguardando">Aguardando Moto</option>
+                <option value="aceito">Em Rota</option>
+            </select>
+        </div>
+        <div class="form-group filter-group" style="flex:2;">
+            <label>Buscar Loja/Cliente</label>
+            <input type="text" id="searchOrderAdmin" placeholder="Digite para buscar..." onkeyup="window.renderListaPedidosAdmin()">
+        </div>
+    </div>
     <div id="adminOrdersList">
       <div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;border:1px dashed var(--border);border-radius:12px;">Nenhum pedido rodando no momento.</div>
     </div>
   </div>
 
   <div class="tab-content" id="tab-config">
-    
     <div style="background:var(--bg2); border:1px solid var(--border); padding:24px; border-radius:12px; margin-bottom:24px;">
        <p class="section-title" style="color:var(--neon-b)"><i class="ph-fill ph-clock"></i> REGRAS DE TAXA E HORÁRIO NOTURNO</p>
        <p style="font-size: 12px; color: var(--muted); margin-bottom: 16px;">Defina o valor mínimo da entrega e a partir de que horas o valor noturno entra em vigor.</p>
@@ -245,8 +284,7 @@
           <button class="btn btn-green" style="width:auto; margin:0;" onclick="adicionarBairro()"><i class="ph-bold ph-plus"></i> ADC</button>
        </div>
 
-       <div id="listaBairrosAdmin">
-          </div>
+       <div id="listaBairrosAdmin"></div>
     </div>
 
     <div style="background:var(--bg2); border:1px solid var(--border); padding:24px; border-radius:12px; margin-bottom:24px;">
@@ -332,7 +370,6 @@
       document.getElementById('globalLoader').style.display = 'flex';
   };
   window.hideLoading = function() { document.getElementById('globalLoader').style.display = 'none'; };
-
   window.fecharListaModal = function() { document.getElementById('listModal').classList.remove('open'); }
 
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
@@ -357,6 +394,52 @@
 
   window.listaLojasAdmin = [];
   window.listaMotosAdmin = [];
+  
+  // VARIÁVEIS GLOBAIS PARA FILTROS GMT-3
+  window.dashFiltroAtivo = false;
+  window.dashDataInicioVal = "";
+  window.dashDataFimVal = "";
+  window.todosPedidosMemoria = [];
+
+  window.getDataAtualParagominas = function() {
+      const d = new Date();
+      const utc = d.getTime() + (d.getTimezoneOffset() * 60000);
+      return new Date(utc - (3600000 * 3)).toISOString().split('T')[0];
+  };
+
+  window.getDataFormatadaGMT3 = function(timestamp) {
+      if(!timestamp) return "";
+      let dateObj = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+      const utc = dateObj.getTime() + (dateObj.getTimezoneOffset() * 60000);
+      return new Date(utc - (3600000 * 3)).toISOString().split('T')[0];
+  };
+
+  document.addEventListener('DOMContentLoaded', () => {
+      const hj = window.getDataAtualParagominas();
+      if(document.getElementById('dashDataInicio')) document.getElementById('dashDataInicio').value = hj;
+      if(document.getElementById('dashDataFim')) document.getElementById('dashDataFim').value = hj;
+  });
+
+  window.aplicarFiltroDash = function() {
+      const ini = document.getElementById('dashDataInicio').value;
+      const fim = document.getElementById('dashDataFim').value;
+      if(!ini || !fim) return window.showToast("<i class='ph-fill ph-warning'></i> Selecione as duas datas.");
+      window.dashFiltroAtivo = true; window.dashDataInicioVal = ini; window.dashDataFimVal = fim;
+      document.getElementById('lblFaturamento').textContent = "Faturamento (Período)";
+      document.getElementById('lblEntregas').textContent = "Entregas (Período)";
+      if(window.atualizarNumerosDash) window.atualizarNumerosDash();
+      window.showToast("<i class='ph-fill ph-funnel'></i> Filtro aplicado!");
+  };
+
+  window.resetarFiltroDash = function() {
+      window.dashFiltroAtivo = false;
+      document.getElementById('dashDataInicio').value = window.getDataAtualParagominas();
+      document.getElementById('dashDataFim').value = window.getDataAtualParagominas();
+      document.getElementById('lblFaturamento').textContent = "Faturamento (Hoje)";
+      document.getElementById('lblEntregas').textContent = "Entregas Concluídas";
+      if(window.atualizarNumerosDash) window.atualizarNumerosDash();
+      window.showToast("<i class='ph-bold ph-x'></i> Filtro limpo.");
+  };
 
   window.showScreen = function(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); };
   window.showToast = function(msg) {
@@ -393,7 +476,6 @@
       });
   }
 
-  // ── LÓGICA DE LISTAS CLICÁVEIS DO ADMIN ──
   window.abrirListaLojasAdmin = function() {
      let filtrados = window.listaLojasAdmin.filter(l => l.status === 'online');
      let html = '';
@@ -470,11 +552,121 @@
 
   let adminUnsubscribe = null; let promoUnsubscribe = null; let ordersUnsubscribe = null; let inboxUnsubscribe = null; let recargasUnsubscribe = null;
   let bairrosUnsubscribe = null; let taxasGlobaisUnsubscribe = null;
+
+  window.todasRecargasMemoria = []; 
+
+  window.atualizarNumerosDash = function() {
+      let faturamentoDash = 0; let entregasDash = 0;
+      let dataIni = window.dashFiltroAtivo ? window.dashDataInicioVal : window.getDataAtualParagominas();
+      let dataFim = window.dashFiltroAtivo ? window.dashDataFimVal : window.getDataAtualParagominas();
+
+      window.todasRecargasMemoria.forEach(d => {
+          if(d.timestamp) {
+             const diaStr = window.getDataFormatadaGMT3(d.timestamp);
+             if(diaStr >= dataIni && diaStr <= dataFim) { faturamentoDash += d.valor; }
+          }
+      });
+      window.todosPedidosMemoria.forEach(d => {
+          if(d.status === 'concluido' && d.timestamp) {
+             const diaStr = window.getDataFormatadaGMT3(d.timestamp);
+             if(diaStr >= dataIni && diaStr <= dataFim) { entregasDash++; }
+          }
+      });
+
+      if(document.getElementById('dashFaturamentoHoje')) document.getElementById('dashFaturamentoHoje').textContent = `R$ ${faturamentoDash.toFixed(2).replace('.',',')}`;
+      if(document.getElementById('dashEntregasHoje')) document.getElementById('dashEntregasHoje').textContent = entregasDash;
+  };
   
+  // NOVA FUNÇÃO: APLICAR PUNIÇÃO (SHADOWBAN 5s POR 1H)
+  window.aplicarPunicao = async function(id, nome) {
+      if(confirm(`Punir ${nome} por 1 hora?\nOs pedidos vão demorar 5 segundos a mais para aparecer no mural dele.`)) {
+          showLoading('PUNINDO...');
+          try {
+              // Adiciona 1 hora a partir de agora (3.600.000 ms)
+              await updateDoc(doc(db, "usuarios", id), { punishedUntil: Date.now() + 3600000 });
+              showToast('<i class="ph-fill ph-timer"></i> Punição aplicada com sucesso!');
+          } catch(e) { alert("Erro: " + e.message); } finally { hideLoading(); }
+      }
+  }
+
+  // NOVA FUNÇÃO: REMOVER PUNIÇÃO
+  window.removerPunicao = async function(id) {
+      if(confirm(`Perdoar motoboy e remover a punição de atraso?`)) {
+          showLoading('PERDOANDO...');
+          try {
+              await updateDoc(doc(db, "usuarios", id), { punishedUntil: null });
+              showToast('<i class="ph-fill ph-check-circle"></i> Punição removida!');
+          } catch(e) { alert("Erro: " + e.message); } finally { hideLoading(); }
+      }
+  }
+
+  // RENDERIZAR O RANKING NA ABA
+  window.renderRankingEHoras = function() {
+      let motosRanking = [...window.listaMotosAdmin];
+      motosRanking.sort((a, b) => (b.entregasFeitas || 0) - (a.entregasFeitas || 0));
+
+      const rList = document.getElementById('adminRankingList');
+      rList.innerHTML = '';
+      let rankPos = 1;
+
+      motosRanking.forEach(m => {
+          let sessionHoras = 0;
+          let isOvertime = false;
+          let btnOffline = '';
+
+          if(m.status === 'online' || m.status === 'em_rota') {
+              if(m.sessionStart) {
+                  sessionHoras = (Date.now() - m.sessionStart) / (1000 * 60 * 60);
+              } else {
+                  sessionHoras = 0; 
+              }
+              if(sessionHoras > 26) isOvertime = true;
+              btnOffline = `<button class="btn-icon" style="color:var(--neon-r); border-color:var(--neon-r); width:auto; padding:0 12px; font-size:11px; margin-right:8px;" onclick="forcarMotoboyOffline('${m.id}', '${m.nome}')"><i class="ph-bold ph-power"></i> FORÇAR OFFLINE</button>`;
+          }
+
+          let isPunished = m.punishedUntil && m.punishedUntil > Date.now();
+          let btnPunir = isPunished 
+              ? `<button class="btn-icon" style="color:var(--neon-orange); border-color:var(--neon-orange); width:auto; padding:0 12px; font-size:11px;" onclick="removerPunicao('${m.id}')"><i class="ph-bold ph-timer"></i> PERDOAR</button>`
+              : `<button class="btn-icon" style="color:var(--muted); border-color:var(--border); width:auto; padding:0 12px; font-size:11px;" onclick="aplicarPunicao('${m.id}', '${m.nome}')"><i class="ph-bold ph-timer"></i> PUNIR 1H</button>`;
+
+          let trofeu = rankPos === 1 ? '🥇' : (rankPos === 2 ? '🥈' : (rankPos === 3 ? '🥉' : `#${rankPos}`));
+          let color = rankPos <= 3 ? 'var(--neon-y)' : 'var(--muted)';
+          let statusCor = (m.status === 'online' || m.status === 'em_rota') ? 'var(--neon-g)' : 'var(--muted)';
+          let tagPunicao = isPunished ? `<span style="color:var(--neon-orange); font-size:11px; font-weight:bold; margin-left:8px;"><i class="ph-fill ph-timer"></i> PUNIDO (Atraso de 5s)</span>` : '';
+
+          rList.innerHTML += `
+          <div class="admin-row" style="${isOvertime || isPunished ? 'border-color:var(--neon-r); background:rgba(255,51,102,0.05);' : ''}">
+              <div class="admin-row-info" style="display:flex; align-items:center; gap:16px;">
+                  <div style="font-size:24px; font-weight:bold; color:${color}; width:40px; text-align:center;">${trofeu}</div>
+                  <div>
+                      <h4>${m.nome} ${tagPunicao}</h4>
+                      <p style="color:var(--neon-b); font-size:14px; font-family:var(--font-head);">📦 ${m.entregasFeitas || 0} ENTREGAS CONCLUÍDAS</p>
+                      <p style="margin-top:4px;"><span style="color:${statusCor}">●</span> Tempo online hoje: <strong>${sessionHoras.toFixed(1)}h</strong> ${isOvertime ? '<strong style="color:var(--neon-r)">(ALERTA DE FADIGA)</strong>' : ''}</p>
+                  </div>
+              </div>
+              <div class="admin-row-actions">
+                  ${btnOffline} ${btnPunir}
+              </div>
+          </div>`;
+          rankPos++;
+      });
+
+      if(motosRanking.length === 0) rList.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted); border:1px dashed var(--border); border-radius:12px;">Nenhum motoboy para rankear no momento.</div>';
+  }
+
+  window.forcarMotoboyOffline = async function(id, nome) {
+      if(confirm(`Tem certeza que deseja forçar o motoboy ${nome} a ficar OFFLINE?\nIsso deve ser usado em caso de cansaço extremo ou erro de sistema.`)) {
+          showLoading('DESCONECTANDO...');
+          try {
+              await updateDoc(doc(db, "usuarios", id), { status: 'offline', sessionStart: null });
+              showToast('<i class="ph-fill ph-check-circle"></i> Motoboy desconectado da rua.');
+          } catch(e) { alert("Erro: " + e.message); } finally { hideLoading(); }
+      }
+  }
+
   function startAdminListener() {
     if(!auth.currentUser) return;
     
-    // Listener das Taxas Globais (Dia/Noite/Virada)
     if(taxasGlobaisUnsubscribe) taxasGlobaisUnsubscribe();
     taxasGlobaisUnsubscribe = onSnapshot(doc(db, "config", "taxasGlobais"), (docSnap) => {
         if(docSnap.exists()) {
@@ -485,15 +677,12 @@
         }
     });
 
-    // Listener da Tabela de Bairros (CRUD)
     if(bairrosUnsubscribe) bairrosUnsubscribe();
     bairrosUnsubscribe = onSnapshot(collection(db, "bairros"), (snapshot) => {
         const list = document.getElementById('listaBairrosAdmin');
         list.innerHTML = '';
-        let cont = 0;
-        let bairrosHTML = '';
+        let cont = 0; let bairrosHTML = '';
         
-        // Criar array para ordenar alfabeticamente
         let bairrosArray = [];
         snapshot.forEach(docSnap => { bairrosArray.push({ id: docSnap.id, ...docSnap.data() }); });
         bairrosArray.sort((a, b) => a.nome.localeCompare(b.nome));
@@ -511,29 +700,16 @@
             </div>`;
         });
         
-        if(cont === 0) {
-            list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px; border:1px dashed var(--border); border-radius:8px;">Nenhum bairro distante cadastrado.</div>';
-        } else {
-            list.innerHTML = bairrosHTML;
-        }
+        if(cont === 0) list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px; border:1px dashed var(--border); border-radius:8px;">Nenhum bairro distante cadastrado.</div>';
+        else list.innerHTML = bairrosHTML;
     });
 
     if(recargasUnsubscribe) recargasUnsubscribe();
     const qRecargas = query(collection(db, "recargas"));
     recargasUnsubscribe = onSnapshot(qRecargas, (snapshot) => {
-       let faturamentoHoje = 0;
-       const offset = new Date().getTimezoneOffset() * 60000;
-       const hojeStr = (new Date(Date.now() - offset)).toISOString().split('T')[0];
-
-       snapshot.forEach(docSnap => {
-          const d = docSnap.data();
-          if(d.timestamp) {
-             const dateRecarga = new Date(d.timestamp);
-             const recargaStr = new Date(dateRecarga.getTime() - offset).toISOString().split('T')[0];
-             if(recargaStr === hojeStr) { faturamentoHoje += d.valor; }
-          }
-       });
-       if(document.getElementById('dashFaturamentoHoje')) { document.getElementById('dashFaturamentoHoje').textContent = `R$ ${faturamentoHoje.toFixed(2).replace('.',',')}`; }
+       window.todasRecargasMemoria = [];
+       snapshot.forEach(docSnap => window.todasRecargasMemoria.push(docSnap.data()));
+       window.atualizarNumerosDash();
     });
     
     if(promoUnsubscribe) promoUnsubscribe();
@@ -636,11 +812,20 @@
              mCount++;
              const isBlocked = d.status === 'bloqueado'; const isOnline = d.status === 'online' || d.status === 'em_rota';
              if(isOnline) ativosMotos++;
+             
+             let isPunished = d.punishedUntil && d.punishedUntil > Date.now();
+             let badgePunido = isPunished ? `<span class="status-badge" style="background: rgba(255,153,0,0.1); color: var(--neon-orange); border: 1px solid var(--neon-orange); margin-left:6px;"><i class="ph-fill ph-timer"></i> Punido (Atraso 5s)</span>` : '';
+             
              let statusTag = isBlocked ? `<span class="status-badge status-blocked">Bloqueado</span>` : (isOnline ? `<span class="status-badge status-active">Online</span>` : `<span class="status-badge status-offline">Offline</span>`);
+             
+             let btnPunir = isPunished 
+                ? `<button class="btn-icon" style="color:var(--neon-orange); border-color:var(--neon-orange); width: auto; padding: 0 12px; font-size:12px; font-weight:bold;" onclick="removerPunicao('${id}')"><i class="ph-bold ph-timer"></i> PERDOAR</button>`
+                : `<button class="btn-icon" style="color:var(--muted); border-color:var(--border); width: auto; padding: 0 12px; font-size:12px; font-weight:bold;" onclick="aplicarPunicao('${id}', '${d.nome}')"><i class="ph-bold ph-timer"></i> PUNIR (1H)</button>`;
+
              mList.innerHTML += `
                 <div class="admin-row">
                   <div class="admin-row-info">
-                    <h4><i class="ph-fill ph-motorcycle"></i> ${d.nome}</h4>
+                    <h4><i class="ph-fill ph-motorcycle"></i> ${d.nome} ${badgePunido}</h4>
                     <p>Entregas Concluídas: <strong>${d.entregasFeitas || 0}</strong> | Avaliação: ${estrelasHtml}</p>
                     <p>E-mail: ${d.email} | Saldo: <strong style="color: ${d.saldo < 0.40 ? 'var(--neon-r)' : 'var(--neon-g)'}">R$ ${(d.saldo || 0).toFixed(2).replace('.',',')}</strong> | Placa: ${d.placa} | ${fotoLink}</p>
                     <p style="margin-top:6px;">${statusTag}</p>
@@ -649,6 +834,7 @@
                     <button class="btn-icon" title="Forçar Redefinição de Senha" onclick="forcarResetSenha('${d.email}')"><i class="ph-bold ph-key"></i></button>
                     <button class="btn-icon" title="Enviar Mensagem" onclick="openMsgModal('${id}', '${encodeURIComponent(d.nome || '')}')"><i class="ph-fill ph-chat-text"></i></button>
                     <button class="btn-icon" title="Editar Dados" onclick="openEditUserModal('${id}', '${encodeURIComponent(d.nome || '')}', '${d.documento}', '${d.placa}')"><i class="ph-fill ph-pencil"></i></button>
+                    ${btnPunir}
                     <button class="btn-icon" style="color:var(--neon-b); border-color:var(--neon-b); width: auto; padding: 0 12px; font-size:12px; font-weight:bold;" onclick="editarSaldo('${id}', '${d.nome}')">
                        <i class="ph-bold ph-currency-dollar"></i> SALDO
                     </button>
@@ -669,47 +855,17 @@
       if(mCount === 0) mList.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">Nenhum motoboy na base.</div>';
       if(lCount === 0) lList.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">Nenhuma loja na base.</div>';
       if(lowRatings === 0) alertList.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;border:1px dashed var(--border);border-radius:12px;">Todos os usuários estão com boas avaliações.</div>';
+      
+      window.renderRankingEHoras();
     });
 
     if(ordersUnsubscribe) ordersUnsubscribe();
     const qOrders = query(collection(db, "pedidos"), orderBy("timestamp", "desc"));
     ordersUnsubscribe = onSnapshot(qOrders, (snapshot) => {
-       const oList = document.getElementById('adminOrdersList'); oList.innerHTML = '';
-       let ativos = 0; let entregasHoje = 0;
-       const offset = new Date().getTimezoneOffset() * 60000;
-       const hojeStr = (new Date(Date.now() - offset)).toISOString().split('T')[0];
-
-       snapshot.forEach(docSnap => {
-          const d = docSnap.data(); const id = docSnap.id;
-          if(d.status === 'concluido') {
-             if(d.timestamp) {
-                const dateOrder = new Date(d.timestamp);
-                const orderStr = new Date(dateOrder.getTime() - offset).toISOString().split('T')[0];
-                if(orderStr === hojeStr) entregasHoje++;
-             }
-          } else {
-             ativos++;
-             let sit = d.status === 'aguardando' ? `<span class="status-badge status-pending">Aguardando Moto</span>` : `<span class="status-badge status-going">Em Rota com ${d.motoboyNome}</span>`;
-             oList.innerHTML += `
-               <div class="admin-row">
-                 <div class="admin-row-info" style="width:100%">
-                   <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                      <span style="font-family:var(--font-mono); color:var(--muted); font-size:11px;">ID: #${id.substring(0,6).toUpperCase()}</span>
-                      ${sit}
-                   </div>
-                   <h4>${d.lojaNome} <i class="ph-bold ph-arrow-right" style="color:var(--muted)"></i> Cliente</h4>
-                   <p>Destino: ${d.clienteEnd}</p>
-                   <div class="admin-row-actions" style="margin-top: 12px; border-top:1px solid var(--border); padding-top:12px;">
-                      ${d.status === 'aceito' ? `<button class="btn-icon" style="color:var(--neon-y); border-color:var(--neon-y); width:auto; padding:0 12px;" onclick="forcarDevolucao('${id}', '${d.motoboyId}')"><i class="ph-bold ph-arrow-u-up-left"></i> FORÇAR DEVOLUÇÃO</button>` : ''}
-                      <button class="btn-icon" style="color:var(--neon-r); border-color:var(--neon-r); width:auto; padding:0 12px;" onclick="cancelarPedido('${id}')"><i class="ph-bold ph-x"></i> CANCELAR PEDIDO</button>
-                   </div>
-                 </div>
-               </div>
-             `;
-          }
-       });
-       if (document.getElementById('dashEntregasHoje')) document.getElementById('dashEntregasHoje').textContent = entregasHoje;
-       if(ativos === 0) oList.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;border:1px dashed var(--border);border-radius:12px;">Nenhum pedido rodando no momento.</div>';
+       window.todosPedidosMemoria = [];
+       snapshot.forEach(docSnap => window.todosPedidosMemoria.push({id: docSnap.id, ...docSnap.data()}));
+       window.atualizarNumerosDash();
+       window.renderListaPedidosAdmin();
     });
 
     if(inboxUnsubscribe) inboxUnsubscribe();
@@ -736,7 +892,41 @@
     });
   }
 
-  // ── NOVAS FUNÇÕES: TAXAS E BAIRROS ──
+  window.renderListaPedidosAdmin = function() {
+      const oList = document.getElementById('adminOrdersList'); oList.innerHTML = '';
+      const filterStatus = document.getElementById('filterOrderStatus').value;
+      const filterText = document.getElementById('searchOrderAdmin').value.toLowerCase();
+      let ativos = 0;
+
+      window.todosPedidosMemoria.forEach(d => {
+         const matchesStatus = filterStatus === 'todos' || d.status === filterStatus;
+         const txtInfo = `${d.lojaNome || ''} ${d.clienteEnd || ''} ${d.motoboyNome || ''}`.toLowerCase();
+         const matchesText = filterText === '' || txtInfo.includes(filterText);
+
+         if(d.status !== 'concluido' && matchesStatus && matchesText) {
+             ativos++;
+             let sit = d.status === 'aguardando' ? `<span class="status-badge status-pending">Aguardando Moto</span>` : `<span class="status-badge status-active">Em Rota com ${d.motoboyNome}</span>`;
+             oList.innerHTML += `
+               <div class="admin-row">
+                 <div class="admin-row-info" style="width:100%">
+                   <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                      <span style="font-family:var(--font-mono); color:var(--muted); font-size:11px;">ID: #${d.id.substring(0,6).toUpperCase()}</span>
+                      ${sit}
+                   </div>
+                   <h4>${d.lojaNome} <i class="ph-bold ph-arrow-right" style="color:var(--muted)"></i> Cliente</h4>
+                   <p>Destino: ${d.clienteEnd}</p>
+                   <div class="admin-row-actions" style="margin-top: 12px; border-top:1px solid var(--border); padding-top:12px;">
+                      ${d.status === 'aceito' ? `<button class="btn-icon" style="color:var(--neon-y); border-color:var(--neon-y); width:auto; padding:0 12px;" onclick="forcarDevolucao('${d.id}', '${d.motoboyId}')"><i class="ph-bold ph-arrow-u-up-left"></i> FORÇAR DEVOLUÇÃO</button>` : ''}
+                      <button class="btn-icon" style="color:var(--neon-r); border-color:var(--neon-r); width:auto; padding:0 12px;" onclick="cancelarPedido('${d.id}')"><i class="ph-bold ph-x"></i> CANCELAR PEDIDO</button>
+                   </div>
+                 </div>
+               </div>
+             `;
+         }
+      });
+      if(ativos === 0) oList.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;border:1px dashed var(--border);border-radius:12px;">Nenhum pedido correspondente encontrado.</div>';
+  }
+
   window.salvarTaxasGlobais = async function() {
       const dia = parseFloat(document.getElementById('taxaDia').value);
       const noite = parseFloat(document.getElementById('taxaNoite').value);
@@ -752,7 +942,7 @@
   }
 
   window.adicionarBairro = async function() {
-      const nome = document.getElementById('novoBairroNome').value.trim();
+      const nome = document.getElementById('novoBairroNome').value.trim().toUpperCase();
       const dia = parseFloat(document.getElementById('novoBairroDia').value);
       const noite = parseFloat(document.getElementById('novoBairroNoite').value);
       
@@ -760,12 +950,7 @@
       
       showLoading('ADICIONANDO...');
       try {
-          // Salva o nome em maiúsculo para facilitar a busca no lado do lojista
-          await addDoc(collection(db, "bairros"), { 
-              nome: nome.toUpperCase(), 
-              taxaDia: dia, 
-              taxaNoite: noite 
-          });
+          await addDoc(collection(db, "bairros"), { nome: nome, taxaDia: dia, taxaNoite: noite });
           document.getElementById('novoBairroNome').value = '';
           document.getElementById('novoBairroDia').value = '';
           document.getElementById('novoBairroNoite').value = '';
@@ -783,7 +968,6 @@
       }
   }
 
-  // ── FUNÇÕES DE AÇÃO DO ADMIN ──
   window.forcarResetSenha = async function(emailAlvo) {
       if(!emailAlvo || emailAlvo === 'undefined') return alert('Este usuário não possui e-mail cadastrado ou válido.');
       if(confirm(`Tem certeza que deseja enviar o link de redefinição de senha para o e-mail:\n${emailAlvo}\n?`)) {
@@ -800,9 +984,7 @@
      const acao = isPaused ? "REATIVAR" : "PAUSAR (CONGELAR)";
      if(confirm(`Tem certeza que deseja ${acao} a plataforma?`)) {
         showLoading('ATUALIZANDO...');
-        try {
-           await setDoc(doc(db, "config", "geral"), { isPaused: !isPaused }, { merge: true });
-        } catch(e) { alert("Erro: " + e.message); } finally { hideLoading(); }
+        try { await setDoc(doc(db, "config", "geral"), { isPaused: !isPaused }, { merge: true }); } catch(e) { alert("Erro: " + e.message); } finally { hideLoading(); }
      }
   }
 
