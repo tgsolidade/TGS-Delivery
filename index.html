@@ -125,7 +125,7 @@
   .opt-text p { color: var(--muted); font-size: 13px; margin-top: 3px; }
 
   .screen-header { background: var(--panel); border-bottom: 1px solid var(--border); padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
-  .back-btn { width: 38px; height: 38px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; transition: all .2s; }
+  .back-btn { width: 38px; height: 38px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; cursor: display; display: flex; align-items: center; justify-content: center; font-size: 18px; transition: all .2s; }
   .back-btn:hover { border-color: var(--neon-b); color: var(--neon-b); }
   .screen-header h2 { font-family: var(--font-head); font-size: 15px; display:flex; align-items:center; gap:8px; }
   
@@ -511,7 +511,7 @@
           <div class="form-group" style="flex:1"><label>Número</label><input type="text" id="editLojaNum"></div>
         </div>
         <div style="display:flex; gap:10px;">
-          <div class="form-group" style="flex:1"><label>Bairro</label><input type="text" id="editLojaBairro"></div>
+          <div class="form-group" style="flex:1"><label>Bairro</label><input type="text" id="lojaBairro"></div>
           <div class="form-group" style="flex:1"><label>Referência</label><input type="text" id="editLojaRef"></div>
         </div>
         <button class="btn-green" onclick="salvarPerfilLoja()"><i class="ph-fill ph-floppy-disk"></i> SALVAR ALTERAÇÕES</button>
@@ -860,7 +860,7 @@
 
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
   import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, onAuthStateChanged, deleteUser } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-  import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, where, setDoc, doc, updateDoc, deleteDoc, getDoc, getDocs, increment, limit, runTransaction, enableNetwork, disableNetwork } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, where, setDoc, doc, updateDoc, deleteDoc, getDoc, getDocs, increment, limit, runTransaction, enableNetwork, disableNetwork, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDLSvxNn8jwZGG8Ky9MUlDRvSH6vHK7vdI",
@@ -874,6 +874,15 @@
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
+
+  // ATIVANDO CACHE OFFLINE PARA RODAR LISO NO 3G
+  enableIndexedDbPersistence(db).catch((err) => {
+      if (err.code == 'failed-precondition') {
+          console.log("Múltiplas abas abertas, persistência desativada.");
+      } else if (err.code == 'unimplemented') {
+          console.log("Navegador não suporta persistência offline.");
+      }
+  });
 
   let activeOrderId = null;
   let userDataGlobal = null; 
@@ -1574,7 +1583,8 @@
                 document.getElementById('activeWhatsLojaDiv').style.display = 'block'; document.getElementById('activeBtnWhatsLoja').onclick = () => window.open(`https://wa.me/${whatsNum}?text=${msgM}`, '_blank');
              } else { document.getElementById('activeWhatsLojaDiv').style.display = 'none'; }
 
-             document.getElementById('activeOrderBox').classList.add('visible'); document.getElementById('muralTitle').style.display = 'none';
+             document.getElementById('activeOrderBox').classList.add('visible'); 
+             document.getElementById('muralTitle').style.display = 'none';
           }
           
           if(data.status === 'concluido' && data.motoboyId === uid) {
@@ -1606,10 +1616,22 @@
       }
       lastPendentesCount = pendentes;
       
-      if(!encontrouAtivo) { document.getElementById('activeOrderBox').classList.remove('visible'); document.getElementById('muralTitle').style.display = 'flex'; activeOrderId = null; }
+      if(!encontrouAtivo) { 
+          document.getElementById('activeOrderBox').classList.remove('visible'); 
+          document.getElementById('muralTitle').style.display = 'flex'; 
+          document.getElementById('orderCards').style.display = 'block'; // Mostra o mural
+          activeOrderId = null; 
+      } else {
+          document.getElementById('orderCards').style.display = 'none'; // Esconde os outros cards se estiver em rota
+          document.getElementById('emptyMural').style.display = 'none';
+      }
 
       document.getElementById('dashMotoHoje').textContent = concluidasHj;
-      document.getElementById('emptyMural').style.display = pendentes === 0 ? 'block' : 'none';
+      
+      if (!encontrouAtivo) {
+          document.getElementById('emptyMural').style.display = pendentes === 0 ? 'block' : 'none';
+      }
+      
       if(window.motoHistoryData.length > 0) document.getElementById('motoHistoryWrapper').style.display = 'block';
       if(document.getElementById('tab-moto-pagamentos').classList.contains('active')) renderMotoPagamentos();
     });
@@ -1715,6 +1737,13 @@
     if(window.isProcessingClick) return;
     window.isProcessingClick = true;
 
+    // TRAVA DE SEGURANÇA: Impede pegar 2 pedidos ao mesmo tempo
+    if(userDataGlobal && userDataGlobal.status === 'em_rota' || activeOrderId !== null) {
+        window.isProcessingClick = false;
+        window.triggerErrorFeedback();
+        return showToast("<i class='ph-fill ph-warning'></i> Conclua a rota atual primeiro!");
+    }
+
     if(currentConfig.isPaused) { window.isProcessingClick = false; return showToast("<i class='ph-fill ph-prohibit'></i> Manutenção."); }
     
     const taxaCobranca = currentConfig.taxaApp || 0.40;
@@ -1782,6 +1811,7 @@
     // LIMPA A TELA IMEDIATAMENTE
     document.getElementById('activeOrderBox').classList.remove('visible'); 
     document.getElementById('muralTitle').style.display = 'flex'; 
+    document.getElementById('orderCards').style.display = 'block';
     const backupOrderId = activeOrderId;
     activeOrderId = null; 
 
@@ -1806,6 +1836,7 @@
     // LIMPA A TELA IMEDIATAMENTE
     document.getElementById('activeOrderBox').classList.remove('visible'); 
     document.getElementById('muralTitle').style.display = 'flex'; 
+    document.getElementById('orderCards').style.display = 'block';
     const backupOrderId = activeOrderId;
     activeOrderId = null; 
     showToast('Devolvido ao mural.');
