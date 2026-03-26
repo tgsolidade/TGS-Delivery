@@ -860,7 +860,7 @@
 
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
   import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, onAuthStateChanged, deleteUser } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-  import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, where, setDoc, doc, updateDoc, deleteDoc, getDoc, getDocs, increment, limit } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, where, setDoc, doc, updateDoc, deleteDoc, getDoc, getDocs, increment, limit, runTransaction, enableNetwork, disableNetwork } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDLSvxNn8jwZGG8Ky9MUlDRvSH6vHK7vdI",
@@ -1090,7 +1090,17 @@
      }
   }
 
-  setInterval(setOnlineStatus, 15000); window.addEventListener('focus', setOnlineStatus);
+  setInterval(setOnlineStatus, 15000); 
+
+  window.addEventListener('focus', () => {
+      setOnlineStatus();
+      // Dá um "choque" no Firebase para ele acordar imediatamente após o celular apagar a tela
+      if(db) {
+          disableNetwork(db).then(() => enableNetwork(db)).catch(e => console.log("Erro de reconexão:", e));
+      }
+      blindarTela();
+  });
+
   window.addEventListener('beforeunload', () => {
       if(auth.currentUser && userDataGlobal) {
           if(userDataGlobal.status === 'pendente' || userDataGlobal.status === 'bloqueado') return;
@@ -1188,6 +1198,7 @@
             listenStoreDashStats();
             listenTaxasGlobais();
             listenBairrosCadastrados();
+            blindarTela();
           } else if(userDataGlobal.perfil === 'motoboy') {
             if(userDataGlobal.status === 'pendente') { showToast('<i class="ph-fill ph-warning"></i> Cadastro em análise!'); await signOut(auth); window.showScreen('login'); } 
             else if (userDataGlobal.status === 'bloqueado') { showToast('<i class="ph-fill ph-prohibit"></i> Conta banida!'); await signOut(auth); window.showScreen('login'); } 
@@ -1196,6 +1207,7 @@
                document.getElementById('motoFiltroInicio').value = getTodayStr(); document.getElementById('motoFiltroFim').value = getTodayStr();
                window.pedirPermissaoNotificacao();
                window.showScreen('painel-moto'); startMuralListener(); listenMotoDashStats();
+               blindarTela();
             }
           }
         } else { await signOut(auth); window.showScreen('login'); }
@@ -1690,7 +1702,7 @@
     return div;
   }
 
-  // OTIMIZAÇÃO: Interface Otimista no Aceite
+  // OTIMIZAÇÃO E SEGURANÇA: Interface Otimista + Transação no Servidor
   window.acceptOrderReal = async function(id) {
     if(window.isProcessingClick) return;
     window.isProcessingClick = true;
@@ -1703,30 +1715,50 @@
     if(currentSaldo < taxaCobranca) { 
         window.isProcessingClick = false; 
         window.triggerErrorFeedback(); 
-        return showToast(`<i class="ph-fill ph-warning"></i> Saldo insuficiente! Você precisa de no mínimo R$ ${taxaCobranca.toFixed(2).replace('.',',')} (Taxa do App) para aceitar.`); 
-    }
-    
-    if(!window.allOrdersMemory[id] || window.allOrdersMemory[id].status !== 'aguardando') {
-        window.isProcessingClick = false; 
-        return showToast('<i class="ph-fill ph-warning"></i> Pedido não está mais disponível.');
+        return showToast(`<i class="ph-fill ph-warning"></i> Saldo insuficiente! Você precisa de R$ ${taxaCobranca.toFixed(2).replace('.',',')}`); 
     }
 
     // ESCONDE O CARD IMEDIATAMENTE (Otimista)
     const cardEl = document.getElementById('card-' + id);
     if(cardEl) cardEl.style.display = 'none';
 
-    triggerLightning(); 
-    showToast('<i class="ph-fill ph-lightning"></i> Rota aceita! Vá para a Loja.');
-
     try {
-      const p1 = updateDoc(doc(db, "pedidos", id), { status: 'aceito', motoboyId: auth.currentUser.uid, motoboyNome: userDataGlobal.nome, motoboyWhats: userDataGlobal.whats || '', motoboyPix: userDataGlobal.chavePix || '' });
-      const p2 = updateDoc(doc(db, "usuarios", auth.currentUser.uid), { status: 'em_rota' });
-      await Promise.all([p1, p2]);
+      const pedidoRef = doc(db, "pedidos", id);
+      
+      // TRANSAÇÃO: O Servidor decide quem ganha a corrida
+      await runTransaction(db, async (transaction) => {
+          const pedidoSnap = await transaction.get(pedidoRef);
+          
+          if (!pedidoSnap.exists()) {
+              throw "Pedido foi cancelado!";
+          }
+          if (pedidoSnap.data().status !== 'aguardando') {
+              throw "Alguém foi mais rápido!";
+          }
+          
+          // Se passou pelas barreiras, a corrida é dele!
+          transaction.update(pedidoRef, { 
+              status: 'aceito', 
+              motoboyId: auth.currentUser.uid, 
+              motoboyNome: userDataGlobal.nome, 
+              motoboyWhats: userDataGlobal.whats || '', 
+              motoboyPix: userDataGlobal.chavePix || '' 
+          });
+      });
+
+      // Só atualiza o motoboy se a transação do pedido deu certo
+      await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { status: 'em_rota' });
+      
+      triggerLightning(); 
+      showToast('<i class="ph-fill ph-lightning"></i> Rota aceita! Vá para a Loja.');
+      
     } catch(e) { 
-      console.error("Erro interno:", e);
-      if(cardEl) cardEl.style.display = 'block'; // Volta o card se falhar
-      showToast('<i class="ph-fill ph-warning"></i> Erro: Alguém foi mais rápido!'); 
-    } finally { window.isProcessingClick = false; }
+      console.error("Erro na transação:", e);
+      if(cardEl) cardEl.style.display = 'block'; // Volta o card para a tela se ele perdeu
+      showToast(`<i class="ph-fill ph-warning"></i> ${e === "Alguém foi mais rápido!" ? e : "Erro ao aceitar corrida."}`); 
+    } finally { 
+      window.isProcessingClick = false; 
+    }
   };
 
   // OTIMIZAÇÃO: Interface Otimista na Conclusão
@@ -1898,6 +1930,37 @@
       navigator.connection.addEventListener('change', checkNetworkSpeed);
       checkNetworkSpeed();
   }
+
+  // --- SISTEMA DE MANTER A TELA ACORDADA (WAKE LOCK API) ---
+  let wakeLock = null;
+
+  async function blindarTela() {
+      // Verifica se o navegador suporta essa tecnologia
+      if ('wakeLock' in navigator) {
+          try {
+              wakeLock = await navigator.wakeLock.request('screen');
+              console.log('Tela blindada! O celular não vai apagar sozinho.');
+              
+              wakeLock.addEventListener('release', () => {
+                  console.log('A blindagem da tela foi pausada (app minimizado).');
+              });
+          } catch (err) {
+              console.log('Erro ao tentar manter a tela ligada:', err);
+          }
+      }
+  }
+
+  // O Wake Lock é cancelado automaticamente se o motoboy minimizar o app.
+  // Por isso, precisamos reativá-lo toda vez que ele voltar para a tela.
+  document.addEventListener('visibilitychange', async () => {
+      if (document.visibilityState === 'visible') {
+          blindarTela();
+      }
+  });
+
+  // Ativa a função quando o motoboy focar na tela ou clicar em algo a primeira vez
+  window.addEventListener('focus', blindarTela);
+  document.body.addEventListener('click', blindarTela, { once: true });
 </script>
 </body>
 </html>
