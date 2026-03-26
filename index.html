@@ -1630,7 +1630,7 @@
 
     if(entregas.length === 0 || isNaN(feeInput) || feeInput <= 0) { window.isProcessingClick = false; return showToast('<i class="ph-fill ph-warning"></i> Adicione Bairro e Taxa!'); }
     
-    // OTIMIZAÇÃO: Promessas simultâneas para tirar a lentidão do clique
+    // OTIMIZAÇÃO: Interface Otimista
     const totalFee = feeInput * entregas.length; const pin = Math.floor(1000 + Math.random() * 9000).toString(); const bairrosResumo = bairrosArr.join(', ');
     const clienteEnd = entregas.length === 1 ? `${entregas[0].rua}, ${entregas[0].num} - ${entregas[0].bairro}`.trim() : `Rota com ${entregas.length} entregas`;
     
@@ -1641,12 +1641,10 @@
       });
       const p2 = updateDoc(doc(db, "usuarios", auth.currentUser.uid), { pedidosCriados: increment(1) });
       
-      // Fecha a tela imediatamente (Optimistic UI) enquanto o Firebase trabalha em segundo plano
       window.closeNewOrderModal(); window.resetDestinosUI(); document.getElementById('newFee').value = ''; document.getElementById('newObs').value = ''; document.getElementById('displayTotalFee').textContent = 'R$ 0,00';
       showToast('<i class="ph-fill ph-lightning"></i> Publicando...');
       
       await Promise.all([p1, p2]);
-      
     } catch(e) { showToast("Erro: " + e.message); } finally { window.isProcessingClick = false; }
   };
 
@@ -1677,7 +1675,7 @@
     return div;
   }
 
-  // ACEITAR PEDIDO - OTIMIZADO PARA VELOCIDADE EXTREMA
+  // OTIMIZAÇÃO: Interface Otimista no Aceite
   window.acceptOrderReal = async function(id) {
     if(window.isProcessingClick) return;
     window.isProcessingClick = true;
@@ -1693,53 +1691,73 @@
         return showToast(`<i class="ph-fill ph-warning"></i> Saldo insuficiente! Você precisa de no mínimo R$ ${taxaCobranca.toFixed(2).replace('.',',')} (Taxa do App) para aceitar.`); 
     }
     
-    // Usa a memória local em vez de ir no servidor primeiro. Muito mais rápido!
     if(!window.allOrdersMemory[id] || window.allOrdersMemory[id].status !== 'aguardando') {
         window.isProcessingClick = false; 
         return showToast('<i class="ph-fill ph-warning"></i> Pedido não está mais disponível.');
     }
 
+    // ESCONDE O CARD IMEDIATAMENTE (Otimista)
+    const cardEl = document.getElementById('card-' + id);
+    if(cardEl) cardEl.style.display = 'none';
+
+    triggerLightning(); 
+    showToast('<i class="ph-fill ph-lightning"></i> Rota aceita! Vá para a Loja.');
+
     try {
       const p1 = updateDoc(doc(db, "pedidos", id), { status: 'aceito', motoboyId: auth.currentUser.uid, motoboyNome: userDataGlobal.nome, motoboyWhats: userDataGlobal.whats || '', motoboyPix: userDataGlobal.chavePix || '' });
       const p2 = updateDoc(doc(db, "usuarios", auth.currentUser.uid), { status: 'em_rota' });
       await Promise.all([p1, p2]);
-
-      triggerLightning(); showToast('<i class="ph-fill ph-lightning"></i> Rota aceita! Vá para a Loja.');
-    } catch(e) { showToast('<i class="ph-fill ph-warning"></i> Alguém foi mais rápido ou ocorreu um erro!'); } finally { window.isProcessingClick = false; }
+    } catch(e) { 
+      if(cardEl) cardEl.style.display = 'block'; // Volta o card se falhar
+      showToast('<i class="ph-fill ph-warning"></i> Erro: Alguém foi mais rápido!'); 
+    } finally { window.isProcessingClick = false; }
   };
 
-  // AMORTECEDOR DE CONCLUSÃO: Garante o update na loja (OTIMIZADO)
+  // OTIMIZAÇÃO: Interface Otimista na Conclusão
   window.completeOrder = async function() {
     if(!activeOrderId) return;
-    showLoading('CONCLUINDO...');
+    if(window.isProcessingClick) return;
+    window.isProcessingClick = true;
+
+    const taxaCobranca = currentConfig.taxaApp || 0.40; 
+    const currentSaldo = userDataGlobal.saldo !== undefined ? parseFloat(userDataGlobal.saldo) : 0;
+    const novoSaldo = currentSaldo - taxaCobranca;
+
+    // LIMPA A TELA IMEDIATAMENTE
+    document.getElementById('activeOrderBox').classList.remove('visible'); 
+    document.getElementById('muralTitle').style.display = 'flex'; 
+    const backupOrderId = activeOrderId;
+    activeOrderId = null; 
+
+    showToast(`Corrida concluída! -R$ ${taxaCobranca.toFixed(2).replace('.',',')}`);
+
     try {
-      const taxaCobranca = currentConfig.taxaApp || 0.40; 
-      const currentSaldo = userDataGlobal.saldo !== undefined ? parseFloat(userDataGlobal.saldo) : 0;
-      const novoSaldo = currentSaldo - taxaCobranca;
-
-      const p1 = updateDoc(doc(db, "pedidos", activeOrderId), { status: 'concluido' });
+      const p1 = updateDoc(doc(db, "pedidos", backupOrderId), { status: 'concluido' });
       const p2 = updateDoc(doc(db, "usuarios", auth.currentUser.uid), { saldo: novoSaldo, status: 'online', entregasFeitas: increment(1) });
-      
       await Promise.all([p1, p2]);
-
-      document.getElementById('activeOrderBox').classList.remove('visible'); document.getElementById('muralTitle').style.display = 'flex'; activeOrderId = null; 
-      showToast(`Corrida concluída! -R$ ${taxaCobranca.toFixed(2).replace('.',',')}`);
     } catch(e) {
-      showToast("Erro ao concluir: " + e.message);
-    } finally { hideLoading(); }
+      showToast("Erro ao sincronizar conclusão: " + e.message);
+    } finally { window.isProcessingClick = false; }
   };
 
   window.returnOrder = async function() {
     if(!activeOrderId) return;
     if(!confirm("Deseja mesmo devolver o pedido para o mural?")) return;
-    showLoading('DEVOLVENDO...');
+    if(window.isProcessingClick) return;
+    window.isProcessingClick = true;
+
+    // LIMPA A TELA IMEDIATAMENTE
+    document.getElementById('activeOrderBox').classList.remove('visible'); 
+    document.getElementById('muralTitle').style.display = 'flex'; 
+    const backupOrderId = activeOrderId;
+    activeOrderId = null; 
+    showToast('Devolvido ao mural.');
+
     try {
-      const p1 = updateDoc(doc(db, "pedidos", activeOrderId), { status: 'aguardando', motoboyId: null, motoboyNome: null, motoboyWhats: null, motoboyPix: null });
+      const p1 = updateDoc(doc(db, "pedidos", backupOrderId), { status: 'aguardando', motoboyId: null, motoboyNome: null, motoboyWhats: null, motoboyPix: null });
       const p2 = updateDoc(doc(db, "usuarios", auth.currentUser.uid), { status: 'online' });
       await Promise.all([p1, p2]);
-
-      document.getElementById('activeOrderBox').classList.remove('visible'); document.getElementById('muralTitle').style.display = 'flex'; activeOrderId = null; showToast('Devolvido ao mural.');
-    } catch(e) {} finally { hideLoading(); }
+    } catch(e) { showToast("Erro ao devolver: " + e.message); } finally { window.isProcessingClick = false; }
   };
 
   window.selecionarEstrela = function(nota) {
