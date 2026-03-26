@@ -743,7 +743,7 @@
   }, {once: true});
 
   window.isRegistering = false;
-  window.isProcessingClick = false; 
+  window.isProcessingClick = false;
 
   window.togglePassword = function(inputId, btnElement) {
       const input = document.getElementById(inputId);
@@ -836,18 +836,18 @@
       if ("Notification" in window && Notification.permission === "default") {
           Notification.requestPermission();
       }
+      if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.register('sw.js').then(function(reg) {
+              console.log('SW Registrado para Notificações');
+          }).catch(function(err) {});
+      }
   };
 
-  // FUNÇÃO ROBUSTA DE NOTIFICAÇÃO 
   window.dispararNotificacao = function(titulo, corpo) {
       if ("Notification" in window && Notification.permission === "granted") {
           if ('serviceWorker' in navigator) {
-              navigator.serviceWorker.getRegistrations().then(function(regs) {
-                  if (regs.length > 0) {
-                      regs[0].showNotification(titulo, { body: corpo, icon: "icon.png", vibrate: [200, 100, 200, 100, 200] });
-                  } else {
-                      new Notification(titulo, { body: corpo, icon: "icon.png" });
-                  }
+              navigator.serviceWorker.ready.then(function(registration) {
+                  registration.showNotification(titulo, { body: corpo, icon: "icon.png", vibrate: [200, 100, 200, 100, 200] });
               }).catch(function() {
                   new Notification(titulo, { body: corpo, icon: "icon.png" });
               });
@@ -880,7 +880,6 @@
   let currentConfig = { taxaApp: 0.40, isPaused: false };
   let lastPendentesCount = 0; 
   
-  // -- VARIÁVEIS DE REGRAS DE NEGÓCIO E LISTA DE BAIRROS --
   window.regrasTaxaGlobais = { taxaDia: 8.00, taxaNoite: 10.00, horaVirada: "23:00" };
   window.bairrosExcecao = [];
   let currentMinFee = 8.00; 
@@ -928,7 +927,7 @@
      document.getElementById(tabId).classList.add('active');
      if(tabId === 'tab-loja-pagamentos') renderLojaPagamentos();
   }
-
+  
   function formatarTextoBusca(texto) {
       if(!texto) return "";
       return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -959,92 +958,52 @@
   function encontrarBairroAproximado(digitado, lista, isObjectList = false) {
       const dig = formatarTextoBusca(digitado);
       if(!dig) return null;
-      
-      let melhorMatch = null;
-      let menorDistancia = Infinity;
-
+      let melhorMatch = null; let menorDistancia = Infinity;
       for (let item of lista) {
           const nomeItem = isObjectList ? item.nome : item;
           const b = formatarTextoBusca(nomeItem);
           if (dig === b) return item;
-
           const dist = levenshtein(dig, b);
           const maxErros = Math.floor(b.length * 0.3) + 1; 
-          
-          if (dist <= maxErros && dist < menorDistancia) {
-              menorDistancia = dist;
-              melhorMatch = item;
-          }
+          if (dist <= maxErros && dist < menorDistancia) { menorDistancia = dist; melhorMatch = item; }
       }
       return melhorMatch;
   }
 
   function listenTaxasGlobais() {
-      onSnapshot(doc(db, "config", "taxasGlobais"), (docSnap) => {
-          if (docSnap.exists()) {
-              window.regrasTaxaGlobais = docSnap.data();
-          }
-      });
+      onSnapshot(doc(db, "config", "taxasGlobais"), (docSnap) => { if (docSnap.exists()) window.regrasTaxaGlobais = docSnap.data(); });
   }
 
   function listenBairrosCadastrados() {
       onSnapshot(collection(db, "bairros"), (snapshot) => {
-          window.bairrosExcecao = [];
-          snapshot.forEach(docSnap => {
-              window.bairrosExcecao.push({ id: docSnap.id, ...docSnap.data() });
-          });
+          window.bairrosExcecao = []; snapshot.forEach(docSnap => window.bairrosExcecao.push({ id: docSnap.id, ...docSnap.data() }));
       });
   }
 
   function isHorarioNoturno() {
-      const agora = new Date();
-      const horaAtual = agora.getHours();
-      const minAtual = agora.getMinutes();
-      
+      const agora = new Date(); const horaAtual = agora.getHours(); const minAtual = agora.getMinutes();
       const [horaVirada, minVirada] = (window.regrasTaxaGlobais.horaVirada || "23:00").split(':').map(Number);
-      
-      if (horaAtual > horaVirada) return true;
-      if (horaAtual === horaVirada && minAtual >= minVirada) return true;
-      if (horaAtual >= 0 && horaAtual < 6) return true;
-      
+      if (horaAtual > horaVirada) return true; if (horaAtual === horaVirada && minAtual >= minVirada) return true; if (horaAtual >= 0 && horaAtual < 6) return true;
       return false;
   }
 
   window.verificarBairro = function(inputBairroElement) {
       let nomeDigitado = inputBairroElement.value.trim().toUpperCase();
       nomeDigitado = nomeDigitado.replace(/\s+1$/, " I").replace(/\s+2$/, " II").replace(/\s+3$/, " III");
-
-      const isNoite = isHorarioNoturno();
-      const inputTaxa = document.getElementById('newFee');
-      const feeHint = document.getElementById('feeHint');
-      
+      const isNoite = isHorarioNoturno(); const inputTaxa = document.getElementById('newFee'); const feeHint = document.getElementById('feeHint');
       if (!nomeDigitado) return;
-
       const bairroExcecao = encontrarBairroAproximado(nomeDigitado, window.bairrosExcecao, true);
-
       if (bairroExcecao) {
-          inputBairroElement.value = bairroExcecao.nome;
-          currentMinFee = isNoite ? parseFloat(bairroExcecao.taxaNoite) : parseFloat(bairroExcecao.taxaDia);
-          inputTaxa.value = currentMinFee.toFixed(2);
-          feeHint.textContent = `Bairro identificado: ${bairroExcecao.nome}. Taxa base: R$ ${currentMinFee.toFixed(2)}.`;
-          feeHint.style.display = 'block';
-          feeHint.style.color = "var(--neon-b)";
+          inputBairroElement.value = bairroExcecao.nome; currentMinFee = isNoite ? parseFloat(bairroExcecao.taxaNoite) : parseFloat(bairroExcecao.taxaDia);
+          inputTaxa.value = currentMinFee.toFixed(2); feeHint.textContent = `Bairro identificado: ${bairroExcecao.nome}. Taxa base: R$ ${currentMinFee.toFixed(2)}.`;
+          feeHint.style.display = 'block'; feeHint.style.color = "var(--neon-b)";
       } else {
           const bairroPadrao = encontrarBairroAproximado(nomeDigitado, window.bairrosPadraoComuns, false);
-          
-          if (bairroPadrao) {
-              inputBairroElement.value = bairroPadrao;
-          } else {
-              inputBairroElement.value = nomeDigitado;
-          }
-
+          if (bairroPadrao) inputBairroElement.value = bairroPadrao; else inputBairroElement.value = nomeDigitado;
           currentMinFee = isNoite ? parseFloat(window.regrasTaxaGlobais.taxaNoite) : parseFloat(window.regrasTaxaGlobais.taxaDia);
-          if (!inputTaxa.value || parseFloat(inputTaxa.value.replace(',', '.')) < currentMinFee) {
-             inputTaxa.value = currentMinFee.toFixed(2);
-          }
+          if (!inputTaxa.value || parseFloat(inputTaxa.value.replace(',', '.')) < currentMinFee) inputTaxa.value = currentMinFee.toFixed(2);
           feeHint.style.display = 'none';
       }
-      
       calcularTaxaTotal();
   }
 
@@ -1053,7 +1012,6 @@
      if(filtro === 'online') { title = "MOTOS ONLINE"; filtrados = window.listaMotos.filter(m => m.status === 'online'); }
      else if(filtro === 'rota') { title = "MOTOS EM ROTA"; filtrados = window.listaMotos.filter(m => m.status === 'em_rota'); }
      else { title = "TODOS OS MOTOBOYS"; filtrados = window.listaMotos; }
-
      let html = '';
      if(filtrados.length === 0) html = '<p style="text-align:center; color:var(--muted); padding:30px 20px;">Nenhum motoboy encontrado nesta categoria.</p>';
      filtrados.forEach(m => {
@@ -1063,7 +1021,6 @@
          else if (m.status === 'bloqueado') st = '<span style="color:var(--neon-r); font-size:11px; font-weight:bold;">🔴 Bloqueado</span>';
          else if (m.status === 'pendente') st = '<span style="color:var(--neon-y); font-size:11px; font-weight:bold;">🟡 Pendente</span>';
          else st = '<span style="color:var(--muted); font-size:11px;">⚪ Offline</span>';
-
          let imgHtml = m.placaFoto ? `<img src="${m.placaFoto}" class="list-item-avatar moto">` : `<div class="list-item-avatar moto"><i class="ph-fill ph-motorcycle"></i></div>`;
          html += `<div class="list-item-user">${imgHtml}<div class="list-item-info"><div class="list-item-name">${m.nome}</div>${st}</div></div>`;
      });
@@ -1075,7 +1032,6 @@
      let title = "LOJAS"; let filtrados = [];
      if(filtro === 'online') { title = "LOJAS ONLINE"; filtrados = window.listaLojas.filter(l => l.status === 'online'); }
      else { title = "TODAS AS LOJAS"; filtrados = window.listaLojas; }
-
      let html = '';
      if(filtrados.length === 0) html = '<p style="text-align:center; color:var(--muted); padding:30px 20px;">Nenhuma loja encontrada nesta categoria.</p>';
      filtrados.forEach(l => {
@@ -1083,7 +1039,6 @@
          if (l.status === 'online') st = '<span style="color:var(--neon-g); font-size:11px; font-weight:bold;">🟢 Online</span>';
          else if (l.status === 'bloqueado') st = '<span style="color:var(--neon-r); font-size:11px; font-weight:bold;">🔴 Bloqueada</span>';
          else st = '<span style="color:var(--muted); font-size:11px;">⚪ Offline</span>';
-
          let img = l.logo ? `<img src="${l.logo}" class="list-item-avatar">` : `<div class="list-item-avatar"><i class="ph-fill ph-storefront"></i></div>`;
          html += `<div class="list-item-user">${img}<div class="list-item-info"><div class="list-item-name">${l.nome}</div>${st}</div></div>`;
      });
@@ -1104,33 +1059,19 @@
      div.innerHTML = `<button class="btn-icon" style="position:absolute; right:10px; top:10px; width:24px; height:24px; font-size:12px; color:var(--neon-r); border-color:transparent;" onclick="removerDestinoUI(this)"><i class="ph-bold ph-x"></i></button><p style="font-size:11px; color:var(--neon-b); margin-bottom:8px; font-weight:bold;">ENTREGA ${destinosContador}</p><div class="form-group"><label>Bairro (Obrigatório)</label><input type="text" class="dest-bairro" placeholder="Ex: Centro" onblur="verificarBairro(this)"></div><div style="display:flex; gap:10px;"><div class="form-group" style="flex:2; margin-bottom:0;"><label>Rua (Obrigatório)</label><input type="text" class="dest-rua" placeholder="Ex: Rua X"></div><div class="form-group" style="flex:1; margin-bottom:0;"><label>Nº (Obrigatório)</label><input type="text" class="dest-num" placeholder="Ex: 10 ou S/N"></div></div>`;
      container.appendChild(div); calcularTaxaTotal(); 
   }
-
   window.removerDestinoUI = function(btn) { btn.closest('.destino-item').remove(); calcularTaxaTotal(); }
-
   window.resetDestinosUI = function() {
-     destinosContador = 1;
-     document.getElementById('destinosContainer').innerHTML = `<div class="destino-item" style="background:var(--bg2); padding:12px; border-radius:8px; border:1px solid var(--border); margin-bottom:12px;"><p style="font-size:11px; color:var(--neon-b); margin-bottom:8px; font-weight:bold;">ENTREGA 1</p><div class="form-group"><label>Bairro (Obrigatório)</label><input type="text" class="dest-bairro" placeholder="Ex: Centro" onblur="verificarBairro(this)"></div><div style="display:flex; gap:10px;"><div class="form-group" style="flex:2; margin-bottom:0;"><label>Rua (Obrigatório)</label><input type="text" class="dest-rua" placeholder="Ex: Travessa Mauriti"></div><div class="form-group" style="flex:1; margin-bottom:0;"><label>Nº (Obrigatório)</label><input type="text" class="dest-num" placeholder="Ex: 10 ou S/N"></div></div></div>`;
+     destinosContador = 1; document.getElementById('destinosContainer').innerHTML = `<div class="destino-item" style="background:var(--bg2); padding:12px; border-radius:8px; border:1px solid var(--border); margin-bottom:12px;"><p style="font-size:11px; color:var(--neon-b); margin-bottom:8px; font-weight:bold;">ENTREGA 1</p><div class="form-group"><label>Bairro (Obrigatório)</label><input type="text" class="dest-bairro" placeholder="Ex: Centro" onblur="verificarBairro(this)"></div><div style="display:flex; gap:10px;"><div class="form-group" style="flex:2; margin-bottom:0;"><label>Rua (Obrigatório)</label><input type="text" class="dest-rua" placeholder="Ex: Travessa Mauriti"></div><div class="form-group" style="flex:1; margin-bottom:0;"><label>Nº (Obrigatório)</label><input type="text" class="dest-num" placeholder="Ex: 10 ou S/N"></div></div></div>`;
      calcularTaxaTotal();
   }
 
   window.openNewOrderModal = function() { 
-    document.getElementById('newBagGrande').checked = false; 
-    resetDestinosUI(); 
-    document.getElementById('newObs').value = ''; 
-    document.getElementById('displayTotalFee').textContent = 'R$ 0,00';
-    document.getElementById('feeHint').style.display = 'none';
-    
-    const isNoite = isHorarioNoturno();
-    currentMinFee = isNoite ? parseFloat(window.regrasTaxaGlobais.taxaNoite) : parseFloat(window.regrasTaxaGlobais.taxaDia);
+    document.getElementById('newBagGrande').checked = false; resetDestinosUI(); document.getElementById('newObs').value = ''; 
+    document.getElementById('displayTotalFee').textContent = 'R$ 0,00'; document.getElementById('feeHint').style.display = 'none';
+    const isNoite = isHorarioNoturno(); currentMinFee = isNoite ? parseFloat(window.regrasTaxaGlobais.taxaNoite) : parseFloat(window.regrasTaxaGlobais.taxaDia);
     document.getElementById('newFee').value = currentMinFee.toFixed(2);
-    
-    if (isNoite) {
-        document.getElementById('nightAlertValue').textContent = currentMinFee.toFixed(2);
-        document.getElementById('nightAlertBanner').classList.add('visible');
-    } else {
-        document.getElementById('nightAlertBanner').classList.remove('visible');
-    }
-
+    if (isNoite) { document.getElementById('nightAlertValue').textContent = currentMinFee.toFixed(2); document.getElementById('nightAlertBanner').classList.add('visible'); } 
+    else { document.getElementById('nightAlertBanner').classList.remove('visible'); }
     document.getElementById('newOrderModal').classList.add('open'); 
   };
   window.closeNewOrderModal = function() { document.getElementById('newOrderModal').classList.remove('open'); };
@@ -1141,10 +1082,7 @@
         if(userDataGlobal.status === 'pendente' || userDataGlobal.status === 'bloqueado') return;
         try { 
             if(userDataGlobal.perfil === 'loja' || (userDataGlobal.perfil === 'motoboy' && userDataGlobal.status !== 'em_rota')) { 
-                let updateObj = { status: 'online' };
-                if (!userDataGlobal.sessionStart) {
-                    updateObj.sessionStart = Date.now();
-                }
+                let updateObj = { status: 'online' }; if (!userDataGlobal.sessionStart) { updateObj.sessionStart = Date.now(); }
                 await updateDoc(doc(db, "usuarios", auth.currentUser.uid), updateObj); 
             } 
         } catch(e) {}
@@ -1162,28 +1100,10 @@
   function handleAuthError(error) {
     triggerErrorFeedback(); 
     if(error.code === 'auth/email-already-in-use') return '<i class="ph-fill ph-warning-octagon"></i> E-mail já está em uso!';
-    if(error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-        return '<i class="ph-fill ph-warning-octagon"></i> E-mail ou senha incorretos! Tente novamente.';
-    }
+    if(error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') return '<i class="ph-fill ph-warning-octagon"></i> E-mail ou senha incorretos! Tente novamente.';
     if(error.code === 'auth/invalid-email') return '<i class="ph-fill ph-warning-octagon"></i> E-mail inválido!';
     if(error.code === 'auth/weak-password') return '<i class="ph-fill ph-warning-octagon"></i> A senha deve ter 6+ caracteres!';
-    
     return '<i class="ph-fill ph-warning-octagon"></i> Erro: ' + error.message;
-  }
-
-  function getBase64(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader(); reader.readAsDataURL(file);
-      reader.onload = (event) => {
-        const img = new Image(); img.src = event.target.result;
-        img.onload = () => {
-          const canvas = document.createElement('canvas'); let width = img.width; let height = img.height; const MAX = 800;
-          if (width > height) { if (width > MAX) { height *= MAX / width; width = MAX; } } else { if (height > MAX) { width *= MAX / height; height = MAX; } }
-          canvas.width = width; canvas.height = height; const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, width, height); resolve(canvas.toDataURL('image/jpeg', 0.6));
-        };
-      };
-      reader.onerror = error => reject(error);
-    });
   }
 
   function listenCurrentUser(uid) {
@@ -1191,53 +1111,33 @@
     userListenerUnsubscribe = onSnapshot(doc(db, "usuarios", uid), (docSnap) => {
       if (docSnap.exists()) {
         userDataGlobal = docSnap.data();
-        
-        if (userDataGlobal.perfil === 'loja' || userDataGlobal.perfil === 'pf') {
-            updateStoreHeaderLogo();
-        }
-
+        if (userDataGlobal.perfil === 'loja' || userDataGlobal.perfil === 'pf') updateStoreHeaderLogo();
         if (userDataGlobal.perfil === 'motoboy') {
           const saldo = userDataGlobal.saldo !== undefined ? userDataGlobal.saldo : 0;
-          document.getElementById('creditDisplay').textContent = `R$ ${saldo.toFixed(2).replace('.',',')}`;
-          document.getElementById('creditDisplay').style.color = saldo < 0.40 ? "var(--neon-r)" : "var(--neon-g)";
+          document.getElementById('creditDisplay').textContent = `R$ ${saldo.toFixed(2).replace('.',',')}`; document.getElementById('creditDisplay').style.color = saldo < 0.40 ? "var(--neon-r)" : "var(--neon-g)";
         }
       }
     });
   }
 
   window.updateStoreHeaderLogo = function() {
-      const imgEl = document.getElementById('lojaHeaderLogo');
-      const phEl = document.getElementById('lojaHeaderPlaceholder');
-      if (userDataGlobal && userDataGlobal.logo) {
-          imgEl.src = userDataGlobal.logo;
-          imgEl.style.display = 'block';
-          phEl.style.display = 'none';
-      } else {
-          imgEl.style.display = 'none';
-          phEl.style.display = 'block';
-      }
+      const imgEl = document.getElementById('lojaHeaderLogo'); const phEl = document.getElementById('lojaHeaderPlaceholder');
+      if (userDataGlobal && userDataGlobal.logo) { imgEl.src = userDataGlobal.logo; imgEl.style.display = 'block'; phEl.style.display = 'none'; } 
+      else { imgEl.style.display = 'none'; phEl.style.display = 'block'; }
   }
 
-  window.fecharAvisoGlobal = function() {
-     document.getElementById('adminAlertModal').classList.remove('open');
-     if(window.currentAvisoId) { try { localStorage.setItem('lastAvisoId', window.currentAvisoId); } catch(e){} }
-  }
+  window.fecharAvisoGlobal = function() { document.getElementById('adminAlertModal').classList.remove('open'); if(window.currentAvisoId) { try { localStorage.setItem('lastAvisoId', window.currentAvisoId); } catch(e){} } }
 
   function listenConfigAndAlerts() {
-     onSnapshot(doc(db, "config", "geral"), (docSnap) => {
-        if(docSnap.exists()) { currentConfig = docSnap.data(); document.getElementById('killSwitchOverlay').style.display = currentConfig.isPaused ? 'flex' : 'none'; }
-     });
-
+     onSnapshot(doc(db, "config", "geral"), (docSnap) => { if(docSnap.exists()) { currentConfig = docSnap.data(); document.getElementById('killSwitchOverlay').style.display = currentConfig.isPaused ? 'flex' : 'none'; } });
      const qGlobal = query(collection(db, "avisos"), orderBy("timestamp", "desc"), limit(1));
      onSnapshot(qGlobal, (snap) => {
         if(!snap.empty) {
            const docAlerta = snap.docs[0]; const data = docAlerta.data(); let savedId = null; try { savedId = localStorage.getItem('lastAvisoId'); } catch(e){}
-           let isExpired = false;
-           if (data.timestamp) { const alertTime = data.timestamp.toMillis ? data.timestamp.toMillis() : (data.timestamp.seconds * 1000); if ((Date.now() - alertTime) > 86400000) isExpired = true; }
+           let isExpired = false; if (data.timestamp) { const alertTime = data.timestamp.toMillis ? data.timestamp.toMillis() : (data.timestamp.seconds * 1000); if ((Date.now() - alertTime) > 86400000) isExpired = true; }
            if(docAlerta.id !== savedId && !isExpired) { window.currentAvisoId = docAlerta.id; document.getElementById('adminAlertText').textContent = data.msg; document.getElementById('adminAlertModal').classList.add('open'); }
         }
      });
-     
      if(auth.currentUser) {
         const qMsg = query(collection(db, "mensagens"), where("to", "==", auth.currentUser.uid), where("status", "==", "enviado"));
         window.msgIndivUnsubscribe = onSnapshot(qMsg, (snap) => {
@@ -1251,25 +1151,18 @@
 
   window.responderAdmin = async function() {
      const msgId = document.getElementById('indivAlertMsgId').value; const replyTxt = document.getElementById('indivAlertReply').value.trim();
-     if(!replyTxt) return showToast("<i class='ph-fill ph-warning'></i> Digite uma resposta.");
-     showLoading('ENVIANDO...');
+     if(!replyTxt) return showToast("<i class='ph-fill ph-warning'></i> Digite uma resposta."); showLoading('ENVIANDO...');
      try { await updateDoc(doc(db, "mensagens", msgId), { status: 'respondido', reply: replyTxt }); document.getElementById('indivAlertModal').classList.remove('open'); showToast('<i class="ph-fill ph-check-circle"></i> Resposta enviada ao Suporte!'); } catch(e) { alert("Erro: " + e.message); } finally { hideLoading(); }
   }
 
-  window.dispensarMensagemIndividual = async function() {
-     const msgId = document.getElementById('indivAlertMsgId').value;
-     if(msgId) { try { await updateDoc(doc(db, "mensagens", msgId), { status: 'lido' }); } catch(e) {} }
-     document.getElementById('indivAlertModal').classList.remove('open');
-  }
+  window.dispensarMensagemIndividual = async function() { const msgId = document.getElementById('indivAlertMsgId').value; if(msgId) { try { await updateDoc(doc(db, "mensagens", msgId), { status: 'lido' }); } catch(e) {} } document.getElementById('indivAlertModal').classList.remove('open'); }
 
   window.abrirModalRecarga = function() { document.getElementById('rechargeValue').value = ''; document.getElementById('rechargeModal').classList.add('open'); }
   window.processarRecargaMock = async function() {
      const valInput = document.getElementById('rechargeValue').value; const valor = parseFloat(valInput.replace(',', '.'));
-     if (isNaN(valor) || valor < 10) return showToast('<i class="ph-fill ph-warning"></i> O valor mínimo é R$ 10,00.');
-     showLoading('PROCESSANDO PIX...');
+     if (isNaN(valor) || valor < 10) return showToast('<i class="ph-fill ph-warning"></i> O valor mínimo é R$ 10,00.'); showLoading('PROCESSANDO PIX...');
      try {
-        await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { saldo: increment(valor) });
-        await addDoc(collection(db, "recargas"), { motoboyId: auth.currentUser.uid, motoboyNome: userDataGlobal.nome, valor: valor, tipo: 'pix', timestamp: Date.now() });
+        await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { saldo: increment(valor) }); await addDoc(collection(db, "recargas"), { motoboyId: auth.currentUser.uid, motoboyNome: userDataGlobal.nome, valor: valor, tipo: 'pix', timestamp: Date.now() });
         document.getElementById('rechargeModal').classList.remove('open'); showToast(`<i class="ph-fill ph-check-circle"></i> Recarga concluída!`);
      } catch(e) { showToast('<i class="ph-fill ph-warning"></i> Erro na recarga: ' + e.message); } finally { hideLoading(); }
   }
@@ -1295,11 +1188,9 @@
             listenTaxasGlobais();
             listenBairrosCadastrados();
           } else if(userDataGlobal.perfil === 'motoboy') {
-            if(userDataGlobal.status === 'pendente') {
-               showToast('<i class="ph-fill ph-warning"></i> Cadastro em análise!'); await signOut(auth); window.showScreen('login');
-            } else if (userDataGlobal.status === 'bloqueado') {
-               showToast('<i class="ph-fill ph-prohibit"></i> Conta banida!'); await signOut(auth); window.showScreen('login');
-            } else {
+            if(userDataGlobal.status === 'pendente') { showToast('<i class="ph-fill ph-warning"></i> Cadastro em análise!'); await signOut(auth); window.showScreen('login'); } 
+            else if (userDataGlobal.status === 'bloqueado') { showToast('<i class="ph-fill ph-prohibit"></i> Conta banida!'); await signOut(auth); window.showScreen('login'); } 
+            else {
                await updateDoc(doc(db, "usuarios", user.uid), { status: 'online' });
                document.getElementById('motoFiltroInicio').value = getTodayStr(); document.getElementById('motoFiltroFim').value = getTodayStr();
                window.pedirPermissaoNotificacao();
@@ -1316,53 +1207,33 @@
 
   window.doLogin = async function() {
     const email = document.getElementById('loginEmail').value.trim(); const pass = document.getElementById('loginPass').value.trim();
-    if(!email || !pass) return showToast('<i class="ph-fill ph-warning"></i> Preencha tudo.');
-    showLoading('ENTRANDO...');
+    if(!email || !pass) return showToast('<i class="ph-fill ph-warning"></i> Preencha tudo.'); showLoading('ENTRANDO...');
     try { 
       const uc = await signInWithEmailAndPassword(auth, email, pass); 
       const userDoc = await getDoc(doc(db, "usuarios", uc.user.uid));
       if (!userDoc.exists()) { await deleteUser(uc.user); hideLoading(); showToast('<i class="ph-fill ph-broom"></i> Cadastro corrompido limpo!'); return; }
       hideLoading();
-    } catch (e) { 
-      hideLoading(); 
-      showToast(handleAuthError(e)); 
-    }
+    } catch (e) { hideLoading(); showToast(handleAuthError(e)); }
   };
 
   window.deslogar = async function() {
     showLoading('SAINDO...');
     try {
-        if(userListenerUnsubscribe) userListenerUnsubscribe();
-        if(window.msgIndivUnsubscribe) window.msgIndivUnsubscribe();
-        
-        if(auth.currentUser && userDataGlobal && userDataGlobal.status !== 'pendente' && userDataGlobal.status !== 'bloqueado') {
-            await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { status: 'offline' }).catch(() => {});
-        }
+        if(userListenerUnsubscribe) userListenerUnsubscribe(); if(window.msgIndivUnsubscribe) window.msgIndivUnsubscribe();
+        if(auth.currentUser && userDataGlobal && userDataGlobal.status !== 'pendente' && userDataGlobal.status !== 'bloqueado') { await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { status: 'offline' }).catch(() => {}); }
         await signOut(auth); 
-    } catch(e) { 
-        console.log("Forçando logout...", e); 
-    } finally {
-        userDataGlobal = null; 
-        hideLoading();
-        window.showScreen('login');
-    }
+    } catch(e) { console.log("Forçando logout...", e); } finally { userDataGlobal = null; hideLoading(); window.showScreen('login'); }
   }
 
   window.validarERecuperarSenha = async function() {
     const email = document.getElementById('recEmail').value.trim(); const docInput = document.getElementById('recDoc').value.trim(); const dataInput = document.getElementById('recData').value;
-    if(!email || !docInput) return showToast("<i class='ph-fill ph-warning'></i> Preencha E-mail e Documento.");
-    showLoading('VALIDANDO...');
+    if(!email || !docInput) return showToast("<i class='ph-fill ph-warning'></i> Preencha E-mail e Documento."); showLoading('VALIDANDO...');
     try {
       const q = query(collection(db, "usuarios"), where("email", "==", email)); const querySnapshot = await getDocs(q);
       if(querySnapshot.empty) { hideLoading(); return alert("Usuário não encontrado."); }
       let validado = false;
-      querySnapshot.forEach((docSnap) => {
-        const d = docSnap.data();
-        if(d.documento === docInput && (d.perfil === 'loja' || d.dataNasc === dataInput)) { validado = true; }
-      });
-      if(validado) { 
-        await sendPasswordResetEmail(auth, email); alert("Autenticação confirmada! Link enviado."); window.fecharModalEsqueciSenha(); 
-      } else { alert("Dados divergentes. Contate o Admin Geral."); }
+      querySnapshot.forEach((docSnap) => { const d = docSnap.data(); if(d.documento === docInput && (d.perfil === 'loja' || d.dataNasc === dataInput)) { validado = true; } });
+      if(validado) { await sendPasswordResetEmail(auth, email); alert("Autenticação confirmada! Link enviado."); window.fecharModalEsqueciSenha(); } else { alert("Dados divergentes. Contate o Admin Geral."); }
     } catch(e) { showToast("<i class='ph-fill ph-warning'></i> Erro na verificação."); } finally { hideLoading(); }
   }
 
@@ -1377,7 +1248,6 @@
     showLoading('CADASTRANDO...'); window.isRegistering = true; 
     try {
       let logoBase64 = null; if (fileInput.files.length > 0) { logoBase64 = await getBase64(fileInput.files[0]); }
-      
       const uc = await createUserWithEmailAndPassword(auth, email, senha);
       await setDoc(doc(db, "usuarios", uc.user.uid), { nome, perfil: 'loja', email, documento, rua, num, bairro, ref, whats, logo: logoBase64, status: 'online', pedidosCriados: 0, ratingSum: 0, ratingCount: 0, dataCriacao: Date.now() });
       window.isRegistering = false; hideLoading(); showToast('<i class="ph-fill ph-check-circle"></i> Bem-vindo!'); window.location.reload(); 
@@ -1395,20 +1265,8 @@
     showLoading('CADASTRANDO...'); window.isRegistering = true; 
     try {
       let placaFotoBase64 = null; if (fotoPlacaInput.files.length > 0) { placaFotoBase64 = await getBase64(fotoPlacaInput.files[0]); }
-      
-      const uc = await createUserWithEmailAndPassword(auth, email, senha);
-      let saldoInicial = 0;
-      try {
-        const configSnap = await getDoc(doc(db, "config", "geral"));
-        if(configSnap.exists()) {
-           const cfg = configSnap.data();
-           if(cfg.promoInicio && cfg.promoFim && cfg.promoValor) {
-              const dataLocalBR = getTodayStr();
-              if(dataLocalBR >= cfg.promoInicio && dataLocalBR <= cfg.promoFim) saldoInicial = parseFloat(cfg.promoValor);
-           }
-        }
-      } catch(e) {}
-
+      const uc = await createUserWithEmailAndPassword(auth, email, senha); let saldoInicial = 0;
+      try { const configSnap = await getDoc(doc(db, "config", "geral")); if(configSnap.exists()) { const cfg = configSnap.data(); if(cfg.promoInicio && cfg.promoFim && cfg.promoValor) { const dataLocalBR = getTodayStr(); if(dataLocalBR >= cfg.promoInicio && dataLocalBR <= cfg.promoFim) saldoInicial = parseFloat(cfg.promoValor); } } } catch(e) {}
       await setDoc(doc(db, "usuarios", uc.user.uid), { nome, perfil: 'motoboy', email, documento, dataNasc, placa, whats, chavePix: pix, bagGrande: temBag, placaFoto: placaFotoBase64, status: 'pendente', saldo: saldoInicial, entregasFeitas: 0, ratingSum: 0, ratingCount: 0, dataCriacao: Date.now() });
       await signOut(auth); window.isRegistering = false; hideLoading(); showToast('<i class="ph-fill ph-check-circle"></i> Criado! Aguarde aprovação.'); window.showScreen('login');
     } catch (e) { window.isRegistering = false; hideLoading(); showToast(handleAuthError(e)); }
@@ -1419,22 +1277,16 @@
     document.getElementById('editLojaNome').value = userDataGlobal.nome || ''; document.getElementById('editLojaRua').value = userDataGlobal.rua || ''; 
     document.getElementById('editLojaNum').value = userDataGlobal.num || ''; document.getElementById('editLojaBairro').value = userDataGlobal.bairro || ''; 
     document.getElementById('editLojaRef').value = userDataGlobal.ref || ''; document.getElementById('editLojaWhats').value = userDataGlobal.whats || '';
-    
-    if(userDataGlobal.logo) { document.getElementById('currentLogoImg').src = userDataGlobal.logo; document.getElementById('currentLogoContainer').style.display = 'block';
-    } else { document.getElementById('currentLogoContainer').style.display = 'none'; }
+    if(userDataGlobal.logo) { document.getElementById('currentLogoImg').src = userDataGlobal.logo; document.getElementById('currentLogoContainer').style.display = 'block'; } else { document.getElementById('currentLogoContainer').style.display = 'none'; }
     window.switchLojaTab('tab-loja-perfil');
   };
 
   window.salvarPerfilLoja = async function() {
-    if(!auth.currentUser) return;
-    showLoading('SALVANDO...');
+    if(!auth.currentUser) return; showLoading('SALVANDO...');
     try {
       let logoBase64 = userDataGlobal.logo; const fileInput = document.getElementById('editLojaLogo');
       if (fileInput.files.length > 0) { logoBase64 = await getBase64(fileInput.files[0]); }
-      await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { 
-        nome: document.getElementById('editLojaNome').value, rua: document.getElementById('editLojaRua').value, num: document.getElementById('editLojaNum').value, 
-        bairro: document.getElementById('editLojaBairro').value, ref: document.getElementById('editLojaRef').value, whats: document.getElementById('editLojaWhats').value, logo: logoBase64 
-      });
+      await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { nome: document.getElementById('editLojaNome').value, rua: document.getElementById('editLojaRua').value, num: document.getElementById('editLojaNum').value, bairro: document.getElementById('editLojaBairro').value, ref: document.getElementById('editLojaRef').value, whats: document.getElementById('editLojaWhats').value, logo: logoBase64 });
       showToast('<i class="ph-fill ph-check-circle"></i> Perfil atualizado!');
     } catch(e) { showToast('<i class="ph-fill ph-warning"></i> Erro ao salvar.'); } finally { hideLoading(); }
   };
@@ -1444,23 +1296,16 @@
     document.getElementById('editMotoNome').value = userDataGlobal.nome || ''; document.getElementById('editMotoPlaca').value = userDataGlobal.placa || ''; 
     document.getElementById('editMotoWhats').value = userDataGlobal.whats || ''; document.getElementById('editMotoData').value = userDataGlobal.dataNasc || '';
     document.getElementById('editMotoPix').value = userDataGlobal.chavePix || ''; document.getElementById('editMotoBag').checked = userDataGlobal.bagGrande || false;
-    
-    if(userDataGlobal.placaFoto) { document.getElementById('currentPlacaImg').src = userDataGlobal.placaFoto; document.getElementById('currentPlacaContainer').style.display = 'block';
-    } else { document.getElementById('currentPlacaContainer').style.display = 'none'; }
+    if(userDataGlobal.placaFoto) { document.getElementById('currentPlacaImg').src = userDataGlobal.placaFoto; document.getElementById('currentPlacaContainer').style.display = 'block'; } else { document.getElementById('currentPlacaContainer').style.display = 'none'; }
     window.switchMotoTab('tab-moto-perfil');
   };
 
   window.salvarPerfilMoto = async function() {
-    if(!auth.currentUser) return;
-    showLoading('SALVANDO...');
+    if(!auth.currentUser) return; showLoading('SALVANDO...');
     try {
       let placaFotoBase64 = userDataGlobal.placaFoto; const fileInputMoto = document.getElementById('editMotoPlacaFoto');
       if (fileInputMoto && fileInputMoto.files.length > 0) { placaFotoBase64 = await getBase64(fileInputMoto.files[0]); }
-      await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { 
-        nome: document.getElementById('editMotoNome').value, placa: document.getElementById('editMotoPlaca').value.trim().toUpperCase(), whats: document.getElementById('editMotoWhats').value, 
-        dataNasc: document.getElementById('editMotoData').value, chavePix: document.getElementById('editMotoPix').value.trim(),
-        bagGrande: document.getElementById('editMotoBag').checked, placaFoto: placaFotoBase64
-      });
+      await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { nome: document.getElementById('editMotoNome').value, placa: document.getElementById('editMotoPlaca').value.trim().toUpperCase(), whats: document.getElementById('editMotoWhats').value, dataNasc: document.getElementById('editMotoData').value, chavePix: document.getElementById('editMotoPix').value.trim(), bagGrande: document.getElementById('editMotoBag').checked, placaFoto: placaFotoBase64 });
       showToast('<i class="ph-fill ph-check-circle"></i> Perfil atualizado!');
     } catch(e) { showToast('<i class="ph-fill ph-warning"></i> Erro ao salvar.'); } finally { hideLoading(); }
   };
@@ -1520,8 +1365,6 @@
     
     const uid = auth.currentUser.uid;
     const q = query(collection(db, "pedidos"), orderBy("timestamp", "desc"));
-    
-    // INJEÇÃO DA MEMÓRIA LOCAL DA LOJA
     if (!window.lastLojaOrdersState) window.lastLojaOrdersState = {};
 
     lojaUnsubscribe = onSnapshot(q, (snapshot) => {
@@ -1653,7 +1496,6 @@
                 if (userDataGlobal.punishedUntil && userDataGlobal.punishedUntil > Date.now()) {
                     if (!window.pendingDelayedOrders.has(docSnap.id)) {
                         window.pendingDelayedOrders.add(docSnap.id);
-                        
                         setTimeout(() => {
                             window.pendingDelayedOrders.delete(docSnap.id);
                             window.seenOrderIds.add(docSnap.id);
@@ -1787,19 +1629,25 @@
     }
 
     if(entregas.length === 0 || isNaN(feeInput) || feeInput <= 0) { window.isProcessingClick = false; return showToast('<i class="ph-fill ph-warning"></i> Adicione Bairro e Taxa!'); }
-    showLoading('PUBLICANDO...');
+    
+    // OTIMIZAÇÃO: Promessas simultâneas para tirar a lentidão do clique
     const totalFee = feeInput * entregas.length; const pin = Math.floor(1000 + Math.random() * 9000).toString(); const bairrosResumo = bairrosArr.join(', ');
     const clienteEnd = entregas.length === 1 ? `${entregas[0].rua}, ${entregas[0].num} - ${entregas[0].bairro}`.trim() : `Rota com ${entregas.length} entregas`;
     
     try {
-      await addDoc(collection(db, "pedidos"), {
+      const p1 = addDoc(collection(db, "pedidos"), {
         lojaId: auth.currentUser.uid, lojaNome: userDataGlobal.nome || 'Loja', lojaLogo: userDataGlobal.logo || null, lojaWhats: userDataGlobal.whats || '', lojaEnd: `${userDataGlobal.rua}, ${userDataGlobal.num} - ${userDataGlobal.bairro} (${userDataGlobal.ref})`,
         clienteEnd: clienteEnd, bairro: bairrosResumo, taxa: `R$ ${totalFee.toFixed(2).replace('.', ',')}`, obs: obs, pin: pin, bagGrande: bagGrande, status: 'aguardando', timestamp: Date.now(), qtdEntregas: entregas.length, entregas: entregas
       });
-      await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { pedidosCriados: increment(1) });
+      const p2 = updateDoc(doc(db, "usuarios", auth.currentUser.uid), { pedidosCriados: increment(1) });
+      
+      // Fecha a tela imediatamente (Optimistic UI) enquanto o Firebase trabalha em segundo plano
       window.closeNewOrderModal(); window.resetDestinosUI(); document.getElementById('newFee').value = ''; document.getElementById('newObs').value = ''; document.getElementById('displayTotalFee').textContent = 'R$ 0,00';
-      showToast('<i class="ph-fill ph-lightning"></i> Rota no mural!');
-    } catch(e) { showToast("Erro: " + e.message); } finally { hideLoading(); window.isProcessingClick = false; }
+      showToast('<i class="ph-fill ph-lightning"></i> Publicando...');
+      
+      await Promise.all([p1, p2]);
+      
+    } catch(e) { showToast("Erro: " + e.message); } finally { window.isProcessingClick = false; }
   };
 
   function buildCardReal(id, data) {
@@ -1829,6 +1677,7 @@
     return div;
   }
 
+  // ACEITAR PEDIDO - OTIMIZADO PARA VELOCIDADE EXTREMA
   window.acceptOrderReal = async function(id) {
     if(window.isProcessingClick) return;
     window.isProcessingClick = true;
@@ -1844,21 +1693,22 @@
         return showToast(`<i class="ph-fill ph-warning"></i> Saldo insuficiente! Você precisa de no mínimo R$ ${taxaCobranca.toFixed(2).replace('.',',')} (Taxa do App) para aceitar.`); 
     }
     
-    showLoading('ACEITANDO...');
-    try {
-      const orderRef = doc(db, "pedidos", id);
-      const orderSnap = await getDoc(orderRef);
-      if(!orderSnap.exists() || orderSnap.data().status !== 'aguardando') {
-          throw new Error("Pedido não está mais disponível.");
-      }
+    // Usa a memória local em vez de ir no servidor primeiro. Muito mais rápido!
+    if(!window.allOrdersMemory[id] || window.allOrdersMemory[id].status !== 'aguardando') {
+        window.isProcessingClick = false; 
+        return showToast('<i class="ph-fill ph-warning"></i> Pedido não está mais disponível.');
+    }
 
-      await updateDoc(orderRef, { status: 'aceito', motoboyId: auth.currentUser.uid, motoboyNome: userDataGlobal.nome, motoboyWhats: userDataGlobal.whats || '', motoboyPix: userDataGlobal.chavePix || '' });
-      await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { status: 'em_rota' });
+    try {
+      const p1 = updateDoc(doc(db, "pedidos", id), { status: 'aceito', motoboyId: auth.currentUser.uid, motoboyNome: userDataGlobal.nome, motoboyWhats: userDataGlobal.whats || '', motoboyPix: userDataGlobal.chavePix || '' });
+      const p2 = updateDoc(doc(db, "usuarios", auth.currentUser.uid), { status: 'em_rota' });
+      await Promise.all([p1, p2]);
+
       triggerLightning(); showToast('<i class="ph-fill ph-lightning"></i> Rota aceita! Vá para a Loja.');
-    } catch(e) { showToast('<i class="ph-fill ph-warning"></i> Alguém foi mais rápido ou ocorreu um erro!'); } finally { hideLoading(); window.isProcessingClick = false; }
+    } catch(e) { showToast('<i class="ph-fill ph-warning"></i> Alguém foi mais rápido ou ocorreu um erro!'); } finally { window.isProcessingClick = false; }
   };
 
-  // AMORTECEDOR DE CONCLUSÃO: Garante o update na loja
+  // AMORTECEDOR DE CONCLUSÃO: Garante o update na loja (OTIMIZADO)
   window.completeOrder = async function() {
     if(!activeOrderId) return;
     showLoading('CONCLUINDO...');
@@ -1867,9 +1717,11 @@
       const currentSaldo = userDataGlobal.saldo !== undefined ? parseFloat(userDataGlobal.saldo) : 0;
       const novoSaldo = currentSaldo - taxaCobranca;
 
-      await updateDoc(doc(db, "pedidos", activeOrderId), { status: 'concluido' });
-      await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { saldo: novoSaldo, status: 'online', entregasFeitas: increment(1) });
+      const p1 = updateDoc(doc(db, "pedidos", activeOrderId), { status: 'concluido' });
+      const p2 = updateDoc(doc(db, "usuarios", auth.currentUser.uid), { saldo: novoSaldo, status: 'online', entregasFeitas: increment(1) });
       
+      await Promise.all([p1, p2]);
+
       document.getElementById('activeOrderBox').classList.remove('visible'); document.getElementById('muralTitle').style.display = 'flex'; activeOrderId = null; 
       showToast(`Corrida concluída! -R$ ${taxaCobranca.toFixed(2).replace('.',',')}`);
     } catch(e) {
@@ -1882,8 +1734,10 @@
     if(!confirm("Deseja mesmo devolver o pedido para o mural?")) return;
     showLoading('DEVOLVENDO...');
     try {
-      await updateDoc(doc(db, "pedidos", activeOrderId), { status: 'aguardando', motoboyId: null, motoboyNome: null, motoboyWhats: null, motoboyPix: null });
-      await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { status: 'online' });
+      const p1 = updateDoc(doc(db, "pedidos", activeOrderId), { status: 'aguardando', motoboyId: null, motoboyNome: null, motoboyWhats: null, motoboyPix: null });
+      const p2 = updateDoc(doc(db, "usuarios", auth.currentUser.uid), { status: 'online' });
+      await Promise.all([p1, p2]);
+
       document.getElementById('activeOrderBox').classList.remove('visible'); document.getElementById('muralTitle').style.display = 'flex'; activeOrderId = null; showToast('Devolvido ao mural.');
     } catch(e) {} finally { hideLoading(); }
   };
@@ -1931,8 +1785,11 @@
       const objAvaliacao = { nota: currentStarRating, msg: msg };
       const atualizacao = isLoja ? { avaliacaoDaLoja: objAvaliacao } : { avaliacaoDoMotoboy: objAvaliacao };
       
-      await updateDoc(doc(db, "pedidos", currentModalOrderId), atualizacao);
-      if (targetUserId) { await updateDoc(doc(db, "usuarios", targetUserId), { ratingSum: increment(currentStarRating), ratingCount: increment(1) }); }
+      const p1 = updateDoc(doc(db, "pedidos", currentModalOrderId), atualizacao);
+      let p2 = Promise.resolve();
+      if (targetUserId) { p2 = updateDoc(doc(db, "usuarios", targetUserId), { ratingSum: increment(currentStarRating), ratingCount: increment(1) }); }
+      
+      await Promise.all([p1, p2]);
       showToast('Avaliação enviada!'); window.fecharModalHistory();
     } catch(e) { showToast('Erro ao enviar.'); } finally { hideLoading(); }
   };
