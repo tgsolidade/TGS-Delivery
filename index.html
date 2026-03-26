@@ -12,8 +12,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon.png">
-<link rel="icon" type="image/png" href="icon.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon.png">
 
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -365,7 +366,7 @@
 <div class="screen" id="cadastro-loja">
   <div class="screen-header">
     <div class="back-btn" onclick="showScreen('choose-profile')"><i class="ph ph-arrow-left"></i></div>
-    <h2><i class="ph-fill ph-storefront"></i> CADASTRO DE LOJA</h2>
+    <h2 style="display:flex; align-items:center; gap:8px;"><i class="ph-fill ph-storefront"></i> CADASTRO DE LOJA</h2>
   </div>
   <div class="screen-body">
     <div class="form-group">
@@ -398,7 +399,7 @@
 <div class="screen" id="cadastro-moto">
   <div class="screen-header">
     <div class="back-btn" onclick="showScreen('choose-profile')"><i class="ph ph-arrow-left"></i></div>
-    <h2><i class="ph ph-motorcycle"></i> CADASTRO MOTOBOY</h2>
+    <h2 style="display:flex; align-items:center; gap:8px;"><i class="ph ph-motorcycle"></i> CADASTRO MOTOBOY</h2>
   </div>
   <div class="screen-body">
     <div class="form-group"><label>Nome Completo</label><input type="text" id="motoNome" placeholder="Seu nome completo"></div>
@@ -817,7 +818,7 @@
               btnElement.style.borderColor = 'var(--border)';
               btnElement.innerHTML = `<i class="ph-bold ph-check"></i> COPIADO`;
           }
-      }, function(err) { showToast('<i class="ph-fill ph-warning"></i> Erro ao copiar PIX.'); });
+      }, function(err) { console.error("Erro interno:", err); showToast('<i class="ph-fill ph-warning"></i> Erro ao copiar PIX.'); });
   }
 
   function getTodayStr() {
@@ -839,7 +840,7 @@
       if ('serviceWorker' in navigator) {
           navigator.serviceWorker.register('sw.js').then(function(reg) {
               console.log('SW Registrado para Notificações');
-          }).catch(function(err) {});
+          }).catch(function(err) { console.error("Erro interno:", err); });
       }
   };
 
@@ -1085,7 +1086,7 @@
                 let updateObj = { status: 'online' }; if (!userDataGlobal.sessionStart) { updateObj.sessionStart = Date.now(); }
                 await updateDoc(doc(db, "usuarios", auth.currentUser.uid), updateObj); 
             } 
-        } catch(e) {}
+        } catch(e) { console.error("Erro interno:", e); }
      }
   }
 
@@ -1093,7 +1094,7 @@
   window.addEventListener('beforeunload', () => {
       if(auth.currentUser && userDataGlobal) {
           if(userDataGlobal.status === 'pendente' || userDataGlobal.status === 'bloqueado') return;
-          updateDoc(doc(db, "usuarios", auth.currentUser.uid), { status: 'offline' }).catch(()=>{});
+          updateDoc(doc(db, "usuarios", auth.currentUser.uid), { status: 'offline' }).catch((e)=>{ console.error("Erro interno:", e); });
       }
   });
 
@@ -1126,14 +1127,14 @@
       else { imgEl.style.display = 'none'; phEl.style.display = 'block'; }
   }
 
-  window.fecharAvisoGlobal = function() { document.getElementById('adminAlertModal').classList.remove('open'); if(window.currentAvisoId) { try { localStorage.setItem('lastAvisoId', window.currentAvisoId); } catch(e){} } }
+  window.fecharAvisoGlobal = function() { document.getElementById('adminAlertModal').classList.remove('open'); if(window.currentAvisoId) { try { localStorage.setItem('lastAvisoId', window.currentAvisoId); } catch(e){ console.error("Erro interno:", e); } } }
 
   function listenConfigAndAlerts() {
      onSnapshot(doc(db, "config", "geral"), (docSnap) => { if(docSnap.exists()) { currentConfig = docSnap.data(); document.getElementById('killSwitchOverlay').style.display = currentConfig.isPaused ? 'flex' : 'none'; } });
      const qGlobal = query(collection(db, "avisos"), orderBy("timestamp", "desc"), limit(1));
      onSnapshot(qGlobal, (snap) => {
         if(!snap.empty) {
-           const docAlerta = snap.docs[0]; const data = docAlerta.data(); let savedId = null; try { savedId = localStorage.getItem('lastAvisoId'); } catch(e){}
+           const docAlerta = snap.docs[0]; const data = docAlerta.data(); let savedId = null; try { savedId = localStorage.getItem('lastAvisoId'); } catch(e){ console.error("Erro interno:", e); }
            let isExpired = false; if (data.timestamp) { const alertTime = data.timestamp.toMillis ? data.timestamp.toMillis() : (data.timestamp.seconds * 1000); if ((Date.now() - alertTime) > 86400000) isExpired = true; }
            if(docAlerta.id !== savedId && !isExpired) { window.currentAvisoId = docAlerta.id; document.getElementById('adminAlertText').textContent = data.msg; document.getElementById('adminAlertModal').classList.add('open'); }
         }
@@ -1152,10 +1153,10 @@
   window.responderAdmin = async function() {
      const msgId = document.getElementById('indivAlertMsgId').value; const replyTxt = document.getElementById('indivAlertReply').value.trim();
      if(!replyTxt) return showToast("<i class='ph-fill ph-warning'></i> Digite uma resposta."); showLoading('ENVIANDO...');
-     try { await updateDoc(doc(db, "mensagens", msgId), { status: 'respondido', reply: replyTxt }); document.getElementById('indivAlertModal').classList.remove('open'); showToast('<i class="ph-fill ph-check-circle"></i> Resposta enviada ao Suporte!'); } catch(e) { alert("Erro: " + e.message); } finally { hideLoading(); }
+     try { await updateDoc(doc(db, "mensagens", msgId), { status: 'respondido', reply: replyTxt }); document.getElementById('indivAlertModal').classList.remove('open'); showToast('<i class="ph-fill ph-check-circle"></i> Resposta enviada ao Suporte!'); } catch(e) { console.error("Erro interno:", e); alert("Erro: " + e.message); } finally { hideLoading(); }
   }
 
-  window.dispensarMensagemIndividual = async function() { const msgId = document.getElementById('indivAlertMsgId').value; if(msgId) { try { await updateDoc(doc(db, "mensagens", msgId), { status: 'lido' }); } catch(e) {} } document.getElementById('indivAlertModal').classList.remove('open'); }
+  window.dispensarMensagemIndividual = async function() { const msgId = document.getElementById('indivAlertMsgId').value; if(msgId) { try { await updateDoc(doc(db, "mensagens", msgId), { status: 'lido' }); } catch(e) { console.error("Erro interno:", e); } } document.getElementById('indivAlertModal').classList.remove('open'); }
 
   window.abrirModalRecarga = function() { document.getElementById('rechargeValue').value = ''; document.getElementById('rechargeModal').classList.add('open'); }
   window.processarRecargaMock = async function() {
@@ -1164,7 +1165,7 @@
      try {
         await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { saldo: increment(valor) }); await addDoc(collection(db, "recargas"), { motoboyId: auth.currentUser.uid, motoboyNome: userDataGlobal.nome, valor: valor, tipo: 'pix', timestamp: Date.now() });
         document.getElementById('rechargeModal').classList.remove('open'); showToast(`<i class="ph-fill ph-check-circle"></i> Recarga concluída!`);
-     } catch(e) { showToast('<i class="ph-fill ph-warning"></i> Erro na recarga: ' + e.message); } finally { hideLoading(); }
+     } catch(e) { console.error("Erro interno:", e); showToast('<i class="ph-fill ph-warning"></i> Erro na recarga: ' + e.message); } finally { hideLoading(); }
   }
 
   let initialAuthChecked = false;
@@ -1198,7 +1199,7 @@
             }
           }
         } else { await signOut(auth); window.showScreen('login'); }
-      } catch(e) { window.showScreen('login'); }
+      } catch(e) { console.error("Erro interno:", e); window.showScreen('login'); }
     } else {
       if (!initialAuthChecked) { setTimeout(() => window.showScreen('login'), 1500); } else { window.showScreen('login'); }
     }
@@ -1213,16 +1214,16 @@
       const userDoc = await getDoc(doc(db, "usuarios", uc.user.uid));
       if (!userDoc.exists()) { await deleteUser(uc.user); hideLoading(); showToast('<i class="ph-fill ph-broom"></i> Cadastro corrompido limpo!'); return; }
       hideLoading();
-    } catch (e) { hideLoading(); showToast(handleAuthError(e)); }
+    } catch (e) { hideLoading(); console.error("Erro interno:", e); showToast(handleAuthError(e)); }
   };
 
   window.deslogar = async function() {
     showLoading('SAINDO...');
     try {
         if(userListenerUnsubscribe) userListenerUnsubscribe(); if(window.msgIndivUnsubscribe) window.msgIndivUnsubscribe();
-        if(auth.currentUser && userDataGlobal && userDataGlobal.status !== 'pendente' && userDataGlobal.status !== 'bloqueado') { await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { status: 'offline' }).catch(() => {}); }
+        if(auth.currentUser && userDataGlobal && userDataGlobal.status !== 'pendente' && userDataGlobal.status !== 'bloqueado') { await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { status: 'offline' }).catch((e) => { console.error("Erro interno:", e); }); }
         await signOut(auth); 
-    } catch(e) { console.log("Forçando logout...", e); } finally { userDataGlobal = null; hideLoading(); window.showScreen('login'); }
+    } catch(e) { console.error("Erro interno:", e); console.log("Forçando logout...", e); } finally { userDataGlobal = null; hideLoading(); window.showScreen('login'); }
   }
 
   window.validarERecuperarSenha = async function() {
@@ -1234,7 +1235,7 @@
       let validado = false;
       querySnapshot.forEach((docSnap) => { const d = docSnap.data(); if(d.documento === docInput && (d.perfil === 'loja' || d.dataNasc === dataInput)) { validado = true; } });
       if(validado) { await sendPasswordResetEmail(auth, email); alert("Autenticação confirmada! Link enviado."); window.fecharModalEsqueciSenha(); } else { alert("Dados divergentes. Contate o Admin Geral."); }
-    } catch(e) { showToast("<i class='ph-fill ph-warning'></i> Erro na verificação."); } finally { hideLoading(); }
+    } catch(e) { console.error("Erro interno:", e); showToast("<i class='ph-fill ph-warning'></i> Erro na verificação."); } finally { hideLoading(); }
   }
 
   window.cadastrarLoja = async function() {
@@ -1251,7 +1252,7 @@
       const uc = await createUserWithEmailAndPassword(auth, email, senha);
       await setDoc(doc(db, "usuarios", uc.user.uid), { nome, perfil: 'loja', email, documento, rua, num, bairro, ref, whats, logo: logoBase64, status: 'online', pedidosCriados: 0, ratingSum: 0, ratingCount: 0, dataCriacao: Date.now() });
       window.isRegistering = false; hideLoading(); showToast('<i class="ph-fill ph-check-circle"></i> Bem-vindo!'); window.location.reload(); 
-    } catch (e) { window.isRegistering = false; hideLoading(); showToast(handleAuthError(e)); }
+    } catch (e) { window.isRegistering = false; hideLoading(); console.error("Erro interno:", e); showToast(handleAuthError(e)); }
   };
 
   window.cadastrarMoto = async function() {
@@ -1266,10 +1267,10 @@
     try {
       let placaFotoBase64 = null; if (fotoPlacaInput.files.length > 0) { placaFotoBase64 = await getBase64(fotoPlacaInput.files[0]); }
       const uc = await createUserWithEmailAndPassword(auth, email, senha); let saldoInicial = 0;
-      try { const configSnap = await getDoc(doc(db, "config", "geral")); if(configSnap.exists()) { const cfg = configSnap.data(); if(cfg.promoInicio && cfg.promoFim && cfg.promoValor) { const dataLocalBR = getTodayStr(); if(dataLocalBR >= cfg.promoInicio && dataLocalBR <= cfg.promoFim) saldoInicial = parseFloat(cfg.promoValor); } } } catch(e) {}
+      try { const configSnap = await getDoc(doc(db, "config", "geral")); if(configSnap.exists()) { const cfg = configSnap.data(); if(cfg.promoInicio && cfg.promoFim && cfg.promoValor) { const dataLocalBR = getTodayStr(); if(dataLocalBR >= cfg.promoInicio && dataLocalBR <= cfg.promoFim) saldoInicial = parseFloat(cfg.promoValor); } } } catch(e) { console.error("Erro interno:", e); }
       await setDoc(doc(db, "usuarios", uc.user.uid), { nome, perfil: 'motoboy', email, documento, dataNasc, placa, whats, chavePix: pix, bagGrande: temBag, placaFoto: placaFotoBase64, status: 'pendente', saldo: saldoInicial, entregasFeitas: 0, ratingSum: 0, ratingCount: 0, dataCriacao: Date.now() });
       await signOut(auth); window.isRegistering = false; hideLoading(); showToast('<i class="ph-fill ph-check-circle"></i> Criado! Aguarde aprovação.'); window.showScreen('login');
-    } catch (e) { window.isRegistering = false; hideLoading(); showToast(handleAuthError(e)); }
+    } catch (e) { window.isRegistering = false; hideLoading(); console.error("Erro interno:", e); showToast(handleAuthError(e)); }
   };
 
   window.abrirPerfilLoja = function() {
@@ -1288,7 +1289,7 @@
       if (fileInput.files.length > 0) { logoBase64 = await getBase64(fileInput.files[0]); }
       await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { nome: document.getElementById('editLojaNome').value, rua: document.getElementById('editLojaRua').value, num: document.getElementById('editLojaNum').value, bairro: document.getElementById('editLojaBairro').value, ref: document.getElementById('editLojaRef').value, whats: document.getElementById('editLojaWhats').value, logo: logoBase64 });
       showToast('<i class="ph-fill ph-check-circle"></i> Perfil atualizado!');
-    } catch(e) { showToast('<i class="ph-fill ph-warning"></i> Erro ao salvar.'); } finally { hideLoading(); }
+    } catch(e) { console.error("Erro interno:", e); showToast('<i class="ph-fill ph-warning"></i> Erro ao salvar.'); } finally { hideLoading(); }
   };
 
   window.abrirPerfilMoto = function() {
@@ -1307,13 +1308,13 @@
       if (fileInputMoto && fileInputMoto.files.length > 0) { placaFotoBase64 = await getBase64(fileInputMoto.files[0]); }
       await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { nome: document.getElementById('editMotoNome').value, placa: document.getElementById('editMotoPlaca').value.trim().toUpperCase(), whats: document.getElementById('editMotoWhats').value, dataNasc: document.getElementById('editMotoData').value, chavePix: document.getElementById('editMotoPix').value.trim(), bagGrande: document.getElementById('editMotoBag').checked, placaFoto: placaFotoBase64 });
       showToast('<i class="ph-fill ph-check-circle"></i> Perfil atualizado!');
-    } catch(e) { showToast('<i class="ph-fill ph-warning"></i> Erro ao salvar.'); } finally { hideLoading(); }
+    } catch(e) { console.error("Erro interno:", e); showToast('<i class="ph-fill ph-warning"></i> Erro ao salvar.'); } finally { hideLoading(); }
   };
 
   window.solicitarRedefinicaoSenha = async function() {
     if(confirm('Deseja receber um link no seu e-mail para redefinir a senha?')) {
        showLoading('ENVIANDO...');
-       try { await sendPasswordResetEmail(auth, userDataGlobal.email); alert("Link enviado!"); } catch(e) { alert("Erro."); } finally { hideLoading(); }
+       try { await sendPasswordResetEmail(auth, userDataGlobal.email); alert("Link enviado!"); } catch(e) { console.error("Erro interno:", e); alert("Erro."); } finally { hideLoading(); }
     }
   }
 
@@ -1364,12 +1365,15 @@
     if(lojaUnsubscribe) lojaUnsubscribe();
     
     const uid = auth.currentUser.uid;
-    const q = query(collection(db, "pedidos"), orderBy("timestamp", "desc"));
+    const q = query(collection(db, "pedidos"), orderBy("timestamp", "desc"), limit(100));
     if (!window.lastLojaOrdersState) window.lastLojaOrdersState = {};
 
     lojaUnsubscribe = onSnapshot(q, (snapshot) => {
       const contAtivos = document.getElementById('lojaOrdersContainer');
       const contHist = document.getElementById('lojaHistoryContainer');
+      const fragAtivos = document.createDocumentFragment(); 
+      const fragHist = document.createDocumentFragment();
+
       contAtivos.innerHTML = ''; contHist.innerHTML = ''; let ativos = 0; let hist = 0;
       window.lojaHistoryData = []; 
       
@@ -1384,11 +1388,15 @@
             }
             window.lastLojaOrdersState[docSnap.id] = data.status;
 
-            if(data.status !== 'concluido') { ativos++; contAtivos.appendChild(buildLojaCard(docSnap.id, data)); } 
-            else { hist++; contHist.appendChild(buildLojaCard(docSnap.id, data)); window.lojaHistoryData.push(data); }
+            if(data.status !== 'concluido') { ativos++; fragAtivos.appendChild(buildLojaCard(docSnap.id, data)); } 
+            else { hist++; fragHist.appendChild(buildLojaCard(docSnap.id, data)); window.lojaHistoryData.push(data); }
           }
-        } catch(e) {}
+        } catch(e) { console.error("Erro interno no loop da loja:", e); }
       });
+
+      contAtivos.appendChild(fragAtivos);
+      contHist.appendChild(fragHist);
+
       if(ativos===0) contAtivos.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">Nenhum pedido ativo.</div>';
       if(hist===0) contHist.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">Nenhum histórico.</div>';
       
@@ -1419,7 +1427,7 @@
   window.deleteOrder = async function(id) {
     if(confirm('Tem certeza que deseja apagar este pedido?')) { 
        showLoading('CANCELANDO...');
-       try { await deleteDoc(doc(db, "pedidos", id)); showToast('<i class="ph-fill ph-trash"></i> Pedido apagado.'); } catch(e) { showToast('Erro ao apagar.'); } finally { hideLoading(); }
+       try { await deleteDoc(doc(db, "pedidos", id)); showToast('<i class="ph-fill ph-trash"></i> Pedido apagado.'); } catch(e) { console.error("Erro interno:", e); showToast('Erro ao apagar.'); } finally { hideLoading(); }
     }
   }
 
@@ -1469,10 +1477,14 @@
     if(motoMuralUnsubscribe) motoMuralUnsubscribe();
     
     const uid = auth.currentUser.uid;
-    const q = query(collection(db, "pedidos"), orderBy("timestamp", "desc"));
+    const q = query(collection(db, "pedidos"), orderBy("timestamp", "desc"), limit(150));
 
     motoMuralUnsubscribe = onSnapshot(q, (snapshot) => {
-      const container = document.getElementById('orderCards'); const histContainer = document.getElementById('motoHistoryContainer');
+      const container = document.getElementById('orderCards'); 
+      const histContainer = document.getElementById('motoHistoryContainer');
+      const fragAtivos = document.createDocumentFragment(); 
+      const fragHist = document.createDocumentFragment();
+
       container.innerHTML = ''; histContainer.innerHTML = ''; 
       let pendentes = 0; let concluidasHj = 0; let encontrouAtivo = false;
       window.motoHistoryData = []; 
@@ -1508,7 +1520,7 @@
                                         document.getElementById('emptyMural').style.display = 'none';
                                     }
                                 }
-                            });
+                            }).catch(e => console.error("Erro interno:", e));
                         }, 5000); 
                     }
                     return; 
@@ -1517,7 +1529,7 @@
                 }
             }
 
-            pendentes++; container.appendChild(buildCardReal(docSnap.id, data));
+            pendentes++; fragAtivos.appendChild(buildCardReal(docSnap.id, data));
           }
           
           if(data.status === 'aceito' && data.motoboyId === uid) {
@@ -1557,13 +1569,16 @@
              }
              let badgeRotas = data.qtdEntregas > 1 ? `<div style="color:var(--neon-y); font-size:10px; font-weight:bold; margin-bottom:4px; font-family:var(--font-head);"><i class="ph-fill ph-package"></i> ROTA: ${data.qtdEntregas} ENTREGAS</div>` : '';
              hDiv.innerHTML = `<div class="order-card-top"><span class="order-id">${data.lojaNome}</span><div style="display:flex; gap:10px; align-items:center;"><span class="order-fee">${data.taxa}</span>${whatsBtn}</div></div>${badgeRotas}<div class="order-info"><i class="ph-fill ph-map-pin"></i> ${data.bairro}</div>`;
-             histContainer.appendChild(hDiv); window.motoHistoryData.push(data);
+             fragHist.appendChild(hDiv); window.motoHistoryData.push(data);
           }
-        } catch(e) {}
+        } catch(e) { console.error("Erro interno no loop de pedidos:", e); }
       });
       
+      container.appendChild(fragAtivos);
+      histContainer.appendChild(fragHist);
+
       if(pendentes > lastPendentesCount && !encontrouAtivo) {
-          try { const aud = document.getElementById('alertSound'); aud.currentTime = 0; let playPromise = aud.play(); if (playPromise !== undefined) playPromise.catch(error => { }); } catch(err) { }
+          try { const aud = document.getElementById('alertSound'); aud.currentTime = 0; let playPromise = aud.play(); if (playPromise !== undefined) playPromise.catch(error => { }); } catch(err) { console.error("Erro interno:", err); }
           
           if (document.hidden) {
               window.dispararNotificacao("TGS Delivery ⚡", "Nova corrida disponível no mural!");
@@ -1645,7 +1660,7 @@
       showToast('<i class="ph-fill ph-lightning"></i> Publicando...');
       
       await Promise.all([p1, p2]);
-    } catch(e) { showToast("Erro: " + e.message); } finally { window.isProcessingClick = false; }
+    } catch(e) { console.error("Erro interno:", e); showToast("Erro: " + e.message); } finally { window.isProcessingClick = false; }
   };
 
   function buildCardReal(id, data) {
@@ -1708,6 +1723,7 @@
       const p2 = updateDoc(doc(db, "usuarios", auth.currentUser.uid), { status: 'em_rota' });
       await Promise.all([p1, p2]);
     } catch(e) { 
+      console.error("Erro interno:", e);
       if(cardEl) cardEl.style.display = 'block'; // Volta o card se falhar
       showToast('<i class="ph-fill ph-warning"></i> Erro: Alguém foi mais rápido!'); 
     } finally { window.isProcessingClick = false; }
@@ -1736,6 +1752,7 @@
       const p2 = updateDoc(doc(db, "usuarios", auth.currentUser.uid), { saldo: novoSaldo, status: 'online', entregasFeitas: increment(1) });
       await Promise.all([p1, p2]);
     } catch(e) {
+      console.error("Erro interno:", e);
       showToast("Erro ao sincronizar conclusão: " + e.message);
     } finally { window.isProcessingClick = false; }
   };
@@ -1757,7 +1774,7 @@
       const p1 = updateDoc(doc(db, "pedidos", backupOrderId), { status: 'aguardando', motoboyId: null, motoboyNome: null, motoboyWhats: null, motoboyPix: null });
       const p2 = updateDoc(doc(db, "usuarios", auth.currentUser.uid), { status: 'online' });
       await Promise.all([p1, p2]);
-    } catch(e) { showToast("Erro ao devolver: " + e.message); } finally { window.isProcessingClick = false; }
+    } catch(e) { console.error("Erro interno:", e); showToast("Erro ao devolver: " + e.message); } finally { window.isProcessingClick = false; }
   };
 
   window.selecionarEstrela = function(nota) {
@@ -1809,7 +1826,7 @@
       
       await Promise.all([p1, p2]);
       showToast('Avaliação enviada!'); window.fecharModalHistory();
-    } catch(e) { showToast('Erro ao enviar.'); } finally { hideLoading(); }
+    } catch(e) { console.error("Erro interno:", e); showToast('Erro ao enviar.'); } finally { hideLoading(); }
   };
 
   function triggerLightning() {
