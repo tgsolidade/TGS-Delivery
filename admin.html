@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="theme-color" content="#0a0a0f">
 <title>Painel Admin - Lightning</title>
+
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon.png">
+
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/@phosphor-icons/web"></script>
 <style>
@@ -373,8 +379,8 @@
   window.fecharListaModal = function() { document.getElementById('listModal').classList.remove('open'); }
 
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-  import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, setDoc, doc, updateDoc, deleteDoc, getDoc, serverTimestamp, increment } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+  import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, setDoc, doc, updateDoc, deleteDoc, getDoc, serverTimestamp, increment, limit } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDLSvxNn8jwZGG8Ky9MUlDRvSH6vHK7vdI",
@@ -389,7 +395,7 @@
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  const MASTER_EMAIL = "talessolidade@yahoo.com";
+  const MASTER_UID = "mt7ry6KcfkcayB0w5I52B3tsHjf2";
   let currentConfig = { taxaApp: 0.40, isPaused: false };
 
   window.listaLojasAdmin = [];
@@ -508,19 +514,14 @@
         let userDoc = await getDoc(doc(db, "usuarios", user.uid));
         let dados = userDoc.exists() ? userDoc.data() : {};
 
-        if (user.email === MASTER_EMAIL) {
-           if (dados.perfil !== 'admin') {
+        if (user.uid === MASTER_UID || dados.perfil === 'admin') {
+           if (user.uid === MASTER_UID && (!userDoc.exists() || dados.perfil !== 'admin')) {
               await setDoc(doc(db, "usuarios", user.uid), { nome: "Admin Geral", email: user.email, perfil: "admin", status: "online", dataCriacao: serverTimestamp() }, { merge: true });
            }
            document.getElementById('adminEmailDisplay').textContent = user.email;
-           window.showScreen('painel-admin'); startAdminListener(); return;
-        }
-
-        if (userDoc.exists() && dados.perfil === 'admin') {
-          document.getElementById('adminEmailDisplay').textContent = user.email;
-          window.showScreen('painel-admin'); startAdminListener();
+           window.showScreen('painel-admin'); startAdminListener();
         } else {
-          showToast('<i class="ph-fill ph-warning"></i> Acesso negado. Esta área é restrita.'); await signOut(auth); window.showScreen('login-admin');
+           showToast('<i class="ph-fill ph-warning"></i> Acesso negado. Esta área é restrita.'); await signOut(auth); window.showScreen('login-admin');
         }
       } catch(e) { window.showScreen('login-admin'); }
     } else {
@@ -538,13 +539,7 @@
       hideLoading();
     } catch (error) { 
       hideLoading();
-      if (email === MASTER_EMAIL) {
-         try {
-            const uc = await createUserWithEmailAndPassword(auth, email, pass);
-            await setDoc(doc(db, "usuarios", uc.user.uid), { nome: "Admin Geral", email: email, perfil: "admin", status: "online", dataCriacao: serverTimestamp() });
-            showToast('<i class="ph-fill ph-check-circle"></i> Conta Master criada!');
-         } catch(eCreate) { showToast('Erro: ' + eCreate.message); }
-      } else { showToast('<i class="ph-fill ph-warning"></i> Credenciais inválidas.'); }
+      showToast('<i class="ph-fill ph-warning"></i> Credenciais inválidas.');
     }
   };
 
@@ -620,7 +615,7 @@
               } else {
                   sessionHoras = 0; 
               }
-              if(sessionHoras > 26) isOvertime = true;
+              if(sessionHoras > 12) isOvertime = true;
               btnOffline = `<button class="btn-icon" style="color:var(--neon-r); border-color:var(--neon-r); width:auto; padding:0 12px; font-size:11px; margin-right:8px;" onclick="forcarMotoboyOffline('${m.id}', '${m.nome}')"><i class="ph-bold ph-power"></i> FORÇAR OFFLINE</button>`;
           }
 
@@ -860,7 +855,7 @@
     });
 
     if(ordersUnsubscribe) ordersUnsubscribe();
-    const qOrders = query(collection(db, "pedidos"), orderBy("timestamp", "desc"));
+    const qOrders = query(collection(db, "pedidos"), orderBy("timestamp", "desc"), limit(300));
     ordersUnsubscribe = onSnapshot(qOrders, (snapshot) => {
        window.todosPedidosMemoria = [];
        snapshot.forEach(docSnap => window.todosPedidosMemoria.push({id: docSnap.id, ...docSnap.data()}));
