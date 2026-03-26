@@ -49,12 +49,24 @@
 
   .neon-y { color: var(--neon-y); } .neon-g { color: var(--neon-g); } .neon-b { color: var(--neon-b); } .neon-r { color: var(--neon-r); }
 
-  /* GIRA-GIRA DO CARREGAMENTO */
+  /* GIRA-GIRA DO CARREGAMENTO GERAL (Agora só para Login/Recarga/Avaliação) */
   @keyframes spin { 100% { transform: rotate(360deg); } }
   .ph-spin { animation: spin 1s linear infinite; }
 
   /* ── BANNER DE INTERNET ── */
   #netStatusBanner { display:none; position:fixed; top:0; left:0; right:0; z-index:999999; padding:12px 16px; text-align:center; font-size:12px; font-family:var(--font-head); letter-spacing: 1px; transition: all 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.5); align-items:center; gap:10px; }
+
+  /* ── SKELETON SCREEN (CARREGAMENTO A JATO) ── */
+  .skeleton-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; position: relative; overflow: hidden; }
+  .skeleton-card::after {
+      content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent);
+      animation: skeletonShimmer 1.5s infinite;
+  }
+  @keyframes skeletonShimmer { 100% { left: 100%; } }
+  .sk-line { background: var(--bg2); border-radius: 4px; height: 14px; margin-bottom: 10px; }
+  .sk-w-100 { width: 100%; } .sk-w-60 { width: 60%; } .sk-w-40 { width: 40%; height: 28px; } .sk-circle { width: 45px; height: 45px; border-radius: 8px; flex-shrink: 0; margin-right: 10px; background: var(--bg2);}
+  .sk-top-row { display: flex; align-items: center; margin-bottom: 16px; }
 
   /* ── SPLASH SCREEN ── */
   #splash { align-items: center; justify-content: center; background: radial-gradient(ellipse at center, #0f0f28 0%, #0a0a0f 70%); position: relative; overflow: hidden; }
@@ -860,7 +872,7 @@
 
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
   import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, onAuthStateChanged, deleteUser } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-  import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, where, setDoc, doc, updateDoc, deleteDoc, getDoc, getDocs, increment, limit, runTransaction, enableNetwork, disableNetwork, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, where, setDoc, doc, updateDoc, deleteDoc, getDoc, getDocs, increment, limit, runTransaction, enableNetwork, disableNetwork } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDLSvxNn8jwZGG8Ky9MUlDRvSH6vHK7vdI",
@@ -874,15 +886,6 @@
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
-
-  // ATIVANDO CACHE OFFLINE PARA RODAR LISO NO 3G
-  enableIndexedDbPersistence(db).catch((err) => {
-      if (err.code == 'failed-precondition') {
-          console.log("Múltiplas abas abertas, persistência desativada.");
-      } else if (err.code == 'unimplemented') {
-          console.log("Navegador não suporta persistência offline.");
-      }
-  });
 
   let activeOrderId = null;
   let userDataGlobal = null; 
@@ -1385,17 +1388,27 @@
     if(!auth.currentUser) return;
     if(lojaUnsubscribe) lojaUnsubscribe();
     
+    let initialLoad = true;
     const uid = auth.currentUser.uid;
     const q = query(collection(db, "pedidos"), orderBy("timestamp", "desc"), limit(100));
     if (!window.lastLojaOrdersState) window.lastLojaOrdersState = {};
 
+    const contAtivos = document.getElementById('lojaOrdersContainer');
+    
+    // INJETA O SKELETON ANTES DE BUSCAR
+    if(contAtivos) {
+        contAtivos.innerHTML = `
+          <div class="skeleton-card"><div class="sk-top-row"><div class="sk-circle"></div><div><div class="sk-line sk-w-60"></div><div class="sk-line sk-w-100" style="margin-bottom:0;"></div></div></div><div class="sk-line sk-w-40"></div></div>
+          <div class="skeleton-card"><div class="sk-top-row"><div class="sk-circle"></div><div><div class="sk-line sk-w-60"></div><div class="sk-line sk-w-100" style="margin-bottom:0;"></div></div></div><div class="sk-line sk-w-40"></div></div>
+        `;
+    }
+
     lojaUnsubscribe = onSnapshot(q, (snapshot) => {
-      const contAtivos = document.getElementById('lojaOrdersContainer');
       const contHist = document.getElementById('lojaHistoryContainer');
       const fragAtivos = document.createDocumentFragment(); 
       const fragHist = document.createDocumentFragment();
 
-      contAtivos.innerHTML = ''; contHist.innerHTML = ''; let ativos = 0; let hist = 0;
+      let ativos = 0; let hist = 0;
       window.lojaHistoryData = []; 
       
       snapshot.forEach((docSnap) => {
@@ -1404,7 +1417,7 @@
           if(data.lojaId === uid) {
             
             const oldState = window.lastLojaOrdersState[docSnap.id];
-            if (oldState === 'aguardando' && data.status === 'aceito' && document.hidden) {
+            if (!initialLoad && oldState === 'aguardando' && data.status === 'aceito' && document.hidden) {
                 window.dispararNotificacao("TGS Delivery ⚡", `O motoboy ${data.motoboyNome} aceitou sua rota!`);
             }
             window.lastLojaOrdersState[docSnap.id] = data.status;
@@ -1415,12 +1428,17 @@
         } catch(e) { console.error("Erro interno no loop da loja:", e); }
       });
 
+      // APAGA OS SKELETONS E INJETA DADOS REAIS
+      contAtivos.innerHTML = '';
+      contHist.innerHTML = '';
+
       contAtivos.appendChild(fragAtivos);
       contHist.appendChild(fragHist);
 
       if(ativos===0) contAtivos.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">Nenhum pedido ativo.</div>';
       if(hist===0) contHist.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">Nenhum histórico.</div>';
       
+      initialLoad = false;
       if(document.getElementById('tab-loja-pagamentos').classList.contains('active')) renderLojaPagamentos();
     });
   }
@@ -1431,7 +1449,6 @@
     div.className = `order-card ${isWaiting ? 'waiting' : (isDone ? 'done' : 'going')}`;
     if(isDone) div.setAttribute('onclick', `abrirDetalhesPedido('${id}')`); 
     
-    // ALTERAÇÃO AQUI: Adicionado o nome do motoboy no status
     let statusTexto = isWaiting ? "Aguardando Moto" : (isDone ? `Entregue por ${data.motoboyNome || 'Motoboy'}` : `Em Rota com ${data.motoboyNome || 'Motoboy'}`);
     let statusIcon = isWaiting ? "ph-hourglass-high" : (isDone ? "ph-check-circle" : "ph-motorcycle");
     let statusHtml = isWaiting ? `<span class="status-badge status-pending"><i class="ph-fill ${statusIcon}"></i> ${statusTexto}</span>` : (isDone ? `<span class="status-badge" style="background:var(--muted); color:#000;"><i class="ph-fill ${statusIcon}"></i> ${statusTexto}</span>` : `<span class="status-badge status-going"><i class="ph-fill ${statusIcon}"></i> ${statusTexto}</span>`);
@@ -1445,8 +1462,6 @@
     }
     
     let badgeRotas = data.qtdEntregas > 1 ? `<div style="color:var(--neon-y); font-size:11px; font-weight:bold; margin-bottom:4px; font-family:var(--font-head);"><i class="ph-fill ph-package"></i> ROTA: ${data.qtdEntregas} ENTREGAS</div>` : '';
-    
-    // NOVA LINHA PARA DESTACAR O NOME DO MOTOBOY NA LOJA
     let motoboyInfo = !isWaiting ? `<div style="font-size:12px; color:var(--neon-b); margin-bottom:6px; font-family:var(--font-head);"><i class="ph-fill ph-helmet"></i> ENTREGADOR: ${data.motoboyNome ? data.motoboyNome.toUpperCase() : 'NÃO REGISTRADO'}</div>` : '';
 
     div.innerHTML = `<div class="order-card-top"><span class="order-id">#${id.substring(0,6).toUpperCase()} ${isDone ? '' : `· PIN: <strong style="color:var(--neon-y)">${data.pin}</strong>`}</span><div style="display:flex; gap:10px; align-items:center;"><span class="order-fee">${data.taxa}</span>${deleteBtn}${whatsBtn}</div></div>${badgeRotas}${motoboyInfo}<div class="order-info"><i class="ph-fill ph-map-pin"></i> <span>${data.clienteEnd}</span></div>${data.bagGrande ? `<div style="font-size:11px; font-weight:bold; color:var(--neon-orange); margin-bottom:6px;"><i class="ph-fill ph-package"></i> EXIGE BAG GRANDE</div>` : ''}<div class="order-footer">${statusHtml}</div>`;
@@ -1505,16 +1520,27 @@
     if(!auth.currentUser) return;
     if(motoMuralUnsubscribe) motoMuralUnsubscribe();
     
+    let initialLoad = true;
     const uid = auth.currentUser.uid;
     const q = query(collection(db, "pedidos"), orderBy("timestamp", "desc"), limit(150));
 
+    const container = document.getElementById('orderCards'); 
+    
+    // INJETA O SKELETON ANTES DE BUSCAR
+    if(container) {
+        document.getElementById('emptyMural').style.display = 'none';
+        container.innerHTML = `
+          <div class="skeleton-card"><div class="sk-top-row"><div class="sk-circle"></div><div><div class="sk-line sk-w-60"></div><div class="sk-line sk-w-100" style="margin-bottom:0;"></div></div></div><div class="sk-line sk-w-40"></div></div>
+          <div class="skeleton-card"><div class="sk-top-row"><div class="sk-circle"></div><div><div class="sk-line sk-w-60"></div><div class="sk-line sk-w-100" style="margin-bottom:0;"></div></div></div><div class="sk-line sk-w-40"></div></div>
+          <div class="skeleton-card"><div class="sk-top-row"><div class="sk-circle"></div><div><div class="sk-line sk-w-60"></div><div class="sk-line sk-w-100" style="margin-bottom:0;"></div></div></div><div class="sk-line sk-w-40"></div></div>
+        `;
+    }
+
     motoMuralUnsubscribe = onSnapshot(q, (snapshot) => {
-      const container = document.getElementById('orderCards'); 
       const histContainer = document.getElementById('motoHistoryContainer');
       const fragAtivos = document.createDocumentFragment(); 
       const fragHist = document.createDocumentFragment();
 
-      container.innerHTML = ''; histContainer.innerHTML = ''; 
       let pendentes = 0; let concluidasHj = 0; let encontrouAtivo = false;
       window.motoHistoryData = []; 
 
@@ -1533,7 +1559,7 @@
 
             const isNewOrderToThisDevice = !window.seenOrderIds.has(docSnap.id);
             
-            if (isNewOrderToThisDevice) {
+            if (!initialLoad && isNewOrderToThisDevice) {
                 if (userDataGlobal.punishedUntil && userDataGlobal.punishedUntil > Date.now()) {
                     if (!window.pendingDelayedOrders.has(docSnap.id)) {
                         window.pendingDelayedOrders.add(docSnap.id);
@@ -1556,6 +1582,8 @@
                 } else {
                     window.seenOrderIds.add(docSnap.id);
                 }
+            } else if (initialLoad) {
+                window.seenOrderIds.add(docSnap.id); // Registra no load inicial silenciosamente
             }
 
             pendentes++; fragAtivos.appendChild(buildCardReal(docSnap.id, data));
@@ -1604,10 +1632,14 @@
         } catch(e) { console.error("Erro interno no loop de pedidos:", e); }
       });
       
+      // APAGA OS SKELETONS E INJETA DADOS REAIS
+      container.innerHTML = ''; 
+      histContainer.innerHTML = ''; 
+
       container.appendChild(fragAtivos);
       histContainer.appendChild(fragHist);
 
-      if(pendentes > lastPendentesCount && !encontrouAtivo) {
+      if(!initialLoad && pendentes > lastPendentesCount && !encontrouAtivo) {
           try { const aud = document.getElementById('alertSound'); aud.currentTime = 0; let playPromise = aud.play(); if (playPromise !== undefined) playPromise.catch(error => { }); } catch(err) { console.error("Erro interno:", err); }
           
           if (document.hidden) {
@@ -1619,10 +1651,10 @@
       if(!encontrouAtivo) { 
           document.getElementById('activeOrderBox').classList.remove('visible'); 
           document.getElementById('muralTitle').style.display = 'flex'; 
-          document.getElementById('orderCards').style.display = 'block'; // Mostra o mural
+          document.getElementById('orderCards').style.display = 'block'; 
           activeOrderId = null; 
       } else {
-          document.getElementById('orderCards').style.display = 'none'; // Esconde os outros cards se estiver em rota
+          document.getElementById('orderCards').style.display = 'none'; 
           document.getElementById('emptyMural').style.display = 'none';
       }
 
@@ -1632,6 +1664,7 @@
           document.getElementById('emptyMural').style.display = pendentes === 0 ? 'block' : 'none';
       }
       
+      initialLoad = false;
       if(window.motoHistoryData.length > 0) document.getElementById('motoHistoryWrapper').style.display = 'block';
       if(document.getElementById('tab-moto-pagamentos').classList.contains('active')) renderMotoPagamentos();
     });
