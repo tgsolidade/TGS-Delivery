@@ -743,11 +743,34 @@
 
 <div class="modal-overlay" id="rechargeModal" style="z-index: 9997;">
   <div class="modal">
-    <h3><i class="ph-fill ph-money"></i> RECARREGAR SALDO</h3>
+    <h3><i class="ph-fill ph-wallet"></i> RECARREGAR SALDO</h3>
     <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Insira o valor que deseja adicionar à sua carteira. (Mínimo R$ 10,00)</p>
     <div class="form-group"><label>Valor da Recarga (R$)</label><input type="number" id="rechargeValue" placeholder="Ex: 10,00" step="1.00" min="10.00"></div>
-    <button class="btn btn-green" onclick="processarRecargaMock()"><i class="ph-fill ph-check-circle"></i> GERAR PIX E PAGAR</button>
+    <button class="btn btn-green" onclick="processarRecargaPix()"><i class="ph-fill ph-check-circle"></i> GERAR PIX</button>
     <button class="btn btn-secondary" onclick="document.getElementById('rechargeModal').classList.remove('open')"><i class="ph ph-x"></i> CANCELAR</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="pixModal" style="z-index: 9998;">
+  <div class="modal" style="text-align: center;">
+    <h3><i class="ph-fill ph-qr-code"></i> PAGAMENTO PIX</h3>
+    <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Escaneie o QR Code ou copie o código abaixo para pagar.</p>
+    
+    <div style="background: white; padding: 10px; border-radius: 12px; display: inline-block; margin-bottom: 16px;">
+        <img id="pixQrCodeImg" src="" style="width: 200px; height: 200px; display: block;">
+    </div>
+    
+    <div class="form-group" style="text-align: left;">
+        <label>PIX Copia e Cola</label>
+        <div style="display: flex; gap: 8px;">
+            <input type="text" id="pixCopiaColaText" readonly style="flex: 1; font-size: 11px;">
+            <button class="btn-icon" style="background: var(--neon-b); color: #fff; border: none; flex-shrink: 0;" onclick="copiarPixGerado()"><i class="ph-bold ph-copy"></i></button>
+        </div>
+    </div>
+    
+    <p style="font-size:11px; color:var(--neon-y); margin-top:12px;">O saldo será liberado automaticamente após a confirmação do banco.</p>
+    
+    <button class="btn btn-secondary" style="margin-top: 20px;" onclick="document.getElementById('pixModal').classList.remove('open')"><i class="ph ph-x"></i> FECHAR</button>
   </div>
 </div>
 
@@ -1245,13 +1268,47 @@
   window.dispensarMensagemIndividual = async function() { const msgId = document.getElementById('indivAlertMsgId').value; if(msgId) { try { await updateDoc(doc(db, "mensagens", msgId), { status: 'lido' }); } catch(e) { console.error("Erro interno:", e); } } document.getElementById('indivAlertModal').classList.remove('open'); }
 
   window.abrirModalRecarga = function() { document.getElementById('rechargeValue').value = ''; document.getElementById('rechargeModal').classList.add('open'); }
-  window.processarRecargaMock = async function() {
-     const valInput = document.getElementById('rechargeValue').value; const valor = parseFloat(valInput.replace(',', '.'));
-     if (isNaN(valor) || valor < 10) return showToast('<i class="ph-fill ph-warning"></i> O valor mínimo é R$ 10,00.'); showLoading('PROCESSANDO PIX...');
+  
+  // ─── NOVA FUNÇÃO PARA CHAMAR O SERVIDOR PIX NA NUVEM ───
+  window.processarRecargaPix = async function() {
+     const valInput = document.getElementById('rechargeValue').value; 
+     const valor = parseFloat(valInput.replace(',', '.'));
+     if (isNaN(valor) || valor < 10) return showToast('<i class="ph-fill ph-warning"></i> O valor mínimo é R$ 10,00.'); 
+     
+     showLoading('GERANDO PIX...');
      try {
-        await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { saldo: increment(valor) }); await addDoc(collection(db, "recargas"), { motoboyId: auth.currentUser.uid, motoboyNome: userDataGlobal.nome, valor: valor, tipo: 'pix', timestamp: Date.now() });
-        document.getElementById('rechargeModal').classList.remove('open'); showToast(`<i class="ph-fill ph-check-circle"></i> Recarga concluída!`);
-     } catch(e) { console.error("Erro interno:", e); showToast('<i class="ph-fill ph-warning"></i> Erro na recarga: ' + e.message); } finally { hideLoading(); }
+         // Chama a Cloud Function que você acabou de subir!
+         const response = await fetch('https://gerarpix-mnqcjnimuq-uc.a.run.app', {
+             method: 'POST',
+             headers: { 'Content-Type': 'application/json' },
+             body: JSON.stringify({ valor: valor.toFixed(2) })
+         });
+
+         const data = await response.json();
+
+         if (data.sucesso) {
+             // Esconde o modal de valor e mostra o modal do QRCode
+             document.getElementById('rechargeModal').classList.remove('open');
+             document.getElementById('pixQrCodeImg').src = data.imagemQrCode;
+             document.getElementById('pixCopiaColaText').value = data.copiaECola;
+             document.getElementById('pixModal').classList.add('open');
+         } else {
+             showToast('<i class="ph-fill ph-warning"></i> Falha ao gerar: ' + (data.erro || 'Erro no banco'));
+         }
+     } catch(e) { 
+         console.error("Erro interno:", e); 
+         showToast('<i class="ph-fill ph-warning"></i> Erro de conexão com o banco Efí.'); 
+     } finally { 
+         hideLoading(); 
+     }
+  }
+
+  // ─── FUNÇÃO PARA COPIAR O CÓDIGO DO PIX ───
+  window.copiarPixGerado = function() {
+      const texto = document.getElementById('pixCopiaColaText').value;
+      navigator.clipboard.writeText(texto).then(() => {
+          showToast('<i class="ph-fill ph-check-circle"></i> Código PIX copiado!');
+      });
   }
 
   let initialAuthChecked = false;
