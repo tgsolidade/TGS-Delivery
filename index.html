@@ -49,7 +49,7 @@
 
   .neon-y { color: var(--neon-y); } .neon-g { color: var(--neon-g); } .neon-b { color: var(--neon-b); } .neon-r { color: var(--neon-r); }
 
-  /* GIRA-GIRA DO CARREGAMENTO GERAL (Agora só para Login/Recarga/Avaliação) */
+  /* GIRA-GIRA DO CARREGAMENTO GERAL */
   @keyframes spin { 100% { transform: rotate(360deg); } }
   .ph-spin { animation: spin 1s linear infinite; }
 
@@ -96,7 +96,7 @@
   
   /* ESTILOS PARA O BOTÃO DE MOSTRAR SENHA */
   .password-wrapper { position: relative; width: 100%; }
-  .password-wrapper input { padding-right: 45px; } /* Espaço para o ícone */
+  .password-wrapper input { padding-right: 45px; }
   .toggle-pw-btn { 
       position: absolute; right: 12px; top: 50%; transform: translateY(-50%); 
       background: transparent; border: none; color: var(--muted); 
@@ -141,7 +141,6 @@
   .back-btn:hover { border-color: var(--neon-b); color: var(--neon-b); }
   .screen-header h2 { font-family: var(--font-head); font-size: 15px; display:flex; align-items:center; gap:8px; }
   
-  /* MÁGICA DO RESPIRO NO MOBILE */
   .screen-body { padding: 24px 20px calc(100px + env(safe-area-inset-bottom)) 20px; flex: 1; }
 
   .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; font-weight: bold;}
@@ -154,7 +153,7 @@
   .checkbox-box-text h4 { font-family: var(--font-head); font-size: 14px; color: var(--text); letter-spacing: 0.05em; display:flex; align-items:center; gap:6px;}
   .checkbox-box-text p { font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-top: 4px; }
 
-  /* CARDS DE ESTATÍSTICA (CLICÁVEIS) */
+  /* CARDS DE ESTATÍSTICA */
   .stats-dash { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
   .stat-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 10px; text-align: center; cursor: pointer; transition: transform 0.2s, border-color 0.2s; }
   .stat-box:hover { transform: translateY(-2px); border-color: var(--neon-b); }
@@ -228,7 +227,6 @@
   @keyframes scanLine { 0%{transform:scaleX(0)}50%{transform:scaleX(1)}100%{transform:scaleX(0)} }
   .dc-store { font-family: var(--font-mono); font-size: 11px; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; display:flex; align-items:center; gap:6px;}
   
-  /* ESTILOS DA LOGO NO MURAL DO MOTOBOY (AUMENTADA) */
   .dc-logo-container { width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-right: 6px;}
   .dc-logo-container img { width: 45px; height: 45px; border-radius: 8px; object-fit: cover; border: 1px solid var(--border); }
   .dc-logo-container .dc-placeholder { width: 45px; height: 45px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--neon-b); }
@@ -709,7 +707,7 @@
 <div class="modal-overlay top-align" id="listModal">
   <div class="modal modal-top" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
     <div style="background:var(--panel); border-bottom:1px solid var(--border); padding:20px; position:sticky; top:0; z-index:10; display:flex; justify-content:space-between; align-items:center;">
-       <h3 id="listModalTitle" style="margin:0; font-size:14px;"></h3>
+       <h3 id="listModalTitle" style="margin:0; font-size:14px; color:var(--neon-r);"></h3>
        <button class="btn-icon-sm" style="background:transparent; border:none;" onclick="fecharListaModal()"><i class="ph-bold ph-x"></i></button>
     </div>
     <div id="listModalContent" style="padding:0; overflow-y:auto; flex:1;"></div>
@@ -809,6 +807,15 @@
       if (!limpo.startsWith('55')) limpo = '55' + limpo;
       return limpo;
   }
+
+  window.getBase64 = function(file) {
+     return new Promise((resolve, reject) => {
+       const reader = new FileReader();
+       reader.readAsDataURL(file);
+       reader.onload = () => resolve(reader.result);
+       reader.onerror = error => reject(error);
+     });
+  };
 
   window.previewImage = function(inputElement, imgId, containerId) {
       if (inputElement.files && inputElement.files[0]) {
@@ -1297,6 +1304,15 @@
     if(!email || !senha || !nome || !rua || !bairro || !documento || !whats) return showToast("<i class='ph-fill ph-warning'></i> Preencha os campos!");
     showLoading('CADASTRANDO...'); window.isRegistering = true; 
     try {
+      // --- TRAVA DE CPF/CNPJ DUPLICADO ---
+      const docQuery = query(collection(db, "usuarios"), where("documento", "==", documento));
+      const docSnap = await getDocs(docQuery);
+      if (!docSnap.empty) {
+          window.isRegistering = false; hideLoading();
+          window.triggerErrorFeedback();
+          return showToast("<i class='ph-fill ph-warning-octagon'></i> Este CNPJ/CPF já está cadastrado!");
+      }
+
       let logoBase64 = null; if (fileInput.files.length > 0) { logoBase64 = await getBase64(fileInput.files[0]); }
       const uc = await createUserWithEmailAndPassword(auth, email, senha);
       await setDoc(doc(db, "usuarios", uc.user.uid), { nome, perfil: 'loja', email, documento, rua, num, bairro, ref, whats, logo: logoBase64, status: 'online', pedidosCriados: 0, ratingSum: 0, ratingCount: 0, dataCriacao: Date.now(), lastHeartbeat: Date.now() });
@@ -1314,6 +1330,15 @@
     if(!email || !senha || !documento || !dataNasc || !whats || !pix) return showToast("<i class='ph-fill ph-warning'></i> Preencha todos os campos!");
     showLoading('CADASTRANDO...'); window.isRegistering = true; 
     try {
+      // --- TRAVA DE CPF/CNPJ DUPLICADO ---
+      const docQuery = query(collection(db, "usuarios"), where("documento", "==", documento));
+      const docSnap = await getDocs(docQuery);
+      if (!docSnap.empty) {
+          window.isRegistering = false; hideLoading();
+          window.triggerErrorFeedback();
+          return showToast("<i class='ph-fill ph-warning-octagon'></i> Este CPF já está cadastrado!");
+      }
+
       let placaFotoBase64 = null; if (fotoPlacaInput.files.length > 0) { placaFotoBase64 = await getBase64(fotoPlacaInput.files[0]); }
       const uc = await createUserWithEmailAndPassword(auth, email, senha); let saldoInicial = 0;
       try { const configSnap = await getDoc(doc(db, "config", "geral")); if(configSnap.exists()) { const cfg = configSnap.data(); if(cfg.promoInicio && cfg.promoFim && cfg.promoValor) { const dataLocalBR = getTodayStr(); if(dataLocalBR >= cfg.promoInicio && dataLocalBR <= cfg.promoFim) saldoInicial = parseFloat(cfg.promoValor); } } } catch(e) { console.error("Erro interno:", e); }
@@ -1695,26 +1720,11 @@
     const q = query(collection(db, "usuarios"), where("perfil", "==", "motoboy"));
     onSnapshot(q, (snap) => {
       let online = 0; let emRota = 0; let total = snap.size; window.listaMotos = [];
-      const agora = Date.now();
-      
       snap.forEach(doc => { 
-          const d = doc.data(); d.id = doc.id; 
-          
-          // O DETECTOR DE FANTASMAS (Heartbeat)
-          // Se diz que está online/rota, mas não manda sinal há mais de 60 segundos (60000ms), é fantasma!
-          if (d.status === 'online' || d.status === 'em_rota') {
-              if (d.lastHeartbeat && (agora - d.lastHeartbeat > 60000)) {
-                  d.status = 'offline'; // Força visualmente para offline na tela da loja
-              }
-          }
-
-          window.listaMotos.push(d); 
-          if(d.status === 'online') online++; 
-          if(d.status === 'em_rota') emRota++; 
+          const d = doc.data(); d.id = doc.id; window.listaMotos.push(d); 
+          if(d.status === 'online') online++; if(d.status === 'em_rota') emRota++; 
       });
-      document.getElementById('dashLojaOnline').textContent = online; 
-      document.getElementById('dashLojaRota').textContent = emRota; 
-      document.getElementById('dashLojaTotal').textContent = total;
+      document.getElementById('dashLojaOnline').textContent = online; document.getElementById('dashLojaRota').textContent = emRota; document.getElementById('dashLojaTotal').textContent = total;
     });
   }
 
@@ -1722,23 +1732,11 @@
     const q = query(collection(db, "usuarios"), where("perfil", "==", "loja"));
     onSnapshot(q, (snap) => {
       let onlineLojas = 0; window.listaLojas = [];
-      const agora = Date.now();
-
       snap.forEach(doc => { 
-          const d = doc.data(); d.id = doc.id; 
-          
-          // O DETECTOR DE FANTASMAS PARA AS LOJAS TAMBÉM
-          if (d.status === 'online') {
-              if (d.lastHeartbeat && (agora - d.lastHeartbeat > 60000)) {
-                  d.status = 'offline';
-              }
-          }
-
-          window.listaLojas.push(d); 
+          const d = doc.data(); d.id = doc.id; window.listaLojas.push(d); 
           if(d.status === 'online') onlineLojas++; 
       });
-      document.getElementById('dashMotoLojasAtivas').textContent = onlineLojas; 
-      document.getElementById('dashMotoLojasTotal').textContent = snap.size;
+      document.getElementById('dashMotoLojasAtivas').textContent = onlineLojas; document.getElementById('dashMotoLojasTotal').textContent = snap.size;
     });
   }
 
