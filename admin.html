@@ -400,6 +400,7 @@
 
   window.listaLojasAdmin = [];
   window.listaMotosAdmin = [];
+  window.todosUsuariosMemoria = [];
   
   // VARIÁVEIS GLOBAIS PARA FILTROS GMT-3
   window.dashFiltroAtivo = false;
@@ -467,7 +468,7 @@
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
     
-    // Localiza e ativa o botão correto, independente de como foi chamado (mouse ou código)
+    // Localiza e ativa o botão correto
     const targetBtn = document.querySelector(`.tab-btn[onclick*="${tabId}"]`);
     if(targetBtn) targetBtn.classList.add('active');
     
@@ -582,7 +583,6 @@
       if(confirm(`Punir ${nome} por 1 hora?\nOs pedidos vão demorar 5 segundos a mais para aparecer no mural dele.`)) {
           showLoading('PUNINDO...');
           try {
-              // Adiciona 1 hora a partir de agora (3.600.000 ms)
               await updateDoc(doc(db, "usuarios", id), { punishedUntil: Date.now() + 3600000 });
               showToast('<i class="ph-fill ph-timer"></i> Punição aplicada com sucesso!');
           } catch(e) { alert("Erro: " + e.message); } finally { hideLoading(); }
@@ -664,6 +664,138 @@
       }
   }
 
+  // --- MOTOR DE RENDERIZAÇÃO DA ABA DE USUÁRIOS (COM DETECTOR DE FANTASMAS) ---
+  window.renderGestaoUsuarios = function() {
+      const pList = document.getElementById('adminPendentesList'); pList.innerHTML = '';
+      const mList = document.getElementById('adminMotosList'); mList.innerHTML = '';
+      const lList = document.getElementById('adminLojasList'); lList.innerHTML = '';
+      const alertList = document.getElementById('alertasList'); alertList.innerHTML = '';
+      
+      let pCount = 0; let mCount = 0; let lCount = 0; let ativosMotos = 0; let ativosLojas = 0; let lowRatings = 0;
+      const agora = Date.now();
+
+      window.listaLojasAdmin = [];
+      window.listaMotosAdmin = [];
+
+      window.todosUsuariosMemoria.forEach((dOrig) => {
+          let d = { ...dOrig }; // Clona para não mexer no original do banco
+          const id = d.id;
+          
+          // DETECTOR DE FANTASMAS (Roda a cada 20s via setInterval)
+          if (d.status === 'online' || d.status === 'em_rota') {
+              if (d.lastHeartbeat && (agora - d.lastHeartbeat > 60000)) {
+                  d.status = 'offline';
+              }
+          }
+
+          let mediaNum = 0; let estrelasHtml = `<span style="color:var(--muted)">Sem avaliações</span>`;
+          if(d.ratingCount > 0) {
+             mediaNum = (d.ratingSum / d.ratingCount);
+             estrelasHtml = `<strong style="color:var(--neon-y)"><i class="ph-fill ph-star"></i> ${mediaNum.toFixed(1)}</strong> (${d.ratingCount})`;
+             if(mediaNum < 3.0) {
+                lowRatings++;
+                alertList.innerHTML += `<div class="admin-row" style="border-color:var(--neon-r); background:rgba(255,51,102,.05);"><div class="admin-row-info"><h4><i class="ph-fill ph-warning"></i> ${d.nome} (${d.perfil})</h4><p>Nota muito baixa: <strong>${mediaNum.toFixed(1)} estrelas</strong></p></div><div class="admin-row-actions"><button class="btn-icon" title="Enviar Mensagem" onclick="openMsgModal('${id}', '${encodeURIComponent(d.nome || '')}')"><i class="ph-fill ph-chat-text"></i></button><button class="btn-icon" style="color:var(--neon-r); border-color:var(--neon-r);" onclick="toggleBlockMoto('${id}', '${d.status}')"><i class="ph-bold ph-prohibit"></i> Banir</button></div></div>`;
+             }
+          }
+
+          if(d.perfil === 'loja') {
+             window.listaLojasAdmin.push(d);
+             lCount++; if(d.status === 'online') ativosLojas++;
+             const isBlocked = d.status === 'bloqueado';
+             let statusTag = isBlocked ? `<span class="status-badge status-blocked">Bloqueada</span>` : (d.status==='online' ? `<span class="status-badge status-active">Online</span>` : `<span class="status-badge status-offline">Offline</span>`);
+             lList.innerHTML += `
+                <div class="admin-row">
+                  <div class="admin-row-info">
+                    <h4><i class="ph-fill ph-storefront"></i> ${d.nome || 'Loja'}</h4>
+                    <p>Pedidos Enviados: <strong>${d.pedidosCriados || 0}</strong> | Avaliação: ${estrelasHtml}</p>
+                    <p>CNPJ/CPF: ${d.documento || 'N/A'} | E-mail: ${d.email || 'N/A'}</p>
+                    <p style="margin-top:6px;">${statusTag}</p>
+                  </div>
+                  <div class="admin-row-actions">
+                    <button class="btn-icon" title="Forçar Redefinição de Senha" onclick="forcarResetSenha('${d.email}')"><i class="ph-bold ph-key"></i></button>
+                    <button class="btn-icon" title="Enviar Mensagem" onclick="openMsgModal('${id}', '${encodeURIComponent(d.nome || '')}')"><i class="ph-fill ph-chat-text"></i></button>
+                    <button class="btn-icon" title="Editar Dados" onclick="openEditUserModal('${id}', '${encodeURIComponent(d.nome || '')}', '${d.documento}', null)"><i class="ph-fill ph-pencil"></i></button>
+                    <button class="btn-icon" style="color:${isBlocked ? 'var(--neon-g)' : 'var(--neon-r)'}; border-color:${isBlocked ? 'var(--neon-g)' : 'var(--neon-r)'};" onclick="toggleBlockMoto('${id}', '${d.status}')">
+                       ${isBlocked ? '<i class="ph-bold ph-check"></i>' : '<i class="ph-bold ph-prohibit"></i>'}
+                    </button>
+                  </div>
+                </div>`;
+          } 
+          else if(d.perfil === 'motoboy') {
+             window.listaMotosAdmin.push(d);
+             const fotoLink = d.placaFoto ? `<span class="doc-link" onclick="viewDocument('${d.placaFoto}')"><i class="ph-bold ph-image"></i> Ver Placa</span>` : `<span style="color:var(--muted)">Sem foto</span>`;
+             
+             let nascBR = 'Não informado';
+             if(d.dataNasc) { const pts = d.dataNasc.split('-'); if(pts.length === 3) nascBR = `${pts[2]}/${pts[1]}/${pts[0]}`; else nascBR = d.dataNasc; }
+
+             if(d.status === 'pendente') {
+               pCount++;
+               pList.innerHTML += `
+                  <div class="admin-row" style="border-color: rgba(245,230,66,.3);">
+                    <div class="admin-row-info">
+                      <h4><i class="ph-fill ph-user-focus"></i> ${d.nome}</h4>
+                      <p>E-mail: ${d.email} | CPF: ${d.documento}</p>
+                      <p>Nascimento: <strong style="color:var(--neon-b)">${nascBR}</strong></p>
+                      <p>Placa: <strong style="color:var(--text)">${d.placa}</strong> | ${fotoLink}</p>
+                      <p style="margin-top:6px;"><span class="status-badge status-pending">Aguardando Avaliação</span></p>
+                    </div>
+                    <div class="admin-row-actions">
+                      <button class="btn-icon" style="color:var(--neon-g); border-color:var(--neon-g);" onclick="aprovarMoto('${id}', '${d.whats || ''}', '${encodeURIComponent(d.nome || '')}')" title="Aprovar"><i class="ph-bold ph-check"></i></button>
+                      <button class="btn-icon" style="color:var(--neon-r); border-color:var(--neon-r);" onclick="recusarMoto('${id}')" title="Recusar e Deletar"><i class="ph-bold ph-x"></i></button>
+                    </div>
+                  </div>`;
+             } else {
+               mCount++;
+               const isBlocked = d.status === 'bloqueado'; const isOnline = d.status === 'online' || d.status === 'em_rota';
+               if(isOnline) ativosMotos++;
+               
+               let isPunished = d.punishedUntil && d.punishedUntil > Date.now();
+               let badgePunido = isPunished ? `<span class="status-badge" style="background: rgba(255,153,0,0.1); color: var(--neon-orange); border: 1px solid var(--neon-orange); margin-left:6px;"><i class="ph-fill ph-timer"></i> Punido (Atraso 5s)</span>` : '';
+               
+               let statusTag = isBlocked ? `<span class="status-badge status-blocked">Bloqueado</span>` : (isOnline ? `<span class="status-badge status-active">Online</span>` : `<span class="status-badge status-offline">Offline</span>`);
+               
+               let btnPunir = isPunished 
+                  ? `<button class="btn-icon" style="color:var(--neon-orange); border-color:var(--neon-orange); width: auto; padding: 0 12px; font-size:12px; font-weight:bold;" onclick="removerPunicao('${id}')"><i class="ph-bold ph-timer"></i> PERDOAR</button>`
+                  : `<button class="btn-icon" style="color:var(--muted); border-color:var(--border); width: auto; padding: 0 12px; font-size:12px; font-weight:bold;" onclick="aplicarPunicao('${id}', '${d.nome}')"><i class="ph-bold ph-timer"></i> PUNIR (1H)</button>`;
+
+               mList.innerHTML += `
+                  <div class="admin-row">
+                    <div class="admin-row-info">
+                      <h4><i class="ph-fill ph-motorcycle"></i> ${d.nome} ${badgePunido}</h4>
+                      <p>Nascimento: <strong style="color:var(--neon-b)">${nascBR}</strong> | Entregas: <strong>${d.entregasFeitas || 0}</strong> | Avaliação: ${estrelasHtml}</p>
+                      <p>E-mail: ${d.email} | Saldo: <strong style="color: ${d.saldo < 0.40 ? 'var(--neon-r)' : 'var(--neon-g)'}">R$ ${(d.saldo || 0).toFixed(2).replace('.',',')}</strong> | Placa: ${d.placa} | ${fotoLink}</p>
+                      <p style="margin-top:6px;">${statusTag}</p>
+                    </div>
+                    <div class="admin-row-actions">
+                      <button class="btn-icon" title="Forçar Redefinição de Senha" onclick="forcarResetSenha('${d.email}')"><i class="ph-bold ph-key"></i></button>
+                      <button class="btn-icon" title="Enviar Mensagem" onclick="openMsgModal('${id}', '${encodeURIComponent(d.nome || '')}')"><i class="ph-fill ph-chat-text"></i></button>
+                      <button class="btn-icon" title="Editar Dados" onclick="openEditUserModal('${id}', '${encodeURIComponent(d.nome || '')}', '${d.documento}', '${d.placa}')"><i class="ph-fill ph-pencil"></i></button>
+                      ${btnPunir}
+                      <button class="btn-icon" style="color:var(--neon-b); border-color:var(--neon-b); width: auto; padding: 0 12px; font-size:12px; font-weight:bold;" onclick="editarSaldo('${id}', '${d.nome}')">
+                         <i class="ph-bold ph-currency-dollar"></i> SALDO
+                      </button>
+                      <button class="btn-icon" style="color:${isBlocked ? 'var(--neon-g)' : 'var(--neon-r)'}; border-color:${isBlocked ? 'var(--neon-g)' : 'var(--neon-r)'}; width: auto; padding: 0 12px; font-size:12px; font-weight:bold;" onclick="toggleBlockMoto('${id}', '${d.status}')">
+                         ${isBlocked ? '<i class="ph-bold ph-check"></i> LIBERAR' : '<i class="ph-bold ph-prohibit"></i> BLOQUEAR'}
+                      </button>
+                    </div>
+                  </div>`;
+             }
+          }
+      });
+
+      if (document.getElementById('dashLojas')) document.getElementById('dashLojas').textContent = ativosLojas;
+      if (document.getElementById('dashMotos')) document.getElementById('dashMotos').textContent = ativosMotos;
+      const badge = document.getElementById('badgePendente');
+      if(pCount > 0) { badge.style.display = 'inline-block'; badge.textContent = pCount; } else { badge.style.display = 'none'; }
+      if(pCount === 0) pList.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;border:1px dashed var(--border);border-radius:12px;">Nenhum cadastro pendente. 🎉</div>';
+      if(mCount === 0) mList.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">Nenhum motoboy na base.</div>';
+      if(lCount === 0) lList.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">Nenhuma loja na base.</div>';
+      if(lowRatings === 0) alertList.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;border:1px dashed var(--border);border-radius:12px;">Todos os usuários estão com boas avaliações.</div>';
+      
+      window.filtrarUsuarios(); // Reaplica filtro se houver algo digitado na busca
+      window.renderRankingEHoras();
+  }
+
   function startAdminListener() {
     if(!auth.currentUser) return;
     
@@ -733,140 +865,24 @@
     if(adminUnsubscribe) adminUnsubscribe();
     const qUsers = query(collection(db, "usuarios"));
     adminUnsubscribe = onSnapshot(qUsers, (snapshot) => {
-      const pList = document.getElementById('adminPendentesList'); pList.innerHTML = '';
-      const mList = document.getElementById('adminMotosList'); mList.innerHTML = '';
-      const lList = document.getElementById('adminLojasList'); lList.innerHTML = '';
-      const alertList = document.getElementById('alertasList'); alertList.innerHTML = '';
+      window.todosUsuariosMemoria = [];
+      snapshot.forEach((docSnap) => { 
+         if(docSnap.data().perfil !== 'admin') {
+            window.todosUsuariosMemoria.push({ id: docSnap.id, ...docSnap.data() }); 
+         }
+      });
       
-      let pCount = 0; let mCount = 0; let lCount = 0; let ativosMotos = 0; let ativosLojas = 0; let lowRatings = 0;
-      let usersArray = [];
-      
-      window.listaLojasAdmin = [];
-      window.listaMotosAdmin = [];
-      
-      const agora = Date.now();
-
-      snapshot.forEach((docSnap) => { usersArray.push({ id: docSnap.id, ...docSnap.data() }); });
-      
-      usersArray.sort((a, b) => {
+      window.todosUsuariosMemoria.sort((a, b) => {
          const getMs = (val) => { if(!val) return 0; if(typeof val === 'number') return val; if(val.toMillis) return val.toMillis(); if(val.seconds) return val.seconds * 1000; return 0; };
          return getMs(b.dataCriacao) - getMs(a.dataCriacao);
       });
 
-      usersArray.forEach((d) => {
-        if(d.perfil === 'admin') return;
-        const id = d.id; let mediaNum = 0; let estrelasHtml = `<span style="color:var(--muted)">Sem avaliações</span>`;
-        
-        // DETECTOR DE FANTASMAS: Limpa quem fechou a aba (Delay de 60 segundos sem Heartbeat)
-        if (d.status === 'online' || d.status === 'em_rota') {
-            if (d.lastHeartbeat && (agora - d.lastHeartbeat > 60000)) {
-                d.status = 'offline';
-            }
-        }
-
-        if(d.ratingCount > 0) {
-           mediaNum = (d.ratingSum / d.ratingCount);
-           estrelasHtml = `<strong style="color:var(--neon-y)"><i class="ph-fill ph-star"></i> ${mediaNum.toFixed(1)}</strong> (${d.ratingCount})`;
-           if(mediaNum < 3.0) {
-              lowRatings++;
-              alertList.innerHTML += `<div class="admin-row" style="border-color:var(--neon-r); background:rgba(255,51,102,.05);"><div class="admin-row-info"><h4><i class="ph-fill ph-warning"></i> ${d.nome} (${d.perfil})</h4><p>Nota muito baixa: <strong>${mediaNum.toFixed(1)} estrelas</strong></p></div><div class="admin-row-actions"><button class="btn-icon" title="Enviar Mensagem" onclick="openMsgModal('${id}', '${encodeURIComponent(d.nome || '')}')"><i class="ph-fill ph-chat-text"></i></button><button class="btn-icon" style="color:var(--neon-r); border-color:var(--neon-r);" onclick="toggleBlockMoto('${id}', '${d.status}')"><i class="ph-bold ph-prohibit"></i> Banir</button></div></div>`;
-           }
-        }
-
-        if(d.perfil === 'loja') {
-           window.listaLojasAdmin.push(d);
-           lCount++; if(d.status === 'online') ativosLojas++;
-           const isBlocked = d.status === 'bloqueado';
-           let statusTag = isBlocked ? `<span class="status-badge status-blocked">Bloqueada</span>` : (d.status==='online' ? `<span class="status-badge status-active">Online</span>` : `<span class="status-badge status-offline">Offline</span>`);
-           lList.innerHTML += `
-              <div class="admin-row">
-                <div class="admin-row-info">
-                  <h4><i class="ph-fill ph-storefront"></i> ${d.nome || 'Loja'}</h4>
-                  <p>Pedidos Enviados: <strong>${d.pedidosCriados || 0}</strong> | Avaliação: ${estrelasHtml}</p>
-                  <p>CNPJ/CPF: ${d.documento || 'N/A'} | E-mail: ${d.email || 'N/A'}</p>
-                  <p style="margin-top:6px;">${statusTag}</p>
-                </div>
-                <div class="admin-row-actions">
-                  <button class="btn-icon" title="Forçar Redefinição de Senha" onclick="forcarResetSenha('${d.email}')"><i class="ph-bold ph-key"></i></button>
-                  <button class="btn-icon" title="Enviar Mensagem" onclick="openMsgModal('${id}', '${encodeURIComponent(d.nome || '')}')"><i class="ph-fill ph-chat-text"></i></button>
-                  <button class="btn-icon" title="Editar Dados" onclick="openEditUserModal('${id}', '${encodeURIComponent(d.nome || '')}', '${d.documento}', null)"><i class="ph-fill ph-pencil"></i></button>
-                  <button class="btn-icon" style="color:${isBlocked ? 'var(--neon-g)' : 'var(--neon-r)'}; border-color:${isBlocked ? 'var(--neon-g)' : 'var(--neon-r)'};" onclick="toggleBlockMoto('${id}', '${d.status}')">
-                     ${isBlocked ? '<i class="ph-bold ph-check"></i>' : '<i class="ph-bold ph-prohibit"></i>'}
-                  </button>
-                </div>
-              </div>`;
-        } 
-        else if(d.perfil === 'motoboy') {
-           window.listaMotosAdmin.push(d);
-           const fotoLink = d.placaFoto ? `<span class="doc-link" onclick="viewDocument('${d.placaFoto}')"><i class="ph-bold ph-image"></i> Ver Placa</span>` : `<span style="color:var(--muted)">Sem foto</span>`;
-           if(d.status === 'pendente') {
-             pCount++;
-             let nascBR = 'Não informado';
-             if(d.dataNasc) { const pts = d.dataNasc.split('-'); if(pts.length === 3) nascBR = `${pts[2]}/${pts[1]}/${pts[0]}`; else nascBR = d.dataNasc; }
-             pList.innerHTML += `
-                <div class="admin-row" style="border-color: rgba(245,230,66,.3);">
-                  <div class="admin-row-info">
-                    <h4><i class="ph-fill ph-user-focus"></i> ${d.nome}</h4>
-                    <p>E-mail: ${d.email} | CPF: ${d.documento}</p>
-                    <p>Nascimento: <strong>${nascBR}</strong></p>
-                    <p>Placa: <strong style="color:var(--text)">${d.placa}</strong> | ${fotoLink}</p>
-                    <p style="margin-top:6px;"><span class="status-badge status-pending">Aguardando Avaliação</span></p>
-                  </div>
-                  <div class="admin-row-actions">
-                    <button class="btn-icon" style="color:var(--neon-g); border-color:var(--neon-g);" onclick="aprovarMoto('${id}', '${d.whats || ''}', '${encodeURIComponent(d.nome || '')}')" title="Aprovar"><i class="ph-bold ph-check"></i></button>
-                    <button class="btn-icon" style="color:var(--neon-r); border-color:var(--neon-r);" onclick="recusarMoto('${id}')" title="Recusar e Deletar"><i class="ph-bold ph-x"></i></button>
-                  </div>
-                </div>`;
-           } else {
-             mCount++;
-             const isBlocked = d.status === 'bloqueado'; const isOnline = d.status === 'online' || d.status === 'em_rota';
-             if(isOnline) ativosMotos++;
-             
-             let isPunished = d.punishedUntil && d.punishedUntil > Date.now();
-             let badgePunido = isPunished ? `<span class="status-badge" style="background: rgba(255,153,0,0.1); color: var(--neon-orange); border: 1px solid var(--neon-orange); margin-left:6px;"><i class="ph-fill ph-timer"></i> Punido (Atraso 5s)</span>` : '';
-             
-             let statusTag = isBlocked ? `<span class="status-badge status-blocked">Bloqueado</span>` : (isOnline ? `<span class="status-badge status-active">Online</span>` : `<span class="status-badge status-offline">Offline</span>`);
-             
-             let btnPunir = isPunished 
-                ? `<button class="btn-icon" style="color:var(--neon-orange); border-color:var(--neon-orange); width: auto; padding: 0 12px; font-size:12px; font-weight:bold;" onclick="removerPunicao('${id}')"><i class="ph-bold ph-timer"></i> PERDOAR</button>`
-                : `<button class="btn-icon" style="color:var(--muted); border-color:var(--border); width: auto; padding: 0 12px; font-size:12px; font-weight:bold;" onclick="aplicarPunicao('${id}', '${d.nome}')"><i class="ph-bold ph-timer"></i> PUNIR (1H)</button>`;
-
-             mList.innerHTML += `
-                <div class="admin-row">
-                  <div class="admin-row-info">
-                    <h4><i class="ph-fill ph-motorcycle"></i> ${d.nome} ${badgePunido}</h4>
-                    <p>Entregas Concluídas: <strong>${d.entregasFeitas || 0}</strong> | Avaliação: ${estrelasHtml}</p>
-                    <p>E-mail: ${d.email} | Saldo: <strong style="color: ${d.saldo < 0.40 ? 'var(--neon-r)' : 'var(--neon-g)'}">R$ ${(d.saldo || 0).toFixed(2).replace('.',',')}</strong> | Placa: ${d.placa} | ${fotoLink}</p>
-                    <p style="margin-top:6px;">${statusTag}</p>
-                  </div>
-                  <div class="admin-row-actions">
-                    <button class="btn-icon" title="Forçar Redefinição de Senha" onclick="forcarResetSenha('${d.email}')"><i class="ph-bold ph-key"></i></button>
-                    <button class="btn-icon" title="Enviar Mensagem" onclick="openMsgModal('${id}', '${encodeURIComponent(d.nome || '')}')"><i class="ph-fill ph-chat-text"></i></button>
-                    <button class="btn-icon" title="Editar Dados" onclick="openEditUserModal('${id}', '${encodeURIComponent(d.nome || '')}', '${d.documento}', '${d.placa}')"><i class="ph-fill ph-pencil"></i></button>
-                    ${btnPunir}
-                    <button class="btn-icon" style="color:var(--neon-b); border-color:var(--neon-b); width: auto; padding: 0 12px; font-size:12px; font-weight:bold;" onclick="editarSaldo('${id}', '${d.nome}')">
-                       <i class="ph-bold ph-currency-dollar"></i> SALDO
-                    </button>
-                    <button class="btn-icon" style="color:${isBlocked ? 'var(--neon-g)' : 'var(--neon-r)'}; border-color:${isBlocked ? 'var(--neon-g)' : 'var(--neon-r)'}; width: auto; padding: 0 12px; font-size:12px; font-weight:bold;" onclick="toggleBlockMoto('${id}', '${d.status}')">
-                       ${isBlocked ? '<i class="ph-bold ph-check"></i> LIBERAR' : '<i class="ph-bold ph-prohibit"></i> BLOQUEAR'}
-                    </button>
-                  </div>
-                </div>`;
-           }
-        }
-      });
-      
-      if (document.getElementById('dashLojas')) document.getElementById('dashLojas').textContent = ativosLojas;
-      if (document.getElementById('dashMotos')) document.getElementById('dashMotos').textContent = ativosMotos;
-      const badge = document.getElementById('badgePendente');
-      if(pCount > 0) { badge.style.display = 'inline-block'; badge.textContent = pCount; } else { badge.style.display = 'none'; }
-      if(pCount === 0) pList.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;border:1px dashed var(--border);border-radius:12px;">Nenhum cadastro pendente. 🎉</div>';
-      if(mCount === 0) mList.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">Nenhum motoboy na base.</div>';
-      if(lCount === 0) lList.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">Nenhuma loja na base.</div>';
-      if(lowRatings === 0) alertList.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;border:1px dashed var(--border);border-radius:12px;">Todos os usuários estão com boas avaliações.</div>';
-      
-      window.renderRankingEHoras();
+      window.renderGestaoUsuarios();
     });
+
+    // VARREDURA INVISÍVEL A CADA 20 SEGUNDOS (Acaba com os Fantasmas)
+    if(window.ghostDetectorInterval) clearInterval(window.ghostDetectorInterval);
+    window.ghostDetectorInterval = setInterval(window.renderGestaoUsuarios, 20000);
 
     if(ordersUnsubscribe) ordersUnsubscribe();
     const qOrders = query(collection(db, "pedidos"), orderBy("timestamp", "desc"), limit(300));
