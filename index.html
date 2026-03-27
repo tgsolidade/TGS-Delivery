@@ -1090,34 +1090,59 @@
   window.closeNewOrderModal = function() { document.getElementById('newOrderModal').classList.remove('open'); };
   window.showToast = function(msg) { const existing = document.querySelector('.toast'); if (existing) existing.remove(); const el = document.createElement('div'); el.className = 'toast'; el.innerHTML = msg; document.body.appendChild(el); setTimeout(() => el.remove(), 3000); };
 
+  // --- O CORAÇÃO: PULSAR PARA MANTER ONLINE ---
   async function setOnlineStatus() {
      if(auth.currentUser && userDataGlobal && !currentConfig.isPaused) {
         if(userDataGlobal.status === 'pendente' || userDataGlobal.status === 'bloqueado') return;
         try { 
             if(userDataGlobal.perfil === 'loja' || (userDataGlobal.perfil === 'motoboy' && userDataGlobal.status !== 'em_rota')) { 
-                let updateObj = { status: 'online' }; if (!userDataGlobal.sessionStart) { updateObj.sessionStart = Date.now(); }
+                let updateObj = { status: 'online', lastHeartbeat: Date.now() }; 
+                if (!userDataGlobal.sessionStart) { updateObj.sessionStart = Date.now(); }
                 await updateDoc(doc(db, "usuarios", auth.currentUser.uid), updateObj); 
             } 
-        } catch(e) { console.error("Erro interno:", e); }
+        } catch(e) { console.error("Erro no heartbeat:", e); }
      }
   }
+
+  // --- A INTELIGÊNCIA: FICAR OFFLINE AO FECHAR/MINIMIZAR ---
+  async function setOfflineStatus() {
+      if(auth.currentUser && userDataGlobal) {
+          if(userDataGlobal.status === 'pendente' || userDataGlobal.status === 'bloqueado') return;
+          try {
+              // Tenta enviar o último suspiro pro Firebase antes do sistema matar o app
+              await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { status: 'offline' });
+          } catch(e) { console.log("Não deu tempo de ficar offline:", e); }
+      }
+  }
+
+  // Se o usuário fechar a aba/app (Funciona bem no PC e Android)
+  window.addEventListener('beforeunload', setOfflineStatus);
+  window.addEventListener('pagehide', setOfflineStatus); // iOS Safari respeita mais esse
+
+  // Se o usuário apenas minimizar o app e esquecer a vida lá fora
+  let backgroundTimer = null;
+  document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+          // App foi para o segundo plano
+          backgroundTimer = setTimeout(() => {
+              setOfflineStatus(); // Fica offline após 15 minutos fora do app
+          }, 15 * 60 * 1000);
+      } else {
+          // Voltou pro app
+          clearTimeout(backgroundTimer);
+          blindarTela();
+          setOnlineStatus(); // Fica online de novo imediatamente
+      }
+  });
 
   setInterval(setOnlineStatus, 15000); 
 
   window.addEventListener('focus', () => {
       setOnlineStatus();
-      // Dá um "choque" no Firebase para ele acordar imediatamente após o celular apagar a tela
       if(db) {
           disableNetwork(db).then(() => enableNetwork(db)).catch(e => console.log("Erro de reconexão:", e));
       }
       blindarTela();
-  });
-
-  window.addEventListener('beforeunload', () => {
-      if(auth.currentUser && userDataGlobal) {
-          if(userDataGlobal.status === 'pendente' || userDataGlobal.status === 'bloqueado') return;
-          updateDoc(doc(db, "usuarios", auth.currentUser.uid), { status: 'offline' }).catch((e)=>{ console.error("Erro interno:", e); });
-      }
   });
 
   function handleAuthError(error) {
@@ -1201,7 +1226,7 @@
           listenCurrentUser(user.uid); listenConfigAndAlerts();
           
           if (userDataGlobal.perfil === 'loja' || userDataGlobal.perfil === 'pf') {
-            await updateDoc(doc(db, "usuarios", user.uid), { status: 'online' });
+            await updateDoc(doc(db, "usuarios", user.uid), { status: 'online', lastHeartbeat: Date.now() });
             document.getElementById('lojaFiltroInicio').value = getTodayStr(); document.getElementById('lojaFiltroFim').value = getTodayStr();
             window.pedirPermissaoNotificacao();
             window.showScreen('painel-loja'); 
@@ -1215,7 +1240,7 @@
             if(userDataGlobal.status === 'pendente') { showToast('<i class="ph-fill ph-warning"></i> Cadastro em análise!'); await signOut(auth); window.showScreen('login'); } 
             else if (userDataGlobal.status === 'bloqueado') { showToast('<i class="ph-fill ph-prohibit"></i> Conta banida!'); await signOut(auth); window.showScreen('login'); } 
             else {
-               await updateDoc(doc(db, "usuarios", user.uid), { status: 'online' });
+               await updateDoc(doc(db, "usuarios", user.uid), { status: 'online', lastHeartbeat: Date.now() });
                document.getElementById('motoFiltroInicio').value = getTodayStr(); document.getElementById('motoFiltroFim').value = getTodayStr();
                window.pedirPermissaoNotificacao();
                window.showScreen('painel-moto'); startMuralListener(); listenMotoDashStats();
@@ -1274,7 +1299,7 @@
     try {
       let logoBase64 = null; if (fileInput.files.length > 0) { logoBase64 = await getBase64(fileInput.files[0]); }
       const uc = await createUserWithEmailAndPassword(auth, email, senha);
-      await setDoc(doc(db, "usuarios", uc.user.uid), { nome, perfil: 'loja', email, documento, rua, num, bairro, ref, whats, logo: logoBase64, status: 'online', pedidosCriados: 0, ratingSum: 0, ratingCount: 0, dataCriacao: Date.now() });
+      await setDoc(doc(db, "usuarios", uc.user.uid), { nome, perfil: 'loja', email, documento, rua, num, bairro, ref, whats, logo: logoBase64, status: 'online', pedidosCriados: 0, ratingSum: 0, ratingCount: 0, dataCriacao: Date.now(), lastHeartbeat: Date.now() });
       window.isRegistering = false; hideLoading(); showToast('<i class="ph-fill ph-check-circle"></i> Bem-vindo!'); window.location.reload(); 
     } catch (e) { window.isRegistering = false; hideLoading(); console.error("Erro interno:", e); showToast(handleAuthError(e)); }
   };
@@ -1292,7 +1317,7 @@
       let placaFotoBase64 = null; if (fotoPlacaInput.files.length > 0) { placaFotoBase64 = await getBase64(fotoPlacaInput.files[0]); }
       const uc = await createUserWithEmailAndPassword(auth, email, senha); let saldoInicial = 0;
       try { const configSnap = await getDoc(doc(db, "config", "geral")); if(configSnap.exists()) { const cfg = configSnap.data(); if(cfg.promoInicio && cfg.promoFim && cfg.promoValor) { const dataLocalBR = getTodayStr(); if(dataLocalBR >= cfg.promoInicio && dataLocalBR <= cfg.promoFim) saldoInicial = parseFloat(cfg.promoValor); } } } catch(e) { console.error("Erro interno:", e); }
-      await setDoc(doc(db, "usuarios", uc.user.uid), { nome, perfil: 'motoboy', email, documento, dataNasc, placa, whats, chavePix: pix, bagGrande: temBag, placaFoto: placaFotoBase64, status: 'pendente', saldo: saldoInicial, entregasFeitas: 0, ratingSum: 0, ratingCount: 0, dataCriacao: Date.now() });
+      await setDoc(doc(db, "usuarios", uc.user.uid), { nome, perfil: 'motoboy', email, documento, dataNasc, placa, whats, chavePix: pix, bagGrande: temBag, placaFoto: placaFotoBase64, status: 'pendente', saldo: saldoInicial, entregasFeitas: 0, ratingSum: 0, ratingCount: 0, dataCriacao: Date.now(), lastHeartbeat: Date.now() });
       await signOut(auth); window.isRegistering = false; hideLoading(); showToast('<i class="ph-fill ph-check-circle"></i> Criado! Aguarde aprovação.'); window.showScreen('login');
     } catch (e) { window.isRegistering = false; hideLoading(); console.error("Erro interno:", e); showToast(handleAuthError(e)); }
   };
