@@ -462,10 +462,15 @@
       return limpo;
   }
 
+  // --- CORREÇÃO DO BUG DA ABA ---
   window.switchTab = function(tabId) {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-    event.currentTarget.classList.add('active');
+    
+    // Localiza e ativa o botão correto, independente de como foi chamado (mouse ou código)
+    const targetBtn = document.querySelector(`.tab-btn[onclick*="${tabId}"]`);
+    if(targetBtn) targetBtn.classList.add('active');
+    
     document.getElementById(tabId).classList.add('active');
   }
 
@@ -738,6 +743,8 @@
       
       window.listaLojasAdmin = [];
       window.listaMotosAdmin = [];
+      
+      const agora = Date.now();
 
       snapshot.forEach((docSnap) => { usersArray.push({ id: docSnap.id, ...docSnap.data() }); });
       
@@ -750,6 +757,13 @@
         if(d.perfil === 'admin') return;
         const id = d.id; let mediaNum = 0; let estrelasHtml = `<span style="color:var(--muted)">Sem avaliações</span>`;
         
+        // DETECTOR DE FANTASMAS: Limpa quem fechou a aba (Delay de 60 segundos sem Heartbeat)
+        if (d.status === 'online' || d.status === 'em_rota') {
+            if (d.lastHeartbeat && (agora - d.lastHeartbeat > 60000)) {
+                d.status = 'offline';
+            }
+        }
+
         if(d.ratingCount > 0) {
            mediaNum = (d.ratingSum / d.ratingCount);
            estrelasHtml = `<strong style="color:var(--neon-y)"><i class="ph-fill ph-star"></i> ${mediaNum.toFixed(1)}</strong> (${d.ratingCount})`;
@@ -863,6 +877,7 @@
        window.renderListaPedidosAdmin();
     });
 
+    // --- CORREÇÃO DA CAIXA DE MENSAGENS (TIMESTAMP E STATUS DE LEITURA) ---
     if(inboxUnsubscribe) inboxUnsubscribe();
     const qMsg = query(collection(db, "mensagens"), orderBy("timestamp", "desc"));
     inboxUnsubscribe = onSnapshot(qMsg, (snapshot) => {
@@ -872,8 +887,20 @@
           const m = docSnap.data();
           if(m.from === 'admin') {
              contMsg++;
-             const dataStr = m.timestamp ? new Date(m.timestamp.seconds * 1000).toLocaleString('pt-BR') : '';
-             let replyHtml = m.status === 'respondido' ? `<div class="inbox-reply"><strong>Resposta do Usuário:</strong>${m.reply}</div>` : `<div style="font-size:12px; color:var(--muted); font-style:italic;">Aguardando leitura/resposta...</div>`;
+             
+             // Proteção contra Timestamp nulo (durante salvamento)
+             const dataStr = (m.timestamp && typeof m.timestamp.toDate === 'function') ? m.timestamp.toDate().toLocaleString('pt-BR') : '';
+             
+             // Melhora no Feedback Visual de Status
+             let replyHtml = '';
+             if (m.status === 'respondido') {
+                 replyHtml = `<div class="inbox-reply"><strong>Resposta do Usuário:</strong>${m.reply}</div>`;
+             } else if (m.status === 'lido') {
+                 replyHtml = `<div style="font-size:12px; color:var(--neon-g); font-style:italic;"><i class="ph-bold ph-checks"></i> Lida pelo usuário</div>`;
+             } else {
+                 replyHtml = `<div style="font-size:12px; color:var(--muted); font-style:italic;"><i class="ph-bold ph-check"></i> Aguardando leitura...</div>`;
+             }
+
              inList.innerHTML += `
                <div class="inbox-card">
                  <div class="inbox-header"><span>Para: <span style="color:var(--neon-b)">${m.toName}</span></span> <span>${dataStr}</span></div>
