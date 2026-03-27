@@ -278,7 +278,7 @@
 </head>
 <body>
 
-<audio id="alertSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+<audio id="alertSound" src="notpin.mp3" preload="auto"></audio>
 
 <div id="netStatusBanner">
    <span id="netStatusText"></span>
@@ -753,9 +753,46 @@
 
 <script type="module">
   window.audioUnlocked = false;
+  window.audioCtx = null;
+
+  // --- MOTOR DE ÁUDIO TURBINADO (3x Volume) ---
   document.body.addEventListener('click', function() {
-      if(!window.audioUnlocked) { const aud = document.getElementById('alertSound'); if(aud) { aud.load(); window.audioUnlocked = true; } }
+      if(!window.audioUnlocked) { 
+          try {
+              const AudioContext = window.AudioContext || window.webkitAudioContext;
+              window.audioCtx = new AudioContext();
+              const aud = document.getElementById('alertSound');
+              const track = window.audioCtx.createMediaElementSource(aud);
+              const gainNode = window.audioCtx.createGain();
+              gainNode.gain.value = 3.0; // AMPLIFICADOR LIGADO NO 300%
+              track.connect(gainNode).connect(window.audioCtx.destination);
+              aud.load();
+              window.audioUnlocked = true;
+          } catch(e) { 
+              console.log("Áudio 3x bloqueado por segurança do navegador. Rodando em volume normal.");
+              window.audioUnlocked = true; 
+          }
+      }
   }, {once: true});
+
+  // --- DISPARO AGRESSIVO ---
+  window.tocarAlertaMaximo = function() {
+      try {
+          if(window.audioCtx && window.audioCtx.state === 'suspended') {
+              window.audioCtx.resume();
+          }
+          const aud = document.getElementById('alertSound');
+          aud.currentTime = 0;
+          let playPromise = aud.play();
+          if (playPromise !== undefined) {
+              playPromise.catch(error => { console.log("Áudio bloqueado", error) });
+          }
+          // Vibração Agressiva: Treme, pausa, treme, pausa, treme longo
+          if (navigator.vibrate) {
+              navigator.vibrate([600, 200, 600, 200, 1500]);
+          }
+      } catch(e) { console.error("Erro no som:", e); }
+  }
 
   window.isRegistering = false;
   window.isProcessingClick = false;
@@ -1101,7 +1138,6 @@
   window.closeNewOrderModal = function() { document.getElementById('newOrderModal').classList.remove('open'); };
   window.showToast = function(msg) { const existing = document.querySelector('.toast'); if (existing) existing.remove(); const el = document.createElement('div'); el.className = 'toast'; el.innerHTML = msg; document.body.appendChild(el); setTimeout(() => el.remove(), 4000); };
 
-  // --- O CORAÇÃO: PULSAR PARA MANTER ONLINE ---
   async function setOnlineStatus() {
      if(auth.currentUser && userDataGlobal && !currentConfig.isPaused) {
         if(userDataGlobal.status === 'pendente' || userDataGlobal.status === 'bloqueado') return;
@@ -1115,34 +1151,26 @@
      }
   }
 
-  // --- A INTELIGÊNCIA: FICAR OFFLINE AO FECHAR/MINIMIZAR ---
   async function setOfflineStatus() {
       if(auth.currentUser && userDataGlobal) {
           if(userDataGlobal.status === 'pendente' || userDataGlobal.status === 'bloqueado') return;
           try {
-              // Tenta enviar o último suspiro pro Firebase antes do sistema matar o app
               await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { status: 'offline' });
           } catch(e) { console.log("Não deu tempo de ficar offline:", e); }
       }
   }
 
-  // Se o usuário fechar a aba/app (Funciona bem no PC e Android)
   window.addEventListener('beforeunload', setOfflineStatus);
-  window.addEventListener('pagehide', setOfflineStatus); // iOS Safari respeita mais esse
+  window.addEventListener('pagehide', setOfflineStatus); 
 
-  // Se o usuário apenas minimizar o app e esquecer a vida lá fora
   let backgroundTimer = null;
   document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') {
-          // App foi para o segundo plano
-          backgroundTimer = setTimeout(() => {
-              setOfflineStatus(); // Fica offline após 15 minutos fora do app
-          }, 15 * 60 * 1000);
+          backgroundTimer = setTimeout(() => { setOfflineStatus(); }, 15 * 60 * 1000);
       } else {
-          // Voltou pro app
           clearTimeout(backgroundTimer);
           blindarTela();
-          setOnlineStatus(); // Fica online de novo imediatamente
+          setOnlineStatus(); 
       }
   });
 
@@ -1308,22 +1336,21 @@
     if(!email || !senha || !nome || !rua || !bairro || !documento || !whats) return showToast("<i class='ph-fill ph-warning'></i> Preencha os campos!");
     showLoading('VERIFICANDO DADOS...'); window.isRegistering = true; 
     try {
-      // 1. Cria Auth Primeiro (Trava nativa de E-mail)
-      const uc = await createUserWithEmailAndPassword(auth, email, senha);
-
-      // 2. Com o acesso liberado, verifica se o CNPJ/CPF já existe no banco
       const docQuery = query(collection(db, "usuarios"), where("documento", "==", documento));
       const docSnap = await getDocs(docQuery);
-      
-      if (!docSnap.empty) {
-          // Se existir, deleta a conta auth que acabou de ser criada
-          await deleteUser(uc.user);
+      const emailQuery = query(collection(db, "usuarios"), where("email", "==", email));
+      const emailSnap = await getDocs(emailQuery);
+
+      if (!docSnap.empty || !emailSnap.empty) {
           window.isRegistering = false; hideLoading(); window.triggerErrorFeedback();
-          return showToast("<i class='ph-fill ph-warning-octagon'></i> Este CNPJ/CPF já está cadastrado em outra conta!");
+          if (!docSnap.empty && !emailSnap.empty) return showToast("<i class='ph-fill ph-warning-octagon'></i> CNPJ e E-mail já estão cadastrados!");
+          if (!docSnap.empty) return showToast("<i class='ph-fill ph-warning-octagon'></i> Este CNPJ/CPF já está cadastrado!");
+          return showToast("<i class='ph-fill ph-warning-octagon'></i> Este E-mail já está em uso!");
       }
 
       showLoading('CADASTRANDO...');
       let logoBase64 = null; if (fileInput.files.length > 0) { logoBase64 = await getBase64(fileInput.files[0]); }
+      const uc = await createUserWithEmailAndPassword(auth, email, senha);
       await setDoc(doc(db, "usuarios", uc.user.uid), { nome, perfil: 'loja', email, documento, rua, num, bairro, ref, whats, logo: logoBase64, status: 'online', pedidosCriados: 0, ratingSum: 0, ratingCount: 0, dataCriacao: Date.now(), lastHeartbeat: Date.now() });
       window.isRegistering = false; hideLoading(); showToast('<i class="ph-fill ph-check-circle"></i> Bem-vindo!'); window.location.reload(); 
     } catch (e) { window.isRegistering = false; hideLoading(); console.error("Erro interno:", e); showToast(handleAuthError(e)); }
@@ -1339,23 +1366,21 @@
     if(!email || !senha || !documento || !dataNasc || !whats || !pix) return showToast("<i class='ph-fill ph-warning'></i> Preencha todos os campos!");
     showLoading('VERIFICANDO DADOS...'); window.isRegistering = true; 
     try {
-      // 1. Cria Auth Primeiro (Trava nativa de E-mail)
-      const uc = await createUserWithEmailAndPassword(auth, email, senha);
-
-      // 2. Com o acesso liberado, verifica se o CPF já existe no banco
       const docQuery = query(collection(db, "usuarios"), where("documento", "==", documento));
       const docSnap = await getDocs(docQuery);
-      
-      if (!docSnap.empty) {
-          // Se existir, deleta a conta auth que acabou de ser criada
-          await deleteUser(uc.user);
+      const emailQuery = query(collection(db, "usuarios"), where("email", "==", email));
+      const emailSnap = await getDocs(emailQuery);
+
+      if (!docSnap.empty || !emailSnap.empty) {
           window.isRegistering = false; hideLoading(); window.triggerErrorFeedback();
-          return showToast("<i class='ph-fill ph-warning-octagon'></i> Este CPF já está cadastrado em outra conta!");
+          if (!docSnap.empty && !emailSnap.empty) return showToast("<i class='ph-fill ph-warning-octagon'></i> CPF e E-mail já estão cadastrados!");
+          if (!docSnap.empty) return showToast("<i class='ph-fill ph-warning-octagon'></i> Este CPF já está cadastrado!");
+          return showToast("<i class='ph-fill ph-warning-octagon'></i> Este E-mail já está em uso!");
       }
 
       showLoading('CADASTRANDO...');
       let placaFotoBase64 = null; if (fotoPlacaInput.files.length > 0) { placaFotoBase64 = await getBase64(fotoPlacaInput.files[0]); }
-      let saldoInicial = 0;
+      const uc = await createUserWithEmailAndPassword(auth, email, senha); let saldoInicial = 0;
       try { const configSnap = await getDoc(doc(db, "config", "geral")); if(configSnap.exists()) { const cfg = configSnap.data(); if(cfg.promoInicio && cfg.promoFim && cfg.promoValor) { const dataLocalBR = getTodayStr(); if(dataLocalBR >= cfg.promoInicio && dataLocalBR <= cfg.promoFim) saldoInicial = parseFloat(cfg.promoValor); } } } catch(e) { console.error("Erro interno:", e); }
       await setDoc(doc(db, "usuarios", uc.user.uid), { nome, perfil: 'motoboy', email, documento, dataNasc, placa, whats, chavePix: pix, bagGrande: temBag, placaFoto: placaFotoBase64, status: 'pendente', saldo: saldoInicial, entregasFeitas: 0, ratingSum: 0, ratingCount: 0, dataCriacao: Date.now(), lastHeartbeat: Date.now() });
       await signOut(auth); window.isRegistering = false; hideLoading(); showToast('<i class="ph-fill ph-check-circle"></i> Criado! Aguarde aprovação.'); window.showScreen('login');
@@ -1645,7 +1670,7 @@
                     window.seenOrderIds.add(docSnap.id);
                 }
             } else if (initialLoad) {
-                window.seenOrderIds.add(docSnap.id); // Registra no load inicial silenciosamente
+                window.seenOrderIds.add(docSnap.id); 
             }
 
             pendentes++; fragAtivos.appendChild(buildCardReal(docSnap.id, data));
@@ -1701,7 +1726,8 @@
       histContainer.appendChild(fragHist);
 
       if(!initialLoad && pendentes > lastPendentesCount && !encontrouAtivo) {
-          try { const aud = document.getElementById('alertSound'); aud.currentTime = 0; let playPromise = aud.play(); if (playPromise !== undefined) playPromise.catch(error => { }); } catch(err) { console.error("Erro interno:", err); }
+          // --- CHAMA A FUNÇÃO DE ALERTA MÁXIMO ---
+          window.tocarAlertaMaximo();
           
           if (document.hidden) {
               window.dispararNotificacao("TGS Delivery ⚡", "Nova corrida disponível no mural!");
@@ -1805,7 +1831,6 @@
 
     if(entregas.length === 0 || isNaN(feeInput) || feeInput <= 0) { window.isProcessingClick = false; return showToast('<i class="ph-fill ph-warning"></i> Adicione Bairro e Taxa!'); }
     
-    // OTIMIZAÇÃO: Interface Otimista
     const totalFee = feeInput * entregas.length; const pin = Math.floor(1000 + Math.random() * 9000).toString(); const bairrosResumo = bairrosArr.join(', ');
     const clienteEnd = entregas.length === 1 ? `${entregas[0].rua}, ${entregas[0].num} - ${entregas[0].bairro}`.trim() : `Rota com ${entregas.length} entregas`;
     
