@@ -1420,7 +1420,6 @@
 
     const contAtivos = document.getElementById('lojaOrdersContainer');
     
-    // INJETA O SKELETON ANTES DE BUSCAR
     if(contAtivos) {
         contAtivos.innerHTML = `
           <div class="skeleton-card"><div class="sk-top-row"><div class="sk-circle"></div><div><div class="sk-line sk-w-60"></div><div class="sk-line sk-w-100" style="margin-bottom:0;"></div></div></div><div class="sk-line sk-w-40"></div></div>
@@ -1453,7 +1452,6 @@
         } catch(e) { console.error("Erro interno no loop da loja:", e); }
       });
 
-      // APAGA OS SKELETONS E INJETA DADOS REAIS
       contAtivos.innerHTML = '';
       contHist.innerHTML = '';
 
@@ -1551,7 +1549,6 @@
 
     const container = document.getElementById('orderCards'); 
     
-    // INJETA O SKELETON ANTES DE BUSCAR
     if(container) {
         document.getElementById('emptyMural').style.display = 'none';
         container.innerHTML = `
@@ -1657,7 +1654,6 @@
         } catch(e) { console.error("Erro interno no loop de pedidos:", e); }
       });
       
-      // APAGA OS SKELETONS E INJETA DADOS REAIS
       container.innerHTML = ''; 
       histContainer.innerHTML = ''; 
 
@@ -1699,11 +1695,26 @@
     const q = query(collection(db, "usuarios"), where("perfil", "==", "motoboy"));
     onSnapshot(q, (snap) => {
       let online = 0; let emRota = 0; let total = snap.size; window.listaMotos = [];
+      const agora = Date.now();
+      
       snap.forEach(doc => { 
-          const d = doc.data(); d.id = doc.id; window.listaMotos.push(d); 
-          if(d.status === 'online') online++; if(d.status === 'em_rota') emRota++; 
+          const d = doc.data(); d.id = doc.id; 
+          
+          // O DETECTOR DE FANTASMAS (Heartbeat)
+          // Se diz que está online/rota, mas não manda sinal há mais de 60 segundos (60000ms), é fantasma!
+          if (d.status === 'online' || d.status === 'em_rota') {
+              if (d.lastHeartbeat && (agora - d.lastHeartbeat > 60000)) {
+                  d.status = 'offline'; // Força visualmente para offline na tela da loja
+              }
+          }
+
+          window.listaMotos.push(d); 
+          if(d.status === 'online') online++; 
+          if(d.status === 'em_rota') emRota++; 
       });
-      document.getElementById('dashLojaOnline').textContent = online; document.getElementById('dashLojaRota').textContent = emRota; document.getElementById('dashLojaTotal').textContent = total;
+      document.getElementById('dashLojaOnline').textContent = online; 
+      document.getElementById('dashLojaRota').textContent = emRota; 
+      document.getElementById('dashLojaTotal').textContent = total;
     });
   }
 
@@ -1711,11 +1722,23 @@
     const q = query(collection(db, "usuarios"), where("perfil", "==", "loja"));
     onSnapshot(q, (snap) => {
       let onlineLojas = 0; window.listaLojas = [];
+      const agora = Date.now();
+
       snap.forEach(doc => { 
-          const d = doc.data(); d.id = doc.id; window.listaLojas.push(d); 
+          const d = doc.data(); d.id = doc.id; 
+          
+          // O DETECTOR DE FANTASMAS PARA AS LOJAS TAMBÉM
+          if (d.status === 'online') {
+              if (d.lastHeartbeat && (agora - d.lastHeartbeat > 60000)) {
+                  d.status = 'offline';
+              }
+          }
+
+          window.listaLojas.push(d); 
           if(d.status === 'online') onlineLojas++; 
       });
-      document.getElementById('dashMotoLojasAtivas').textContent = onlineLojas; document.getElementById('dashMotoLojasTotal').textContent = snap.size;
+      document.getElementById('dashMotoLojasAtivas').textContent = onlineLojas; 
+      document.getElementById('dashMotoLojasTotal').textContent = snap.size;
     });
   }
 
