@@ -734,9 +734,8 @@
                   <div class="admin-row" style="border-color: rgba(245,230,66,.3);">
                     <div class="admin-row-info">
                       <h4><i class="ph-fill ph-user-focus"></i> ${d.nome}</h4>
-                      <p>E-mail: ${d.email} | CPF: ${d.documento}</p>
-                      <p>Nascimento: <strong style="color:var(--neon-b)">${nascBR}</strong></p>
-                      <p>Placa: <strong style="color:var(--text)">${d.placa}</strong> | ${fotoLink}</p>
+                      <p>CPF: <strong style="color:var(--neon-y); letter-spacing:1px; font-size:13px;">${d.documento}</strong> | Nasc: <strong style="color:var(--neon-b); font-size:13px;">${nascBR}</strong></p>
+                      <p style="margin-top:2px;">E-mail: ${d.email} | Placa: <strong style="color:var(--text)">${d.placa}</strong> | ${fotoLink}</p>
                       <p style="margin-top:6px;"><span class="status-badge status-pending">Aguardando Avaliação</span></p>
                     </div>
                     <div class="admin-row-actions">
@@ -762,7 +761,7 @@
                   <div class="admin-row">
                     <div class="admin-row-info">
                       <h4><i class="ph-fill ph-motorcycle"></i> ${d.nome} ${badgePunido}</h4>
-                      <p>Nascimento: <strong style="color:var(--neon-b)">${nascBR}</strong> | Entregas: <strong>${d.entregasFeitas || 0}</strong> | Avaliação: ${estrelasHtml}</p>
+                      <p>CPF: <strong>${d.documento}</strong> | Nasc: <strong style="color:var(--neon-b)">${nascBR}</strong> | Entregas: <strong>${d.entregasFeitas || 0}</strong> | Avaliação: ${estrelasHtml}</p>
                       <p>E-mail: ${d.email} | Saldo: <strong style="color: ${d.saldo < 0.40 ? 'var(--neon-r)' : 'var(--neon-g)'}">R$ ${(d.saldo || 0).toFixed(2).replace('.',',')}</strong> | Placa: ${d.placa} | ${fotoLink}</p>
                       <p style="margin-top:6px;">${statusTag}</p>
                     </div>
