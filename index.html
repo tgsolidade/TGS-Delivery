@@ -755,7 +755,7 @@
   window.audioUnlocked = false;
   window.audioCtx = null;
 
-  // --- MOTOR DE ÁUDIO TURBINADO (3x Volume) ---
+  // --- MOTOR DE ÁUDIO TURBINADO ) ---
   document.body.addEventListener('click', function() {
       if(!window.audioUnlocked) { 
           try {
@@ -764,7 +764,7 @@
               const aud = document.getElementById('alertSound');
               const track = window.audioCtx.createMediaElementSource(aud);
               const gainNode = window.audioCtx.createGain();
-              gainNode.gain.value = 3.0; // AMPLIFICADOR LIGADO NO 300%
+              gainNode.gain.value = 1.5; // AMPLIFICADOR LIGADO NO 150%
               track.connect(gainNode).connect(window.audioCtx.destination);
               aud.load();
               window.audioUnlocked = true;
