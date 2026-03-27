@@ -96,7 +96,7 @@
   
   /* ESTILOS PARA O BOTÃO DE MOSTRAR SENHA */
   .password-wrapper { position: relative; width: 100%; }
-  .password-wrapper input { padding-right: 45px; } /* Espaço para o ícone */
+  .password-wrapper input { padding-right: 45px; }
   .toggle-pw-btn { 
       position: absolute; right: 12px; top: 50%; transform: translateY(-50%); 
       background: transparent; border: none; color: var(--muted); 
@@ -141,7 +141,6 @@
   .back-btn:hover { border-color: var(--neon-b); color: var(--neon-b); }
   .screen-header h2 { font-family: var(--font-head); font-size: 15px; display:flex; align-items:center; gap:8px; }
   
-  /* MÁGICA DO RESPIRO NO MOBILE */
   .screen-body { padding: 24px 20px calc(100px + env(safe-area-inset-bottom)) 20px; flex: 1; }
 
   .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; font-weight: bold;}
@@ -154,7 +153,7 @@
   .checkbox-box-text h4 { font-family: var(--font-head); font-size: 14px; color: var(--text); letter-spacing: 0.05em; display:flex; align-items:center; gap:6px;}
   .checkbox-box-text p { font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-top: 4px; }
 
-  /* CARDS DE ESTATÍSTICA (CLICÁVEIS) */
+  /* CARDS DE ESTATÍSTICA */
   .stats-dash { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
   .stat-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 10px; text-align: center; cursor: pointer; transition: transform 0.2s, border-color 0.2s; }
   .stat-box:hover { transform: translateY(-2px); border-color: var(--neon-b); }
@@ -1740,7 +1739,6 @@
       snap.forEach(doc => { 
           const d = doc.data(); d.id = doc.id; 
           
-          // O DETECTOR DE FANTASMAS (Heartbeat)
           if (d.status === 'online' || d.status === 'em_rota') {
               if (d.lastHeartbeat && (agora - d.lastHeartbeat > 60000)) {
                   d.status = 'offline';
@@ -1766,7 +1764,6 @@
       snap.forEach(doc => { 
           const d = doc.data(); d.id = doc.id; 
           
-          // O DETECTOR DE FANTASMAS PARA AS LOJAS TAMBÉM
           if (d.status === 'online') {
               if (d.lastHeartbeat && (agora - d.lastHeartbeat > 60000)) {
                   d.status = 'offline';
@@ -1852,12 +1849,10 @@
     return div;
   }
 
-  // OTIMIZAÇÃO E SEGURANÇA: Interface Otimista + Transação no Servidor
   window.acceptOrderReal = async function(id) {
     if(window.isProcessingClick) return;
     window.isProcessingClick = true;
 
-    // TRAVA DE SEGURANÇA: Impede pegar 2 pedidos ao mesmo tempo
     if(userDataGlobal && userDataGlobal.status === 'em_rota' || activeOrderId !== null) {
         window.isProcessingClick = false;
         window.triggerErrorFeedback();
@@ -1875,14 +1870,12 @@
         return showToast(`<i class="ph-fill ph-warning"></i> Saldo insuficiente! Você precisa de R$ ${taxaCobranca.toFixed(2).replace('.',',')}`); 
     }
 
-    // ESCONDE O CARD IMEDIATAMENTE (Otimista)
     const cardEl = document.getElementById('card-' + id);
     if(cardEl) cardEl.style.display = 'none';
 
     try {
       const pedidoRef = doc(db, "pedidos", id);
       
-      // TRANSAÇÃO: O Servidor decide quem ganha a corrida
       await runTransaction(db, async (transaction) => {
           const pedidoSnap = await transaction.get(pedidoRef);
           
@@ -1893,7 +1886,6 @@
               throw "Alguém foi mais rápido!";
           }
           
-          // Se passou pelas barreiras, a corrida é dele!
           transaction.update(pedidoRef, { 
               status: 'aceito', 
               motoboyId: auth.currentUser.uid, 
@@ -1903,7 +1895,6 @@
           });
       });
 
-      // Só atualiza o motoboy se a transação do pedido deu certo
       await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { status: 'em_rota' });
       
       triggerLightning(); 
@@ -1911,14 +1902,13 @@
       
     } catch(e) { 
       console.error("Erro na transação:", e);
-      if(cardEl) cardEl.style.display = 'block'; // Volta o card para a tela se ele perdeu
+      if(cardEl) cardEl.style.display = 'block';
       showToast(`<i class="ph-fill ph-warning"></i> ${e === "Alguém foi mais rápido!" ? e : "Erro ao aceitar corrida."}`); 
     } finally { 
       window.isProcessingClick = false; 
     }
   };
 
-  // OTIMIZAÇÃO: Interface Otimista na Conclusão
   window.completeOrder = async function() {
     if(!activeOrderId) return;
     if(window.isProcessingClick) return;
@@ -1928,7 +1918,6 @@
     const currentSaldo = userDataGlobal.saldo !== undefined ? parseFloat(userDataGlobal.saldo) : 0;
     const novoSaldo = currentSaldo - taxaCobranca;
 
-    // LIMPA A TELA IMEDIATAMENTE
     document.getElementById('activeOrderBox').classList.remove('visible'); 
     document.getElementById('muralTitle').style.display = 'flex'; 
     document.getElementById('orderCards').style.display = 'block';
@@ -1953,7 +1942,6 @@
     if(window.isProcessingClick) return;
     window.isProcessingClick = true;
 
-    // LIMPA A TELA IMEDIATAMENTE
     document.getElementById('activeOrderBox').classList.remove('visible'); 
     document.getElementById('muralTitle').style.display = 'flex'; 
     document.getElementById('orderCards').style.display = 'block';
@@ -2094,12 +2082,10 @@
   let wakeLock = null;
 
   async function blindarTela() {
-      // Verifica se o navegador suporta essa tecnologia
       if ('wakeLock' in navigator) {
           try {
               wakeLock = await navigator.wakeLock.request('screen');
               console.log('Tela blindada! O celular não vai apagar sozinho.');
-              
               wakeLock.addEventListener('release', () => {
                   console.log('A blindagem da tela foi pausada (app minimizado).');
               });
@@ -2109,15 +2095,12 @@
       }
   }
 
-  // O Wake Lock é cancelado automaticamente se o motoboy minimizar o app.
-  // Por isso, precisamos reativá-lo toda vez que ele voltar para a tela.
   document.addEventListener('visibilitychange', async () => {
       if (document.visibilityState === 'visible') {
           blindarTela();
       }
   });
 
-  // Ativa a função quando o motoboy focar na tela ou clicar em algo a primeira vez
   window.addEventListener('focus', blindarTela);
   document.body.addEventListener('click', blindarTela, { once: true });
 </script>
