@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TGS Delivery - Lista VIP</title>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --panel: #16161f;
+            --border: #1e1e30;
+            --neon-y: #f5e642;
+            --neon-b: #00c8ff;
+            --text: #e8e8f0;
+            --muted: #6b6b8a;
+            --neon-r: #ff3366;
+            --neon-g: #00ff88;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 20px; overflow-x: hidden;}
+        
+        .header { text-align: center; margin-bottom: 20px; margin-top: 10px; display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 500px;}
+        
+        .page-logo { 
+            width: 80px; height: 80px; border-radius: 50%; 
+            object-fit: cover; border: 2px solid var(--neon-y); 
+            box-shadow: 0 0 20px rgba(245,230,66,0.3); margin-bottom: 15px; 
+        }
+
+        .header h1 { color: var(--neon-y); font-size: 2rem; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 15px var(--neon-y); }
+        .header p { color: var(--muted); font-size: 0.95rem; margin-top: 10px; line-height: 1.5; }
+
+        /* --- SESSÃO DE PROVA SOCIAL --- */
+        .social-proof-section { width: 100%; max-width: 500px; margin-bottom: 30px; }
+        
+        .stats-cards { display: flex; gap: 10px; margin-bottom: 20px; }
+        .stat-card { flex: 1; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 15px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .stat-card.moto { border-color: rgba(245,230,66,0.3); }
+        .stat-card.loja { border-color: rgba(0,200,255,0.3); }
+        .stat-card i { font-size: 24px; margin-bottom: 5px; }
+        .stat-card.moto i { color: var(--neon-y); }
+        .stat-card.loja i { color: var(--neon-b); }
+        .stat-card .count { font-size: 28px; font-weight: 900; font-family: 'Courier New', Courier, monospace; margin-bottom: 2px; }
+        .stat-card .label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; }
+
+        .scroller-wrapper { margin-bottom: 15px; width: 100%; overflow: hidden; position: relative;}
+        .scroller-wrapper::before, .scroller-wrapper::after { content: ''; position: absolute; top: 0; bottom: 0; width: 30px; z-index: 2; pointer-events: none; }
+        .scroller-wrapper::before { left: 0; background: linear-gradient(to right, var(--bg), transparent); }
+        .scroller-wrapper::after { right: 0; background: linear-gradient(to left, var(--bg), transparent); }
+
+        .scroller-title { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; padding-left: 5px; display: flex; align-items: center; gap: 6px;}
+        .scroller { width: 100%; overflow: hidden; white-space: nowrap; }
+        .scroller-track { display: inline-flex; gap: 10px; padding-left: 100%; animation: marquee 15s linear infinite; }
+        .scroller-track:hover { animation-play-state: paused; }
+        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
+        
+        .scroll-item { background: #0f0f1a; border: 1px solid var(--border); padding: 6px 14px; border-radius: 20px; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: bold; flex-shrink: 0; }
+        .scroll-item.moto-item { color: var(--text); border-color: rgba(245,230,66,0.2); }
+        .scroll-item.moto-item i { color: var(--neon-y); font-size: 16px; }
+        .scroll-item.loja-item { color: var(--text); border-color: rgba(0,200,255,0.2); padding: 4px 14px 4px 6px; }
+        .scroll-item.loja-item i { color: var(--neon-b); font-size: 16px; margin-left: 6px;}
+        .scroll-item.loja-item img { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1px solid var(--neon-b); }
+        
+        .empty-msg { font-size: 12px; color: var(--muted); font-style: italic; padding: 10px; display: inline-block;}
+
+        /* --- CONTAINER FORMULÁRIOS --- */
+        .container { background-color: var(--panel); border-radius: 12px; padding: 30px; width: 100%; max-width: 500px; border: 1px solid var(--border); box-shadow: 0 8px 32px rgba(0,0,0,0.5); transition: transform 0.3s ease; position: relative; z-index: 5;}
+        
+        .tabs { display: flex; gap: 10px; margin-bottom: 25px; }
+        .tab-btn { flex: 1; padding: 15px; border: none; background-color: #13131f; border: 1px solid var(--border); color: #fff; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.85rem; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px;}
+        .tab-btn.active.moto { background-color: rgba(245,230,66,.08); color: var(--neon-y); border-color: var(--neon-y); box-shadow: 0 0 10px rgba(245,230,66,0.1); }
+        .tab-btn.active.loja { background-color: rgba(0,200,255,.08); color: var(--neon-b); border-color: var(--neon-b); box-shadow: 0 0 10px rgba(0,200,255,0.1); }
+
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 0.75rem; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; }
+        .form-group input { width: 100%; padding: 12px; background-color: #0f0f1a; border: 1px solid var(--border); border-radius: 8px; color: #fff; font-size: 1rem; outline: none; transition: 0.3s; }
+        #formMotoboy input:focus { border-color: var(--neon-y); box-shadow: 0 0 8px rgba(245,230,66,0.15); }
+        #formLoja input:focus { border-color: var(--neon-b); box-shadow: 0 0 8px rgba(0,200,255,0.15); }
+        
+        .form-group input[type="file"] { padding: 9px; font-size: 0.85rem; color: var(--muted); cursor: pointer; }
+        .form-group input::placeholder { color: #555; }
+
+        .row { display: flex; gap: 10px; }
+        .row .form-group { flex: 1; }
+        
+        /* Ajuste Mobile para a row */
+        @media (max-width: 400px) {
+            .row { flex-direction: column; gap: 0; }
+            .container { padding: 20px; }
+        }
+
+        .checkbox-box { display: flex; align-items: center; gap: 12px; background: #0f0f1a; border: 1px solid var(--border); padding: 16px; border-radius: 8px; margin-bottom: 20px; cursor: pointer; transition: all 0.2s; }
+        .checkbox-box input[type="checkbox"] { width: 22px; height: 22px; cursor: pointer; accent-color: #ff9900; flex-shrink: 0; }
+        .checkbox-box-text h4 { font-size: 14px; color: #ff9900; letter-spacing: 0.05em; display:flex; align-items:center; gap:6px; margin-bottom: 4px;}
+        .checkbox-box-text p { font-size: 11px; color: var(--muted); line-height: 1.4;}
+
+        .submit-btn { width: 100%; padding: 16px; font-weight: bold; font-size: 0.95rem; cursor: pointer; text-transform: uppercase; border-radius: 10px; border: none; transition: 0.2s; margin-top: 10px; letter-spacing: 1px;}
+        .btn-moto { background: linear-gradient(135deg, #d4c200, var(--neon-y)); color: #0a0a0f; box-shadow: 0 4px 20px rgba(245,230,66,.25); }
+        .btn-loja { background: linear-gradient(135deg, #009acc, var(--neon-b)); color: #fff; box-shadow: 0 4px 20px rgba(0,200,255,.2); }
+        .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+        .submit-btn:active { transform: scale(0.98); }
+
+        .success-msg { display: none; text-align: center; padding: 35px 20px; background-color: #13131f; border: 1px solid var(--neon-g); border-radius: 10px; margin-top: 10px; animation: fadeIn 0.4s; }
+        .success-msg i { font-size: 4rem; color: var(--neon-g); margin-bottom: 15px; display: block;}
+        .success-msg h3 { color: #fff; margin-bottom: 10px; font-size: 1.3rem; }
+        .success-msg p { color: var(--muted); font-size: 0.95rem; line-height: 1.6; }
+        
+        .bonus-pill { 
+            display: none; background: rgba(0, 255, 136, 0.1); color: var(--neon-g); 
+            padding: 8px 15px; border-radius: 8px; border: 1px dashed var(--neon-g); 
+            margin-top: 15px; font-weight: bold; font-family: 'Courier New', Courier, monospace;
+        }
+
+        .hidden { display: none; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .ph-spin { animation: spin 1s linear infinite; }
+        #globalLoader { display:none; position:fixed; inset:0; background:rgba(10,10,15,0.95); z-index:99999; flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); }
+    </style>
+</head>
+<body>
+
+    <div id="globalLoader">
+        <i class="ph-bold ph-spinner ph-spin" style="font-size: 50px; color: var(--neon-y); margin-bottom: 16px;"></i>
+        <h2 id="globalLoaderText" style="font-size: 14px; color: #fff; letter-spacing: 2px; text-transform: uppercase;">CARREGANDO...</h2>
+    </div>
+
+    <div class="header">
+        <img src="https://i.ibb.co/V0Wn1nWG/logo.jpg" alt="TGS Delivery Logo" class="page-logo">
+        <h1>TGS Delivery</h1>
+        <p>A revolução do delivery está chegando a Paragominas. Garanta sua vaga na lista VIP de pré-lançamento!</p>
+    </div>
+
+    <div class="social-proof-section">
+        <div class="stats-cards">
+            <div class="stat-card moto">
+                <i class="ph-fill ph-motorcycle"></i>
+                <div class="count" id="countMotos">0</div>
+                <div class="label">Motoboys Parceiros</div>
+            </div>
+            <div class="stat-card loja">
+                <i class="ph-fill ph-storefront"></i>
+                <div class="count" id="countLojas">0</div>
+                <div class="label">Lojas Parceiras</div>
+            </div>
+        </div>
+        <div class="scroller-wrapper">
+            <div class="scroller-title"><i class="ph-fill ph-storefront" style="color:var(--neon-b)"></i> Restaurantes Confirmados</div>
+            <div class="scroller"><div class="scroller-track" id="trackLojas"><span class="empty-msg">Aguardando novos cadastros...</span></div></div>
+        </div>
+        <div class="scroller-wrapper">
+            <div class="scroller-title"><i class="ph-fill ph-motorcycle" style="color:var(--neon-y)"></i> Motoboys Confirmados</div>
+            <div class="scroller"><div class="scroller-track" id="trackMotos"><span class="empty-msg">Aguardando novos cadastros...</span></div></div>
+        </div>
+    </div>
+
+    <div class="container" id="mainContainer">
+        <div class="tabs" id="tabContainer">
+            <button class="tab-btn active moto" id="btnTabMotoboy" onclick="mudarAba('motoboy')"><i class="ph-fill ph-motorcycle"></i> SOU MOTOBOY</button>
+            <button class="tab-btn loja" id="btnTabLoja" onclick="mudarAba('loja')"><i class="ph-fill ph-storefront"></i> SOU LOJISTA</button>
+        </div>
+
+        <form id="formMotoboy" autocomplete="off">
+            <div class="form-group"><label>Nome Completo</label><input type="text" id="motoNome" required placeholder="Digite seu nome completo" autocomplete="off"></div>
+            <div class="row">
+                <div class="form-group"><label>CPF (Apenas números)</label><input type="text" id="motoCpf" required placeholder="000.000.000-00" autocomplete="off"></div>
+                <div class="form-group"><label>Nascimento</label><input type="date" id="motoData" required autocomplete="off"></div>
+            </div>
+            <div class="row">
+                <div class="form-group"><label>Placa da Moto</label><input type="text" id="motoVeiculo" required placeholder="ABC-1234" style="text-transform:uppercase" autocomplete="off"></div>
+                <div class="form-group"><label>WhatsApp</label><input type="tel" id="motoZap" required placeholder="(91) 90000-0000" oninput="mascaraTelefone(this)" autocomplete="off"></div>
+            </div>
+            <div class="form-group"><label>Chave PIX para Recebimento</label><input type="text" id="motoPix" required placeholder="Ex: Celular, CPF ou Aleatória" autocomplete="off"></div>
+            <div class="form-group"><label>Foto da Placa (Obrigatório)</label><input type="file" id="motoPlacaFoto" accept="image/*" required></div>
+            <div class="checkbox-box" onclick="document.getElementById('motoBagGrande').click()">
+                <input type="checkbox" id="motoBagGrande" onclick="event.stopPropagation()">
+                <div class="checkbox-box-text"><h4><i class="ph ph-package"></i> MODO BAG GRANDE</h4><p>Ative se você tem baú e pode transportar pizzas e fardos.</p></div>
+            </div>
+            <div class="form-group"><label>E-mail (Para Login)</label><input type="email" id="motoEmail" required placeholder="exemplo@email.com" autocomplete="new-password"></div>
+            <div class="form-group"><label>Crie uma Senha (mín. 8 caracteres)</label><input type="password" id="motoSenha" required placeholder="Digite sua senha" minlength="8" autocomplete="new-password"></div>
+            <button type="submit" class="submit-btn btn-moto" id="btnSubmitMotoboy"><i class="ph-fill ph-lightning"></i> ENVIAR CADASTRO VIP</button>
+        </form>
+
+        <form id="formLoja" class="hidden" autocomplete="off">
+            <div class="form-group"><label>Logo da Empresa (Opcional)</label><input type="file" id="lojaLogo" accept="image/*"></div>
+            <div class="form-group"><label>Nome da Loja</label><input type="text" id="lojaNome" required placeholder="Ex: Pizzaria do Tales" autocomplete="off"></div>
+            <div class="row">
+                <div class="form-group"><label>CNPJ / CPF</label><input type="text" id="lojaDoc" required placeholder="Digite apenas números" autocomplete="off"></div>
+                <div class="form-group"><label>WhatsApp da Loja</label><input type="tel" id="lojaZap" required placeholder="(91) 90000-0000" oninput="mascaraTelefone(this)" autocomplete="off"></div>
+            </div>
+            <div class="row">
+                <div class="form-group" style="flex:2"><label>Rua / Av</label><input type="text" id="lojaRua" required placeholder="Endereço da loja" autocomplete="off"></div>
+                <div class="form-group" style="flex:1"><label>Número</label><input type="text" id="lojaNum" required placeholder="S/N" autocomplete="off"></div>
+            </div>
+            <div class="row">
+                <div class="form-group" style="flex:1"><label>Bairro</label><input type="text" id="lojaBairro" required placeholder="Bairro" autocomplete="off"></div>
+                <div class="form-group" style="flex:1"><label>Referência</label><input type="text" id="lojaRef" required placeholder="Ponto de referência" autocomplete="off"></div>
+            </div>
+            <div class="form-group"><label>E-mail (Para Login)</label><input type="email" id="lojaEmail" required placeholder="admin@loja.com" autocomplete="new-password"></div>
+            <div class="form-group"><label>Crie uma Senha (mín. 8 caracteres)</label><input type="password" id="lojaSenha" required placeholder="Digite sua senha" minlength="8" autocomplete="new-password"></div>
+            <button type="submit" class="submit-btn btn-loja" id="btnSubmitLoja"><i class="ph-fill ph-check-circle"></i> CRIAR CONTA LOJA</button>
+        </form>
+
+        <div id="mensagemSucesso" class="success-msg">
+            <i class="ph-fill ph-check-circle"></i>
+            <h3 id="textoSucessoTitulo">Conta Criada!</h3>
+            <p id="textoSucessoDescricao">Seus dados foram salvos com segurança.</p>
+            <div id="bonusDisplay" class="bonus-pill"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, arrayUnion, increment, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getAuth, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDLSvxNn8jwZGG8Ky9MUlDRvSH6vHK7vdI",
+            authDomain: "base-delivery-1d420.firebaseapp.com",
+            projectId: "base-delivery-1d420",
+            storageBucket: "base-delivery-1d420.firebasestorage.app",
+            messagingSenderId: "734860193156",
+            appId: "1:734860193156:web:b013890e8351b10b72c1d1"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // --- LEITURA DA VITRINE ---
+        onSnapshot(doc(db, "sistema", "vitrine"), (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                document.getElementById('countMotos').innerText = data.qtdMotos || 0;
+                document.getElementById('countLojas').innerText = data.qtdLojas || 0;
+                let htmlMotos = '';
+                const listaMotos = data.motosVitrine || [];
+                if (listaMotos.length > 0) {
+                    listaMotos.forEach(moto => { htmlMotos += `<div class="scroll-item moto-item"><i class="ph-fill ph-motorcycle"></i> <span>${moto}</span></div>`; });
+                    document.getElementById('trackMotos').innerHTML = htmlMotos;
+                }
+                let htmlLojas = '';
+                const listaLojas = data.lojasVitrine || [];
+                if (listaLojas.length > 0) {
+                    listaLojas.forEach(loja => { 
+                        let visualLogo = loja.logo ? `<img src="${loja.logo}" alt="${loja.nome}">` : `<i class="ph-fill ph-storefront"></i>`;
+                        htmlLojas += `<div class="scroll-item loja-item">${visualLogo} <span>${loja.nome}</span></div>`; 
+                    });
+                    document.getElementById('trackLojas').innerHTML = htmlLojas;
+                }
+            }
+        });
+
+        // --- COMPRESSOR DE IMAGENS ---
+        window.getBase64 = function(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let w = img.width; let h = img.height; const max = 800;
+                        if (w > h) { if (w > max) { h *= max / w; w = max; } } else { if (h > max) { w *= max / h; h = max; } }
+                        canvas.width = w; canvas.height = h; const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, w, h);
+                        resolve(canvas.toDataURL('image/jpeg', 0.6));
+                    };
+                };
+            });
+        };
+
+        // --- FUNÇÕES GERAIS ---
+        window.mascaraTelefone = function(obj) { let v = obj.value.replace(/\D/g, ''); if (v.length > 11) v = v.substring(0, 11); let f = v; if (v.length > 2 && v.length <= 7) f = `(${v.substring(0,2)}) ${v.substring(2)}`; else if (v.length > 7) f = `(${v.substring(0,2)}) ${v.substring(2,7)}-${v.substring(7)}`; obj.value = f; }
+        window.triggerErrorFeedback = function() { if (navigator.vibrate) navigator.vibrate([200, 100, 200]); const c = document.getElementById('mainContainer'); c.style.transform = 'translateX(-10px)'; setTimeout(() => { c.style.transform = 'translateX(0)'; }, 200); }
+        window.showLoading = function(m) { document.getElementById('globalLoaderText').textContent = m; document.getElementById('globalLoader').style.display = 'flex'; };
+        window.hideLoading = function() { document.getElementById('globalLoader').style.display = 'none'; };
+        function getTodayStr() { const o = new Date().getTimezoneOffset() * 60000; return new Date(Date.now() - o).toISOString().split('T')[0]; }
+
+        window.mudarAba = function(tipo) {
+            document.getElementById('mensagemSucesso').style.display = 'none'; document.getElementById('formMotoboy').classList.add('hidden'); document.getElementById('formLoja').classList.add('hidden');
+            document.getElementById('btnTabMotoboy').classList.remove('active'); document.getElementById('btnTabLoja').classList.remove('active');
+            if(tipo === 'motoboy') { document.getElementById('formMotoboy').classList.remove('hidden'); document.getElementById('btnTabMotoboy').classList.add('active'); } 
+            else { document.getElementById('formLoja').classList.remove('hidden'); document.getElementById('btnTabLoja').classList.add('active'); }
+        }
+
+        // 🚨 CADASTRO MOTOBOY (COM BÔNUS DO ADM) 🚨
+        document.getElementById('formMotoboy').addEventListener('submit', async (e) => {
+            e.preventDefault(); 
+            const nome = document.getElementById('motoNome').value.trim(); const email = document.getElementById('motoEmail').value.trim();
+            const senha = document.getElementById('motoSenha').value.trim(); const documento = document.getElementById('motoCpf').value.trim().replace(/\D/g, ''); 
+            const whats = document.getElementById('motoZap').value.trim(); const fInput = document.getElementById('motoPlacaFoto');
+            if(documento.length !== 11) { triggerErrorFeedback(); return alert("CPF Inválido! Digite os 11 números."); }
+            showLoading('CADASTRANDO VIP...'); window.isRegistering = true; 
+            let uc = null;
+            try {
+                uc = await createUserWithEmailAndPassword(auth, email, senha);
+                const qDoc = query(collection(db, "usuarios"), where("documento", "==", documento));
+                const snapDoc = await getDocs(qDoc);
+                if (!snapDoc.empty) { throw new Error("CPF_DUPLICADO"); }
+                
+                let pic = await getBase64(fInput.files[0]);
+                
+                // --- BUSCA DO BÔNUS DIRETO DO ADMIN ---
+                let saldoInicial = 0;
+                try { 
+                    const cf = await getDoc(doc(db, "config", "geral")); 
+                    if(cf.exists() && cf.data().promoValor) { 
+                        saldoInicial = parseFloat(cf.data().promoValor); 
+                    } 
+                } catch(e) { console.log("Erro ao ler bonus:", e); }
+
+                await setDoc(doc(db, "usuarios", uc.user.uid), {
+                    uid: uc.user.uid, nome: nome, perfil: 'motoboy', email: email, documento: documento, dataNasc: document.getElementById('motoData').value,
+                    placa: document.getElementById('motoVeiculo').value.toUpperCase(), whats: whats, chavePix: document.getElementById('motoPix').value.trim(),
+                    bagGrande: document.getElementById('motoBagGrande').checked, placaFoto: pic, status: 'pendente', saldo: saldoInicial, entregasFeitas: 0, ratingSum: 0, ratingCount: 0, dataCriacao: Date.now(), lastHeartbeat: Date.now()
+                });
+                
+                const partes = nome.trim().split(/\s+/); const nV = partes.length > 1 ? `${partes[0]} ${partes[1]}` : partes[0];
+                await setDoc(doc(db, "sistema", "vitrine"), { qtdMotos: increment(1), motosVitrine: arrayUnion(nV) }, { merge: true });
+                
+                await signOut(auth); window.isRegistering = false; hideLoading(); 
+                
+                // Passa o valor dinâmico para a função de sucesso
+                mostrarSucesso('Motoboy', saldoInicial);
+            } catch (err) {
+                if (uc) { await uc.user.delete().catch(()=>{}); await signOut(auth).catch(()=>{}); }
+                window.isRegistering = false; hideLoading(); triggerErrorFeedback();
+                if (err.message === "CPF_DUPLICADO") alert("❌ Este CPF já está cadastrado em outra conta!");
+                else if (err.code === 'auth/email-already-in-use') alert("❌ Este e-mail já está em uso!");
+                else alert("❌ Erro: " + err.message);
+            }
+        });
+
+        // CADASTRO LOJA
+        document.getElementById('formLoja').addEventListener('submit', async (e) => {
+            e.preventDefault(); 
+            const nomeL = document.getElementById('lojaNome').value.trim(); const email = document.getElementById('lojaEmail').value.trim();
+            const senha = document.getElementById('lojaSenha').value.trim(); const docum = document.getElementById('lojaDoc').value.trim().replace(/\D/g, ''); 
+            const whats = document.getElementById('lojaZap').value.trim(); const lInput = document.getElementById('lojaLogo');
+            if(docum.length < 11) { triggerErrorFeedback(); return alert("Documento Inválido!"); }
+            showLoading('CADASTRANDO LOJA...'); window.isRegistering = true;
+            let uc = null;
+            try {
+                uc = await createUserWithEmailAndPassword(auth, email, senha);
+                const qD = query(collection(db, "usuarios"), where("documento", "==", docum));
+                const sD = await getDocs(qD);
+                if (!sD.empty) { throw new Error("DOC_DUPLICADO"); }
+                let logo = lInput.files.length > 0 ? await getBase64(lInput.files[0]) : null;
+                await setDoc(doc(db, "usuarios", uc.user.uid), {
+                    uid: uc.user.uid, nome: nomeL, perfil: 'loja', email: email, documento: docum, whats: whats,
+                    rua: document.getElementById('lojaRua').value.trim(), num: document.getElementById('lojaNum').value.trim(), bairro: document.getElementById('lojaBairro').value.trim(),
+                    ref: document.getElementById('lojaRef').value.trim(), logo: logo, status: 'pendente', pedidosCriados: 0, ratingSum: 0, ratingCount: 0, dataCriacao: Date.now(), lastHeartbeat: Date.now()
+                });
+                await setDoc(doc(db, "sistema", "vitrine"), { qtdLojas: increment(1), lojasVitrine: arrayUnion({ nome: nomeL, logo: logo }) }, { merge: true });
+                await signOut(auth); window.isRegistering = false; hideLoading(); mostrarSucesso('Loja');
+            } catch (err) {
+                if (uc) { await uc.user.delete().catch(()=>{}); await signOut(auth).catch(()=>{}); }
+                window.isRegistering = false; hideLoading(); triggerErrorFeedback();
+                if (err.message === "DOC_DUPLICADO") alert("❌ Este documento já está cadastrado!");
+                else if (err.code === 'auth/email-already-in-use') alert("❌ Este e-mail já está em uso!");
+                else alert("❌ Erro: " + err.message);
+            }
+        });
+
+        function mostrarSucesso(tipo, valorBonus = 0) {
+            document.getElementById('formMotoboy').classList.add('hidden'); document.getElementById('formLoja').classList.add('hidden'); document.getElementById('tabContainer').style.display = 'none';
+            
+            const titulo = document.getElementById('textoSucessoTitulo');
+            const desc = document.getElementById('textoSucessoDescricao');
+            const pill = document.getElementById('bonusDisplay');
+
+            if(tipo === 'Motoboy') {
+                titulo.innerText = 'Vaga Garantida, Motoboy!';
+                desc.innerHTML = 'Obrigado por se tornar um parceiro TGS Delivery! Seus dados e sua foto da placa foram salvos com segurança.';
+                
+                if(valorBonus > 0) {
+                    pill.style.display = 'inline-block';
+                    pill.innerHTML = `<i class="ph-fill ph-wallet"></i> VOCÊ GANHOU R$ ${valorBonus.toFixed(2).replace('.', ',')} DE CRÉDITO!`;
+                } else {
+                    pill.style.display = 'none';
+                }
+                
+                desc.innerHTML += '<br><br>Fique atento ao nosso Instagram, avisaremos assim que o aplicativo for liberado para você começar a faturar!';
+            } else {
+                titulo.innerText = 'Restaurante Cadastrado!';
+                desc.innerHTML = 'Seus dados foram salvos com segurança. Você já é um parceiro(a) TGS Delivery e está na nossa lista VIP de lançamento.<br><br>Fique atento ao nosso Instagram, avisaremos assim que o aplicativo for liberado!';
+                pill.style.display = 'none';
+            }
+            
+            document.getElementById('mensagemSucesso').style.display = 'block'; window.scrollTo(0, 0); 
+        }
+    </script>
+</body>
+</html>
