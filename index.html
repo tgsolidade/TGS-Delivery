@@ -1270,38 +1270,44 @@
   window.abrirModalRecarga = function() { document.getElementById('rechargeValue').value = ''; document.getElementById('rechargeModal').classList.add('open'); }
   
   // ─── NOVA FUNÇÃO PARA CHAMAR O SERVIDOR PIX NA NUVEM ───
-  window.processarRecargaPix = async function() {
-     const valInput = document.getElementById('rechargeValue').value; 
-     const valor = parseFloat(valInput.replace(',', '.'));
-     if (isNaN(valor) || valor < 10) return showToast('<i class="ph-fill ph-warning"></i> O valor mínimo é R$ 10,00.'); 
-     
-     showLoading('GERANDO PIX...');
-     try {
-         // Chama a Cloud Function que você acabou de subir!
-         const response = await fetch('https://gerarpix-mnqcjnimuq-uc.a.run.app', {
-             method: 'POST',
-             headers: { 'Content-Type': 'application/json' },
-             body: JSON.stringify({ valor: valor.toFixed(2) })
-         });
+ window.processarRecargaPix = async function() {
+   const valInput = document.getElementById('rechargeValue').value; 
+   const valor = parseFloat(valInput.replace(',', '.'));
+   
+   if (isNaN(valor) || valor < 10) return showToast('<i class="ph-fill ph-warning"></i> O valor mínimo é R$ 10,00.'); 
+   
+   if (!userDataGlobal || !auth.currentUser) return showToast('Erro: Usuário não identificado.');
 
-         const data = await response.json();
+   showLoading('GERANDO PIX...');
+   try {
+       const response = await fetch('https://gerarpix-mnqcjnimuq-uc.a.run.app', {
+           method: 'POST',
+           headers: { 'Content-Type': 'application/json' },
+           body: JSON.stringify({ 
+               valor: valor.toFixed(2),
+               uid: auth.currentUser.uid, // 🚨 AGORA O APP MANDA O ID DO MOTOBOY
+               nome: userDataGlobal.nome   // 🚨 E MANDA O NOME TAMBÉM
+           })
+       });
 
-         if (data.sucesso) {
-             // Esconde o modal de valor e mostra o modal do QRCode
-             document.getElementById('rechargeModal').classList.remove('open');
-             document.getElementById('pixQrCodeImg').src = data.imagemQrCode;
-             document.getElementById('pixCopiaColaText').value = data.copiaECola;
-             document.getElementById('pixModal').classList.add('open');
-         } else {
-             showToast('<i class="ph-fill ph-warning"></i> Falha ao gerar: ' + (data.erro || 'Erro no banco'));
-         }
-     } catch(e) { 
-         console.error("Erro interno:", e); 
-         showToast('<i class="ph-fill ph-warning"></i> Erro de conexão com o banco Efí.'); 
-     } finally { 
-         hideLoading(); 
-     }
-  }
+       const data = await response.json();
+
+       if (data.sucesso) {
+           document.getElementById('rechargeModal').classList.remove('open');
+           document.getElementById('pixQrCodeImg').src = data.imagemQrCode;
+           document.getElementById('pixCopiaColaText').value = data.copiaECola;
+           document.getElementById('pixModal').classList.add('open');
+           showToast('<i class="ph-fill ph-check-circle"></i> Pix gerado! Pague para liberar o saldo.');
+       } else {
+           showToast('<i class="ph-fill ph-warning"></i> Falha: ' + (data.erro || 'Erro no banco'));
+       }
+   } catch(e) { 
+       console.error("Erro:", e); 
+       showToast('<i class="ph-fill ph-warning"></i> Erro de conexão.'); 
+   } finally { 
+           hideLoading(); 
+   }
+}
 
   // ─── FUNÇÃO PARA COPIAR O CÓDIGO DO PIX ───
   window.copiarPixGerado = function() {
