@@ -1274,7 +1274,7 @@
    const valInput = document.getElementById('rechargeValue').value; 
    const valor = parseFloat(valInput.replace(',', '.'));
    
-   if (isNaN(valor) || valor < 10) return showToast('<i class="ph-fill ph-warning"></i> O valor mínimo é R$ 10,00.'); 
+   if (isNaN(valor) || valor < 1) return showToast('<i class="ph-fill ph-warning"></i> O valor mínimo é R$ 1,00.'); 
    
    if (!userDataGlobal || !auth.currentUser) return showToast('Erro: Usuário não identificado.');
 
