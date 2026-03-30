@@ -963,6 +963,7 @@
   let userListenerUnsubscribe = null;
   let currentConfig = { taxaApp: 0.40, isPaused: false };
   let lastPendentesCount = 0; 
+  let lastSaldoGlobal = null; // RASTREADOR DE SALDO BLACK BELT 🥷
   
   window.regrasTaxaGlobais = { taxaDia: 8.00, taxaNoite: 10.00, horaVirada: "23:00" };
   window.bairrosExcecao = [];
@@ -1223,8 +1224,18 @@
         userDataGlobal = docSnap.data();
         if (userDataGlobal.perfil === 'loja' || userDataGlobal.perfil === 'pf') updateStoreHeaderLogo();
         if (userDataGlobal.perfil === 'motoboy') {
-          const saldo = userDataGlobal.saldo !== undefined ? userDataGlobal.saldo : 0;
-          document.getElementById('creditDisplay').textContent = `R$ ${saldo.toFixed(2).replace('.',',')}`; document.getElementById('creditDisplay').style.color = saldo < 0.40 ? "var(--neon-r)" : "var(--neon-g)";
+          const saldo = userDataGlobal.saldo !== undefined ? parseFloat(userDataGlobal.saldo) : 0;
+          
+          // 🚀 RASTREADOR BLACK BELT (ATUALIZAÇÃO AUTOMÁTICA DO PIX)
+          if (lastSaldoGlobal !== null && saldo > lastSaldoGlobal) {
+              document.getElementById('pixModal').classList.remove('open');
+              showToast('<i class="ph-fill ph-check-circle" style="color: var(--neon-g);"></i> PIX Confirmado! Saldo atualizado');
+              if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+          }
+          lastSaldoGlobal = saldo;
+
+          document.getElementById('creditDisplay').textContent = `R$ ${saldo.toFixed(2).replace('.',',')}`; 
+          document.getElementById('creditDisplay').style.color = saldo < 0.40 ? "var(--neon-r)" : "var(--neon-g)";
         }
       }
     });
