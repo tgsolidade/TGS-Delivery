@@ -255,7 +255,31 @@
         </div>
     </div>
 
-    <a href="https://instagram.com/tgs_delivery_ofc" target="_blank" class="btn-whatsapp-float" title="Suporte via Instagram">
+    <script>
+        function abrirInstagram(e) {
+            e.preventDefault(); // Impede que o link abra no navegador direto
+            
+            var username = 'tgs_delivery_ofc';
+            var appUrl = 'instagram://user?username=' + username; // Link direto pro app
+            var webUrl = 'https://instagram.com/' + username; // Link pro navegador (Plano B)
+            
+            // Verifica se o usuário está em um dispositivo móvel
+            if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                // Tenta abrir o aplicativo do Instagram
+                window.location.href = appUrl;
+                
+                // Se o app não abrir após 1.5 segundos, ele redireciona para o navegador
+                setTimeout(function() {
+                    window.location.href = webUrl;
+                }, 1500);
+            } else {
+                // Se for computador, abre em uma nova aba direto
+                window.open(webUrl, '_blank');
+            }
+        }
+    </script>
+
+    <a href="https://instagram.com/tgs_delivery_ofc" onclick="abrirInstagram(event)" class="btn-whatsapp-float" title="Suporte via Instagram">
         <i class="ph ph-instagram-logo"></i>
     </a>
 
