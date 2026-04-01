@@ -32,6 +32,23 @@
         .header h1 { color: var(--neon-y); font-size: 2rem; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 15px var(--neon-y); }
         .header p { color: var(--muted); font-size: 0.95rem; margin-top: 10px; line-height: 1.5; }
 
+        /* --- TEXTO PISCANDO VERDE --- */
+        .blink-text {
+            color: var(--neon-g);
+            font-size: 1.1rem;
+            font-weight: 900;
+            margin-top: 15px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            text-shadow: 0 0 8px rgba(0, 255, 136, 0.4);
+            animation: piscar 1s infinite;
+        }
+
+        @keyframes piscar {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.2; }
+        }
+
         /* --- SESSÃO DE PROVA SOCIAL --- */
         .social-proof-section { width: 100%; max-width: 500px; margin-bottom: 30px; }
         
@@ -118,6 +135,32 @@
         @keyframes spin { 100% { transform: rotate(360deg); } }
         .ph-spin { animation: spin 1s linear infinite; }
         #globalLoader { display:none; position:fixed; inset:0; background:rgba(10,10,15,0.95); z-index:99999; flex-direction:column; align-items:center; justify-content:center; backdrop-filter:blur(5px); }
+        
+        /* --- BOTÃO FLUTUANTE INSTAGRAM --- */
+        .btn-whatsapp-float {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 34px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 1000;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            text-decoration: none;
+        }
+
+        .btn-whatsapp-float:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(220, 39, 67, 0.5);
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -131,6 +174,7 @@
         <img src="https://i.ibb.co/V0Wn1nWG/logo.jpg" alt="TGS Delivery Logo" class="page-logo">
         <h1>TGS Delivery</h1>
         <p>A revolução do delivery está chegando a Paragominas. Garanta sua vaga na lista VIP de pré-lançamento!</p>
+        <p class="blink-text">EM 3 DIAS SERÁ O LANÇAMENTO</p>
     </div>
 
     <div class="social-proof-section">
@@ -210,6 +254,10 @@
             <div id="bonusDisplay" class="bonus-pill"></div>
         </div>
     </div>
+
+    <a href="https://instagram.com/tgs_delivery_ofc" target="_blank" class="btn-whatsapp-float" title="Suporte via Instagram">
+        <i class="ph ph-instagram-logo"></i>
+    </a>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
