@@ -558,6 +558,10 @@
             <div class="form-group" style="flex:2; margin-bottom:0;"><label>Rua (Obrigatório)</label><input type="text" class="dest-rua" placeholder="Ex: Rua X"></div>
             <div class="form-group" style="flex:1; margin-bottom:0;"><label>Nº</label><input type="text" class="dest-num" placeholder="Ex: 10"></div>
          </div>
+         <div class="form-group" style="margin-top:10px; margin-bottom:0;">
+            <label>WhatsApp do Cliente (Opcional)</label>
+            <input type="tel" class="dest-whats" placeholder="(91) 99999-9999" oninput="mascaraTelefone(this)">
+         </div>
       </div>
     </div>
     <button class="btn btn-secondary btn-sm" style="margin-bottom:20px; width:100%; border-style:dashed;" onclick="adicionarDestinoUI()">+ ADICIONAR OUTRA ENTREGA NESTA ROTA</button>
@@ -1141,12 +1145,12 @@
   window.adicionarDestinoUI = function() {
      destinosContador++; const container = document.getElementById('destinosContainer'); const div = document.createElement('div');
      div.className = 'destino-item'; div.style.cssText = 'background:var(--bg2); padding:12px; border-radius:8px; border:1px solid var(--border); margin-bottom:12px; position:relative;';
-     div.innerHTML = `<button class="btn-icon" style="position:absolute; right:10px; top:10px; width:24px; height:24px; font-size:12px; color:var(--neon-r); border-color:transparent;" onclick="removerDestinoUI(this)"><i class="ph-bold ph-x"></i></button><p style="font-size:11px; color:var(--neon-b); margin-bottom:8px; font-weight:bold;">ENTREGA ${destinosContador}</p><div class="form-group"><label>Bairro (Obrigatório)</label><input type="text" class="dest-bairro" placeholder="Ex: Centro" onblur="verificarBairro(this)"></div><div style="display:flex; gap:10px;"><div class="form-group" style="flex:2; margin-bottom:0;"><label>Rua (Obrigatório)</label><input type="text" class="dest-rua" placeholder="Ex: Rua X"></div><div class="form-group" style="flex:1; margin-bottom:0;"><label>Nº (Obrigatório)</label><input type="text" class="dest-num" placeholder="Ex: 10 ou S/N"></div></div>`;
+     div.innerHTML = `<button class="btn-icon" style="position:absolute; right:10px; top:10px; width:24px; height:24px; font-size:12px; color:var(--neon-r); border-color:transparent;" onclick="removerDestinoUI(this)"><i class="ph-bold ph-x"></i></button><p style="font-size:11px; color:var(--neon-b); margin-bottom:8px; font-weight:bold;">ENTREGA ${destinosContador}</p><div class="form-group"><label>Bairro (Obrigatório)</label><input type="text" class="dest-bairro" placeholder="Ex: Centro" onblur="verificarBairro(this)"></div><div style="display:flex; gap:10px;"><div class="form-group" style="flex:2; margin-bottom:0;"><label>Rua (Obrigatório)</label><input type="text" class="dest-rua" placeholder="Ex: Rua X"></div><div class="form-group" style="flex:1; margin-bottom:0;"><label>Nº (Obrigatório)</label><input type="text" class="dest-num" placeholder="Ex: 10 ou S/N"></div></div><div class="form-group" style="margin-top:10px; margin-bottom:0;"><label>WhatsApp do Cliente (Opcional)</label><input type="tel" class="dest-whats" placeholder="(91) 99999-9999" oninput="mascaraTelefone(this)"></div>`;
      container.appendChild(div); calcularTaxaTotal(); 
   }
   window.removerDestinoUI = function(btn) { btn.closest('.destino-item').remove(); calcularTaxaTotal(); }
   window.resetDestinosUI = function() {
-     destinosContador = 1; document.getElementById('destinosContainer').innerHTML = `<div class="destino-item" style="background:var(--bg2); padding:12px; border-radius:8px; border:1px solid var(--border); margin-bottom:12px;"><p style="font-size:11px; color:var(--neon-b); margin-bottom:8px; font-weight:bold;">ENTREGA 1</p><div class="form-group"><label>Bairro (Obrigatório)</label><input type="text" class="dest-bairro" placeholder="Ex: Centro" onblur="verificarBairro(this)"></div><div style="display:flex; gap:10px;"><div class="form-group" style="flex:2; margin-bottom:0;"><label>Rua (Obrigatório)</label><input type="text" class="dest-rua" placeholder="Ex: Travessa Mauriti"></div><div class="form-group" style="flex:1; margin-bottom:0;"><label>Nº (Obrigatório)</label><input type="text" class="dest-num" placeholder="Ex: 10 ou S/N"></div></div></div>`;
+     destinosContador = 1; document.getElementById('destinosContainer').innerHTML = `<div class="destino-item" style="background:var(--bg2); padding:12px; border-radius:8px; border:1px solid var(--border); margin-bottom:12px;"><p style="font-size:11px; color:var(--neon-b); margin-bottom:8px; font-weight:bold;">ENTREGA 1</p><div class="form-group"><label>Bairro (Obrigatório)</label><input type="text" class="dest-bairro" placeholder="Ex: Centro" onblur="verificarBairro(this)"></div><div style="display:flex; gap:10px;"><div class="form-group" style="flex:2; margin-bottom:0;"><label>Rua (Obrigatório)</label><input type="text" class="dest-rua" placeholder="Ex: Travessa Mauriti"></div><div class="form-group" style="flex:1; margin-bottom:0;"><label>Nº (Obrigatório)</label><input type="text" class="dest-num" placeholder="Ex: 10 ou S/N"></div></div><div class="form-group" style="margin-top:10px; margin-bottom:0;"><label>WhatsApp do Cliente (Opcional)</label><input type="tel" class="dest-whats" placeholder="(91) 99999-9999" oninput="mascaraTelefone(this)"></div></div>`;
      calcularTaxaTotal();
   }
 
@@ -1760,7 +1764,15 @@
                  data.entregas.forEach((ent, idx) => {
                      let enderecoCompleto = `${ent.rua}, ${ent.num} - ${ent.bairro}, Paragominas - PA`;
                      let mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(enderecoCompleto)}`;
-                     destHtml += `<div style="margin-bottom:12px; padding-bottom:12px; border-bottom:1px dashed var(--border);"><strong style="color:var(--text); font-size:14px;">Entrega ${idx+1}:</strong><br><span style="color:var(--muted); font-size:13px;">${ent.rua}, ${ent.num} - ${ent.bairro}</span><button class="btn btn-sm" style="margin-top:6px; background:rgba(0,200,255,.1); color:var(--neon-b); border:1px solid var(--neon-b); width:100%; display:flex; justify-content:center; align-items:center; gap:6px;" onclick="window.open('${mapsLink}', '_blank')"><i class="ph-fill ph-navigation-arrow"></i> ABRIR GPS</button></div>`;
+                     
+                     let whatsClienteBtn = '';
+                     if(ent.whatsCliente && ent.whatsCliente.trim() !== '') {
+                         let numCliente = window.formatarWhats(ent.whatsCliente);
+                         let msgCliente = encodeURIComponent(`Olá! Sou o entregador do TGS Delivery e estou a caminho com o seu pedido da loja ${data.lojaNome}.`);
+                         whatsClienteBtn = `<button class="btn btn-sm" style="margin-top:6px; background:#25D366; color:#fff; border:none; width:100%; display:flex; justify-content:center; align-items:center; gap:6px;" onclick="window.open('https://wa.me/${numCliente}?text=${msgCliente}', '_blank')"><i class="ph-bold ph-whatsapp-logo"></i> FALAR COM O CLIENTE</button>`;
+                     }
+                     
+                     destHtml += `<div style="margin-bottom:12px; padding-bottom:12px; border-bottom:1px dashed var(--border);"><strong style="color:var(--text); font-size:14px;">Entrega ${idx+1}:</strong><br><span style="color:var(--muted); font-size:13px;">${ent.rua}, ${ent.num} - ${ent.bairro}</span><button class="btn btn-sm" style="margin-top:6px; background:rgba(0,200,255,.1); color:var(--neon-b); border:1px solid var(--neon-b); width:100%; display:flex; justify-content:center; align-items:center; gap:6px;" onclick="window.open('${mapsLink}', '_blank')"><i class="ph-fill ph-navigation-arrow"></i> ABRIR GPS</button>${whatsClienteBtn}</div>`;
                  });
                  document.getElementById('activeClienteEnd').innerHTML = destHtml;
              } else { document.getElementById('activeClienteEnd').textContent = data.clienteEnd; }
@@ -1897,9 +1909,10 @@
     for(let item of destItems) {
         let b = item.querySelector('.dest-bairro').value.trim().toUpperCase(); 
         let r = item.querySelector('.dest-rua').value.trim(); let n = item.querySelector('.dest-num').value.trim();
+        let w = item.querySelector('.dest-whats') ? item.querySelector('.dest-whats').value.trim() : '';
         if(b || r || n) {
             if(!b || !r || !n) { window.isProcessingClick = false; return showToast('<i class="ph-fill ph-warning"></i> Bairro, Rua e Nº são obrigatórios. (Use "S/N")'); }
-            entregas.push({ bairro: b, rua: r, num: n }); bairrosArr.push(b);
+            entregas.push({ bairro: b, rua: r, num: n, whatsCliente: w }); bairrosArr.push(b);
         }
     }
 
