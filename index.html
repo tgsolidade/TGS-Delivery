@@ -531,6 +531,9 @@
         <button class="btn-green" onclick="salvarPerfilLoja()"><i class="ph-fill ph-floppy-disk"></i> SALVAR ALTERAÇÕES</button>
         <div class="login-divider" style="margin-top: 30px;"><span>Segurança</span></div>
         <button class="btn btn-secondary" onclick="solicitarRedefinicaoSenha()"><i class="ph-fill ph-lock-key"></i> REDEFINIR SENHA</button>
+        
+        <div class="login-divider" style="margin-top: 30px;"><span>Notificações</span></div>
+        <button class="btn btn-primary" onclick="pedirPermissaoNotificacao()"><i class="ph-fill ph-bell-ringing"></i> 🔔 FORÇAR ATIVAÇÃO DE NOTIFICAÇÕES</button>
      </div>
   </div>
 </div>
@@ -688,6 +691,9 @@
        <button class="btn btn-green" onclick="salvarPerfilMoto()"><i class="ph-fill ph-floppy-disk"></i> SALVAR ALTERAÇÕES</button>
        <div class="login-divider" style="margin-top: 30px;"><span>Segurança</span></div>
        <button class="btn btn-secondary" onclick="solicitarRedefinicaoSenha()"><i class="ph-fill ph-lock-key"></i> REDEFINIR SENHA</button>
+       
+       <div class="login-divider" style="margin-top: 30px;"><span>Notificações</span></div>
+       <button class="btn btn-primary" onclick="pedirPermissaoNotificacao()"><i class="ph-fill ph-bell-ringing"></i> 🔔 FORÇAR ATIVAÇÃO DE NOTIFICAÇÕES</button>
     </div>
   </div>
 </div>
@@ -782,7 +788,6 @@
   window.audioUnlocked = false;
   window.audioCtx = null;
 
-  // --- MOTOR DE ÁUDIO TURBINADO ) ---
   document.body.addEventListener('click', function() {
       if(!window.audioUnlocked) { 
           try {
@@ -791,18 +796,17 @@
               const aud = document.getElementById('alertSound');
               const track = window.audioCtx.createMediaElementSource(aud);
               const gainNode = window.audioCtx.createGain();
-              gainNode.gain.value = 1.2; // AMPLIFICADOR LIGADO NO 120%
+              gainNode.gain.value = 1.2; 
               track.connect(gainNode).connect(window.audioCtx.destination);
               aud.load();
               window.audioUnlocked = true;
           } catch(e) { 
-              console.log("Áudio 3x bloqueado por segurança do navegador. Rodando em volume normal.");
+              console.log("Áudio 3x bloqueado por segurança do navegador.");
               window.audioUnlocked = true; 
           }
       }
   }, {once: true});
 
-  // --- DISPARO AGRESSIVO ---
   window.tocarAlertaMaximo = function() {
       try {
           if(window.audioCtx && window.audioCtx.state === 'suspended') {
@@ -814,7 +818,6 @@
           if (playPromise !== undefined) {
               playPromise.catch(error => { console.log("Áudio bloqueado", error) });
           }
-          // Vibração Agressiva: Treme, pausa, treme, pausa, treme longo
           if (navigator.vibrate) {
               navigator.vibrate([600, 200, 600, 200, 1500]);
           }
@@ -920,24 +923,47 @@
   window.fecharModalHistory = function() { document.getElementById('historyModal').classList.remove('open'); }
   window.fecharListaModal = function() { document.getElementById('listModal').classList.remove('open'); }
 
-  window.pedirPermissaoNotificacao = function() {
-      if (!("Notification" in window)) return;
-      Notification.requestPermission().then((permission) => {
-          if (permission === 'granted') {
-              if ('serviceWorker' in navigator) {
-                  navigator.serviceWorker.register('firebase-messaging-sw.js')
-                  .then((registration) => {
-                      return getToken(messaging, { vapidKey: vapidKey, serviceWorkerRegistration: registration });
-                  })
-                  .then((currentToken) => {
-                      if (currentToken && auth && auth.currentUser) {
-                          updateDoc(doc(db, "usuarios", auth.currentUser.uid), { fcmToken: currentToken })
-                          .catch(err => console.error("Erro ao salvar token:", err));
-                      }
-                  }).catch((err) => console.error("Erro ao obter token FCM:", err));
-              }
+  // ─── MODO DETETIVE X9 ATIVADO AQUI ───
+  window.pedirPermissaoNotificacao = async function() {
+      if (!("Notification" in window)) {
+          alert("[X9] Seu navegador não suporta notificações de jeito nenhum.");
+          return;
+      }
+      try {
+          const permission = await Notification.requestPermission();
+          if (permission !== 'granted') {
+              alert("[X9] Você não clicou em PERMITIR ou as notificações estão bloqueadas nas configurações do celular.");
+              return;
           }
-      });
+          
+          if ('serviceWorker' in navigator) {
+              // 1. Registra o Arquivo
+              const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+              
+              // 2. Pede o Token Pro Google
+              const currentToken = await getToken(messaging, { 
+                  vapidKey: vapidKey, 
+                  serviceWorkerRegistration: registration 
+              });
+              
+              if (currentToken) {
+                  // 3. Salva no Firebase
+                  if (auth && auth.currentUser) {
+                      await updateDoc(doc(db, "usuarios", auth.currentUser.uid), { fcmToken: currentToken });
+                      alert("[X9] SUCESSO ABSOLUTO! Token gerado e salvo no banco. A notificação vai funcionar!");
+                  } else {
+                      alert("[X9] Token foi gerado, mas o Firebase diz que o motoboy não está logado no momento.");
+                  }
+              } else {
+                  alert("[X9] O arquivo registrou, mas o Google se recusou a entregar a 'Placa' (Token).");
+              }
+          } else {
+              alert("[X9] Seu navegador não suporta Service Workers (Background).");
+          }
+      } catch (err) {
+          alert("[X9] ERRO CRÍTICO NA ENGENHARIA: " + err.message);
+          console.error(err);
+      }
   };
 
   window.dispararNotificacao = function(titulo, corpo) {
@@ -985,7 +1011,7 @@
   let userListenerUnsubscribe = null;
   let currentConfig = { taxaApp: 0.40, isPaused: false };
   let lastPendentesCount = 0; 
-  let lastSaldoGlobal = null; // RASTREADOR DE SALDO BLACK BELT 🥷
+  let lastSaldoGlobal = null; 
   
   window.regrasTaxaGlobais = { taxaDia: 8.00, taxaNoite: 10.00, horaVirada: "23:00" };
   window.bairrosExcecao = [];
@@ -1248,7 +1274,6 @@
         if (userDataGlobal.perfil === 'motoboy') {
           const saldo = userDataGlobal.saldo !== undefined ? parseFloat(userDataGlobal.saldo) : 0;
           
-          // 🚀 RASTREADOR BLACK BELT (ATUALIZAÇÃO AUTOMÁTICA DO PIX)
           if (lastSaldoGlobal !== null && saldo > lastSaldoGlobal) {
               document.getElementById('pixModal').classList.remove('open');
               showToast('<i class="ph-fill ph-check-circle" style="color: var(--neon-g);"></i> PIX Confirmado! Saldo atualizado');
@@ -1302,7 +1327,6 @@
 
   window.abrirModalRecarga = function() { document.getElementById('rechargeValue').value = ''; document.getElementById('rechargeModal').classList.add('open'); }
   
-  // ─── NOVA FUNÇÃO PARA CHAMAR O SERVIDOR PIX NA NUVEM ───
  window.processarRecargaPix = async function() {
    const valInput = document.getElementById('rechargeValue').value; 
    const valor = parseFloat(valInput.replace(',', '.'));
@@ -1318,8 +1342,8 @@
            headers: { 'Content-Type': 'application/json' },
            body: JSON.stringify({ 
                valor: valor.toFixed(2),
-               uid: auth.currentUser.uid, // 🚨 AGORA O APP MANDA O ID DO MOTOBOY
-               nome: userDataGlobal.nome   // 🚨 E MANDA O NOME TAMBÉM
+               uid: auth.currentUser.uid, 
+               nome: userDataGlobal.nome   
            })
        });
 
@@ -1342,7 +1366,6 @@
    }
 }
 
-  // ─── FUNÇÃO PARA COPIAR O CÓDIGO DO PIX ───
   window.copiarPixGerado = function() {
       const texto = document.getElementById('pixCopiaColaText').value;
       navigator.clipboard.writeText(texto).then(() => {
@@ -1830,7 +1853,6 @@
       histContainer.appendChild(fragHist);
 
       if(!initialLoad && pendentes > lastPendentesCount && !encontrouAtivo) {
-          // --- CHAMA A FUNÇÃO DE ALERTA MÁXIMO ---
           window.tocarAlertaMaximo();
           
           if (document.hidden) {
