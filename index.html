@@ -921,14 +921,23 @@
   window.fecharListaModal = function() { document.getElementById('listModal').classList.remove('open'); }
 
   window.pedirPermissaoNotificacao = function() {
-      if ("Notification" in window && Notification.permission === "default") {
-          Notification.requestPermission();
-      }
-      if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.register('sw.js').then(function(reg) {
-              console.log('SW Registrado para Notificações');
-          }).catch(function(err) { console.error("Erro interno:", err); });
-      }
+      if (!("Notification" in window)) return;
+      Notification.requestPermission().then((permission) => {
+          if (permission === 'granted') {
+              if ('serviceWorker' in navigator) {
+                  navigator.serviceWorker.register('firebase-messaging-sw.js')
+                  .then((registration) => {
+                      return getToken(messaging, { vapidKey: vapidKey, serviceWorkerRegistration: registration });
+                  })
+                  .then((currentToken) => {
+                      if (currentToken && auth && auth.currentUser) {
+                          updateDoc(doc(db, "usuarios", auth.currentUser.uid), { fcmToken: currentToken })
+                          .catch(err => console.error("Erro ao salvar token:", err));
+                      }
+                  }).catch((err) => console.error("Erro ao obter token FCM:", err));
+              }
+          }
+      });
   };
 
   window.dispararNotificacao = function(titulo, corpo) {
@@ -948,6 +957,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
   import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail, onAuthStateChanged, deleteUser } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
   import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, where, setDoc, doc, updateDoc, deleteDoc, getDoc, getDocs, increment, limit, runTransaction, enableNetwork, disableNetwork } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+  import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDLSvxNn8jwZGG8Ky9MUlDRvSH6vHK7vdI",
@@ -961,6 +971,14 @@
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
+  const messaging = getMessaging(app);
+  const vapidKey = "BA2iohPWcBCNoIMCnAmj4XS3wqb-j_HvB45B3m3LSS8qb51mrFrGTK20RfYclySx_0B-RnNQFTy9-vRrVY1UEvc";
+
+  onMessage(messaging, (payload) => {
+      console.log('Mensagem FCM Foreground:', payload);
+      window.tocarAlertaMaximo();
+      window.showToast(`<i class="ph-fill ph-bell-ringing"></i> ${payload.notification.title}`);
+  });
 
   let activeOrderId = null;
   let userDataGlobal = null; 
