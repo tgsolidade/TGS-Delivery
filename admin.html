@@ -247,7 +247,21 @@
   </div>
 
   <div class="tab-content" id="tab-orders">
-    <p class="section-title"><i class="ph-fill ph-crosshair"></i> MONITORAMENTO DE PEDIDOS</p>
+    
+    <div style="background: rgba(255, 51, 102, 0.05); border: 1px solid var(--neon-r); padding: 16px; border-radius: 12px; margin-bottom: 24px; text-align: center;">
+      <h3 style="font-family: var(--font-head); color: var(--neon-r); font-size: 14px; margin-bottom: 8px;">📢 MEGAFONE GERAL: "TEM PEDIDO NA TELA"</h3>
+      <p style="font-size: 12px; color: var(--muted); margin-bottom: 12px;">Dispara uma notificação <b>PUSH</b> no celular de TODOS os motoboys online simultaneamente.</p>
+      <button class="btn btn-red" style="width: 100%; max-width: 400px; margin: 0 auto;" onclick="dispararPushTodosMotos()">
+        <i class="ph-fill ph-bell-ringing"></i> ALERTAR TODOS OS MOTOBOYS
+      </button>
+    </div>
+
+    <p class="section-title"><i class="ph-fill ph-radar" style="color: var(--neon-b);"></i> RADAR: MOTOBOYS EM ROTA AGORA</p>
+    <div id="adminRadarList" style="margin-bottom: 36px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px;">
+       <div style="grid-column: 1 / -1; text-align:center; padding:20px; color:var(--muted); font-size:12px; border:1px dashed var(--border); border-radius:8px;">Nenhum motoboy em rota no momento. Radar limpo.</div>
+    </div>
+
+    <p class="section-title"><i class="ph-fill ph-crosshair"></i> TODOS OS PEDIDOS (GERAL)</p>
     <div class="filter-bar">
         <div class="form-group filter-group">
             <label>Status do Pedido</label>
@@ -315,11 +329,11 @@
 
   <div class="tab-content" id="tab-msg">
     <div style="background:var(--bg2); border:1px solid var(--border); padding:24px; border-radius:12px; margin-bottom: 30px;">
-       <p class="section-title" style="color:var(--neon-r)"><i class="ph-fill ph-megaphone"></i> ENVIAR AVISO GERAL</p>
-       <p style="font-size: 12px; color: var(--muted); margin-bottom: 16px;">O alerta saltará na tela de TODOS os usuários conectados (lojas e motos).</p>
+       <p class="section-title" style="color:var(--neon-r)"><i class="ph-fill ph-megaphone"></i> ENVIAR AVISO GERAL (MURAL/SISTEMA)</p>
+       <p style="font-size: 12px; color: var(--muted); margin-bottom: 16px;">Este alerta aparecerá em uma caixa amarela MUDANDO A TELA de todos os usuários logados. Não é notificação push de fundo.</p>
        <div style="display:flex; flex-direction:column; gap:12px;">
           <textarea id="adminMsgInput" rows="3" style="background:var(--bg); border:1px solid var(--border); color:white; padding:16px; border-radius:8px; outline:none; font-family:var(--font-body); font-size: 16px;" placeholder="Digite o alerta global aqui..."></textarea>
-          <button class="btn btn-red" onclick="enviarAvisoGlobal()"><i class="ph-fill ph-paper-plane-tilt"></i> DISPARAR ALERTA GERAL</button>
+          <button class="btn btn-red" onclick="enviarAvisoGlobal()"><i class="ph-fill ph-paper-plane-tilt"></i> DISPARAR ALERTA DE SISTEMA</button>
        </div>
     </div>
 
@@ -380,7 +394,7 @@
 
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-  import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, setDoc, doc, updateDoc, deleteDoc, getDoc, serverTimestamp, increment, limit } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, setDoc, doc, updateDoc, deleteDoc, getDoc, serverTimestamp, increment, limit, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDLSvxNn8jwZGG8Ky9MUlDRvSH6vHK7vdI",
@@ -795,6 +809,71 @@
       window.renderRankingEHoras();
   }
 
+  // 🎯 MOTOR DO RADAR ADMIN (RENDERIZAÇÃO)
+  window.renderRadarAdmin = function() {
+      const rList = document.getElementById('adminRadarList');
+      if(!rList) return;
+      rList.innerHTML = '';
+      let emRotaCount = 0;
+
+      window.todosPedidosMemoria.forEach(d => {
+          if(d.status === 'aceito') {
+              emRotaCount++;
+              rList.innerHTML += `
+                  <div style="background: var(--panel); border: 1px solid var(--border); border-left: 3px solid var(--neon-b); border-radius: 8px; padding: 16px;">
+                      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+                          <strong style="color:var(--neon-b); font-family:var(--font-head); font-size:13px;"><i class="ph-fill ph-helmet"></i> ${d.motoboyNome || 'Motoboy'}</strong>
+                          <span class="status-badge status-going">EM ROTA</span>
+                      </div>
+                      <div style="font-size:13px; color:var(--text); margin-bottom: 6px;">
+                          <i class="ph-fill ph-storefront"></i> Pegou na loja: <strong>${d.lojaNome}</strong>
+                      </div>
+                      <div style="font-size:12px; color:var(--muted);">
+                          <i class="ph-fill ph-map-pin"></i> Destino: ${d.bairro}
+                      </div>
+                  </div>
+              `;
+          }
+      });
+
+      if(emRotaCount === 0) {
+          rList.innerHTML = '<div style="grid-column: 1 / -1; text-align:center; padding:20px; color:var(--muted); font-size:13px; border:1px dashed var(--border); border-radius:8px;">Nenhum motoboy rodando no momento. Radar limpo.</div>';
+      }
+  };
+
+  // 📢 FUNÇÃO DO MEGAFONE PUSH (Dispara o Backend)
+  window.dispararPushTodosMotos = async function() {
+      if(!confirm('🚨 ATENÇÃO: Isso vai disparar o PUSH ALERT no celular de TODOS os motoboys logados na plataforma dizendo que tem pedido no mural. Confirma o alarme?')) return;
+
+      showLoading('ENVIANDO PUSH GERAL...');
+      try {
+          // ESTA É A URL DA SUA FUNÇÃO GER 2 (Vamos criar ela na próxima etapa!)
+          const urlFuncao = 'https://notificartodosmotos-mnqcjnimuq-uc.a.run.app'; 
+          
+          const response = await fetch(urlFuncao, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  titulo: "TGS Delivery ⚡",
+                  mensagem: "🚨 TEM PEDIDO NA TELA! Corre lá no aplicativo!"
+              })
+          });
+
+          const data = await response.json();
+          
+          if(data.sucesso) {
+              showToast(`<i class="ph-fill ph-check-circle"></i> Alarme PUSH disparado para as motos!`);
+          } else {
+              showToast('<i class="ph-fill ph-warning"></i> Falha no disparo: ' + (data.erro || 'Erro desconhecido'));
+          }
+      } catch(e) {
+          console.error("Erro no Megafone:", e);
+          alert("O Megafone está pronto no Painel Admin! Agora precisamos criar a Cloud Function no Backend (functions/index.js) para fazer o disparo real.");
+      } finally {
+          hideLoading();
+      }
+  };
+
   function startAdminListener() {
     if(!auth.currentUser) return;
     
@@ -890,6 +969,9 @@
        snapshot.forEach(docSnap => window.todosPedidosMemoria.push({id: docSnap.id, ...docSnap.data()}));
        window.atualizarNumerosDash();
        window.renderListaPedidosAdmin();
+       
+       // 🎯 ATIVA O RADAR ADMIN
+       window.renderRadarAdmin();
     });
 
     // --- CORREÇÃO DA CAIXA DE MENSAGENS (TIMESTAMP E STATUS DE LEITURA) ---
