@@ -61,6 +61,7 @@
   .btn-primary { background: linear-gradient(135deg, #d4c200, var(--neon-y)); color: #0a0a0f; margin-top: 8px; }
   .btn-red { background: linear-gradient(135deg, #cc1144, var(--neon-r)); color: #fff; box-shadow: 0 4px 20px rgba(255,51,102,.25); margin-top: 8px; }
   .btn-green { background: linear-gradient(135deg, #00cc6a, var(--neon-g)); color: #0a0a0f; margin-top: 8px; }
+  .btn-blue { background: linear-gradient(135deg, #009acc, var(--neon-b)); color: #fff; margin-top: 8px; }
   .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text); margin-top: 10px; }
   .btn-icon { width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 16px; background: var(--bg2); border: 1px solid var(--border); cursor: pointer; transition: all .2s; color: var(--text); }
   .btn-icon-sm { width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 8px; font-size: 16px; background: transparent; border: none; cursor: pointer; transition: all .2s; color: var(--text); }
@@ -248,14 +249,36 @@
 
   <div class="tab-content" id="tab-orders">
     
-    <div style="background: rgba(255, 51, 102, 0.05); border: 1px solid var(--neon-r); padding: 16px; border-radius: 12px; margin-bottom: 24px; text-align: center;">
-      <h3 style="font-family: var(--font-head); color: var(--neon-r); font-size: 14px; margin-bottom: 8px;">📢 MEGAFONE GERAL: "TEM PEDIDO NA TELA"</h3>
-      <p style="font-size: 12px; color: var(--muted); margin-bottom: 12px;">Dispara uma notificação <b>PUSH</b> no celular de TODOS os motoboys online simultaneamente.</p>
-      <button class="btn btn-red" style="width: 100%; max-width: 400px; margin: 0 auto;" onclick="dispararPushTodosMotos()">
-        <i class="ph-fill ph-bell-ringing"></i> ALERTAR TODOS OS MOTOBOYS
-      </button>
-    </div>
+    <div style="background: var(--bg2); border: 1px solid var(--neon-b); padding: 24px; border-radius: 12px; margin-bottom: 24px;">
+      <h3 style="font-family: var(--font-head); color: var(--neon-b); font-size: 16px; margin-bottom: 8px; display:flex; align-items:center; gap:8px;"><i class="ph-fill ph-broadcast"></i> MEGAFONE PUSH (NOTIFICAÇÕES DE TELA)</h3>
+      <p style="font-size: 12px; color: var(--muted); margin-bottom: 16px;">Acorde o celular dos usuários enviando um alerta sonoro e visual para a tela de bloqueio.</p>
+      
+      <div style="display:flex; gap:16px; margin-bottom: 16px; background:var(--bg); padding:12px; border-radius:8px; border:1px dashed var(--border);">
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; color:var(--text); font-weight:bold; font-size:14px;">
+              <input type="radio" name="alvoMegafone" value="motoboys" checked style="accent-color:var(--neon-b); width:18px; height:18px;"> 
+              <i class="ph-fill ph-motorcycle" style="color:var(--neon-y)"></i> Para Motoboys
+          </label>
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; color:var(--text); font-weight:bold; font-size:14px;">
+              <input type="radio" name="alvoMegafone" value="lojas" style="accent-color:var(--neon-b); width:18px; height:18px;"> 
+              <i class="ph-fill ph-storefront" style="color:var(--neon-b)"></i> Para Lojas
+          </label>
+      </div>
 
+      <div class="form-group">
+          <input type="text" id="megafoneTitulo" placeholder="Título (Ex: ⚡ NOVA ROTA TGS DELIVERY / 🌧️ Alerta de Chuva)" style="font-weight:bold;">
+      </div>
+      <div class="form-group">
+          <textarea id="megafoneCorpo" rows="2" placeholder="Digite a mensagem que vai aparecer no celular... (Ex: TEM PEDIDO NA TELA! Corre lá no aplicativo!)"></textarea>
+      </div>
+
+      <button class="btn btn-blue" style="width: 100%;" onclick="dispararPushTodosMotos()">
+        <i class="ph-fill ph-paper-plane-tilt"></i> DISPARAR MEGAFONE AGORA
+      </button>
+
+      <div style="margin-top: 12px; text-align: center;">
+          <span style="font-size: 11px; color: var(--muted); cursor:pointer; text-decoration:underline;" onclick="preencherAlertaPadrao()">Preencher com alerta padrão de 'Pedido na Tela'</span>
+      </div>
+    </div>
     <p class="section-title"><i class="ph-fill ph-radar" style="color: var(--neon-b);"></i> RADAR: MOTOBOYS EM ROTA AGORA</p>
     <div id="adminRadarList" style="margin-bottom: 36px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px;">
        <div style="grid-column: 1 / -1; text-align:center; padding:20px; color:var(--muted); font-size:12px; border:1px dashed var(--border); border-radius:8px;">Nenhum motoboy em rota no momento. Radar limpo.</div>
@@ -477,12 +500,10 @@
       return limpo;
   }
 
-  // --- CORREÇÃO DO BUG DA ABA ---
   window.switchTab = function(tabId) {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
     
-    // Localiza e ativa o botão correto
     const targetBtn = document.querySelector(`.tab-btn[onclick*="${tabId}"]`);
     if(targetBtn) targetBtn.classList.add('active');
     
@@ -592,7 +613,6 @@
       if(document.getElementById('dashEntregasHoje')) document.getElementById('dashEntregasHoje').textContent = entregasDash;
   };
   
-  // NOVA FUNÇÃO: APLICAR PUNIÇÃO (SHADOWBAN 5s POR 1H)
   window.aplicarPunicao = async function(id, nome) {
       if(confirm(`Punir ${nome} por 1 hora?\nOs pedidos vão demorar 5 segundos a mais para aparecer no mural dele.`)) {
           showLoading('PUNINDO...');
@@ -603,7 +623,6 @@
       }
   }
 
-  // NOVA FUNÇÃO: REMOVER PUNIÇÃO
   window.removerPunicao = async function(id) {
       if(confirm(`Perdoar motoboy e remover a punição de atraso?`)) {
           showLoading('PERDOANDO...');
@@ -614,7 +633,6 @@
       }
   }
 
-  // RENDERIZAR O RANKING NA ABA
   window.renderRankingEHoras = function() {
       let motosRanking = [...window.listaMotosAdmin];
       motosRanking.sort((a, b) => (b.entregasFeitas || 0) - (a.entregasFeitas || 0));
@@ -678,7 +696,6 @@
       }
   }
 
-  // --- MOTOR DE RENDERIZAÇÃO DA ABA DE USUÁRIOS (COM DETECTOR DE FANTASMAS) ---
   window.renderGestaoUsuarios = function() {
       const pList = document.getElementById('adminPendentesList'); pList.innerHTML = '';
       const mList = document.getElementById('adminMotosList'); mList.innerHTML = '';
@@ -692,10 +709,9 @@
       window.listaMotosAdmin = [];
 
       window.todosUsuariosMemoria.forEach((dOrig) => {
-          let d = { ...dOrig }; // Clona para não mexer no original do banco
+          let d = { ...dOrig }; 
           const id = d.id;
           
-          // DETECTOR DE FANTASMAS (Roda a cada 20s via setInterval)
           if (d.status === 'online' || d.status === 'em_rota') {
               if (d.lastHeartbeat && (agora - d.lastHeartbeat > 60000)) {
                   d.status = 'offline';
@@ -805,11 +821,10 @@
       if(lCount === 0) lList.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:12px">Nenhuma loja na base.</div>';
       if(lowRatings === 0) alertList.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;border:1px dashed var(--border);border-radius:12px;">Todos os usuários estão com boas avaliações.</div>';
       
-      window.filtrarUsuarios(); // Reaplica filtro se houver algo digitado na busca
+      window.filtrarUsuarios(); 
       window.renderRankingEHoras();
   }
 
-  // 🎯 MOTOR DO RADAR ADMIN (RENDERIZAÇÃO)
   window.renderRadarAdmin = function() {
       const rList = document.getElementById('adminRadarList');
       if(!rList) return;
@@ -841,34 +856,51 @@
       }
   };
 
-  // 📢 FUNÇÃO DO MEGAFONE PUSH (Dispara o Backend)
+  // 📢 FUNÇÃO DO MEGAFONE PUSH ATUALIZADA (Geração 2)
+  window.preencherAlertaPadrao = function() {
+      document.querySelector('input[name="alvoMegafone"][value="motoboys"]').checked = true;
+      document.getElementById('megafoneTitulo').value = "⚡ NOVA ROTA TGS DELIVERY";
+      document.getElementById('megafoneCorpo').value = "🚨 TEM PEDIDO NA TELA! Corre lá no aplicativo!";
+  }
+
   window.dispararPushTodosMotos = async function() {
-      if(!confirm('🚨 ATENÇÃO: Isso vai disparar o PUSH ALERT no celular de TODOS os motoboys logados na plataforma dizendo que tem pedido no mural. Confirma o alarme?')) return;
+      const titulo = document.getElementById('megafoneTitulo').value.trim();
+      const mensagem = document.getElementById('megafoneCorpo').value.trim();
+      const publico = document.querySelector('input[name="alvoMegafone"]:checked').value;
+
+      if (!titulo || !mensagem) {
+          return window.showToast("<i class='ph-fill ph-warning'></i> Preencha o Título e a Mensagem.");
+      }
+
+      const confText = publico === 'lojas' ? "TODAS AS LOJAS" : "TODOS OS MOTOBOYS";
+      if(!confirm(`🚨 ATENÇÃO: Isso vai disparar um PUSH com som no celular de ${confText} online. Confirma o envio?`)) return;
 
       showLoading('ENVIANDO PUSH GERAL...');
       try {
-          // ESTA É A URL DA SUA FUNÇÃO GER 2 (Vamos criar ela na próxima etapa!)
           const urlFuncao = 'https://notificartodosmotos-mnqcjnimuq-uc.a.run.app'; 
           
           const response = await fetch(urlFuncao, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                  titulo: "TGS Delivery ⚡",
-                  mensagem: "🚨 TEM PEDIDO NA TELA! Corre lá no aplicativo!"
+                  titulo: titulo,
+                  mensagem: mensagem,
+                  publico: publico // Envia a escolha para o Backend
               })
           });
 
           const data = await response.json();
           
           if(data.sucesso) {
-              showToast(`<i class="ph-fill ph-check-circle"></i> Alarme PUSH disparado para as motos!`);
+              document.getElementById('megafoneTitulo').value = '';
+              document.getElementById('megafoneCorpo').value = '';
+              showToast(`<i class="ph-fill ph-check-circle"></i> Megafone disparado com sucesso! (${data.disparos} alcançados)`);
           } else {
-              showToast('<i class="ph-fill ph-warning"></i> Falha no disparo: ' + (data.erro || 'Erro desconhecido'));
+              showToast('<i class="ph-fill ph-warning"></i> Falha no disparo: ' + (data.erro || data.msg || 'Erro desconhecido'));
           }
       } catch(e) {
           console.error("Erro no Megafone:", e);
-          alert("O Megafone está pronto no Painel Admin! Agora precisamos criar a Cloud Function no Backend (functions/index.js) para fazer o disparo real.");
+          showToast('<i class="ph-fill ph-warning"></i> Erro de conexão com o servidor.');
       } finally {
           hideLoading();
       }
@@ -958,7 +990,6 @@
       window.renderGestaoUsuarios();
     });
 
-    // VARREDURA INVISÍVEL A CADA 20 SEGUNDOS (Acaba com os Fantasmas)
     if(window.ghostDetectorInterval) clearInterval(window.ghostDetectorInterval);
     window.ghostDetectorInterval = setInterval(window.renderGestaoUsuarios, 20000);
 
@@ -969,12 +1000,9 @@
        snapshot.forEach(docSnap => window.todosPedidosMemoria.push({id: docSnap.id, ...docSnap.data()}));
        window.atualizarNumerosDash();
        window.renderListaPedidosAdmin();
-       
-       // 🎯 ATIVA O RADAR ADMIN
        window.renderRadarAdmin();
     });
 
-    // --- CORREÇÃO DA CAIXA DE MENSAGENS (TIMESTAMP E STATUS DE LEITURA) ---
     if(inboxUnsubscribe) inboxUnsubscribe();
     const qMsg = query(collection(db, "mensagens"), orderBy("timestamp", "desc"));
     inboxUnsubscribe = onSnapshot(qMsg, (snapshot) => {
@@ -984,11 +1012,8 @@
           const m = docSnap.data();
           if(m.from === 'admin') {
              contMsg++;
-             
-             // Proteção contra Timestamp nulo (durante salvamento)
              const dataStr = (m.timestamp && typeof m.timestamp.toDate === 'function') ? m.timestamp.toDate().toLocaleString('pt-BR') : '';
              
-             // Melhora no Feedback Visual de Status
              let replyHtml = '';
              if (m.status === 'respondido') {
                  replyHtml = `<div class="inbox-reply"><strong>Resposta do Usuário:</strong>${m.reply}</div>`;
