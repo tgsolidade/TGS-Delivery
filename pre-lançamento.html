@@ -136,6 +136,32 @@
         /* --- CONTAINER FORMULÁRIOS --- */
         .container { background-color: var(--panel); border-radius: 12px; padding: 30px; width: 100%; max-width: 500px; border: 1px solid var(--border); box-shadow: 0 8px 32px rgba(0,0,0,0.5); transition: transform 0.3s ease; position: relative; z-index: 5;}
         
+        /* --- BOTÃO DE LOGIN REDIRECIONAMENTO --- */
+        .btn-login-redirect {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 25px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+        .btn-login-redirect:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: #555;
+            transform: translateY(-2px);
+        }
+
         .tabs { display: flex; gap: 10px; margin-bottom: 25px; }
         .tab-btn { flex: 1; padding: 15px; border: none; background-color: #13131f; border: 1px solid var(--border); color: #fff; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.85rem; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px;}
         .tab-btn.active.moto { background-color: rgba(245,230,66,.08); color: var(--neon-y); border-color: var(--neon-y); box-shadow: 0 0 10px rgba(245,230,66,0.1); }
@@ -262,6 +288,11 @@
     </div>
 
     <div class="container" id="mainContainer">
+        
+        <a href="index.html" class="btn-login-redirect">
+            <i class="ph ph-sign-in"></i> JÁ TEM UMA CONTA? FAZER LOGIN
+        </a>
+
         <div class="tabs" id="tabContainer">
             <button class="tab-btn active moto" id="btnTabMotoboy" onclick="mudarAba('motoboy')"><i class="ph-fill ph-motorcycle"></i> SOU MOTOBOY</button>
             <button class="tab-btn loja" id="btnTabLoja" onclick="mudarAba('loja')"><i class="ph-fill ph-storefront"></i> SOU LOJISTA</button>
