@@ -1,8 +1,8 @@
 importScripts(
-  "https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js",
+  "https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"
 );
 importScripts(
-  "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging-compat.js",
+  "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging-compat.js"
 );
 
 // Suas credenciais atuais do Firebase
@@ -21,7 +21,7 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
   console.log(
     "[firebase-messaging-sw.js] Notificação recebida em segundo plano!",
-    payload,
+    payload
   );
 
   const notificationTitle = payload.notification.title;
@@ -35,6 +35,31 @@ messaging.onBackgroundMessage((payload) => {
 
   return self.registration.showNotification(
     notificationTitle,
-    notificationOptions,
+    notificationOptions
+  );
+});
+
+// 👇 A ENGRENAGEM NOVA: O que acontece quando o motoboy clica na notificação? 👇
+self.addEventListener('notificationclick', function(event) {
+  console.log('[firebase-messaging-sw.js] Clique na notificação recebido.');
+  
+  // Fecha a notificação do painel do celular
+  event.notification.close(); 
+
+  // Procura o app aberto e foca nele, ou abre do zero se estiver fechado
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
+      for (var i = 0; i < clientList.length; i++) {
+        var client = clientList[i];
+        // Se o app já estiver rodando no fundo, puxa ele pra frente
+        if (client.url.indexOf(self.registration.scope) !== -1 && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      // Se o app estiver 100% fechado, abre ele
+      if (clients.openWindow) {
+        return clients.openWindow('/');
+      }
+    })
   );
 });
