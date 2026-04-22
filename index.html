@@ -475,6 +475,13 @@
     <div class="form-group"><label>Nome da Loja</label><input type="text" id="lojaNome" placeholder="Ex: Pizzaria Volt"></div>
     <div class="form-group"><label>CNPJ / CPF</label><input type="text" id="lojaCnpj" placeholder="Apenas números"></div>
     <div class="form-group"><label>WhatsApp com DDD</label><input type="tel" id="lojaWhats" placeholder="(91) 99999-9999" oninput="mascaraTelefone(this)"></div>
+    
+    <!-- NOVO CAMPO: CIDADE E ESTADO (HERANÇA NACIONAL) -->
+    <div style="display:flex; gap:12px;">
+      <div class="form-group" style="flex:2"><label>Cidade</label><input type="text" id="lojaCidade" value="Paragominas" placeholder="Sua cidade"></div>
+      <div class="form-group" style="flex:1"><label>Estado (UF)</label><input type="text" id="lojaEstado" value="Pará" placeholder="Ex: Pará"></div>
+    </div>
+
     <div style="display:flex; gap:12px;">
       <div class="form-group" style="flex:2"><label>Rua / Av</label><input type="text" id="lojaRua" placeholder="Rua principal"></div>
       <div class="form-group" style="flex:1"><label>Número</label><input type="text" id="lojaNum" placeholder="123"></div>
@@ -504,6 +511,13 @@
     <div class="form-group"><label>Nome Completo</label><input type="text" id="motoNome" placeholder="Seu nome completo"></div>
     <div class="form-group"><label>CPF</label><input type="text" id="motoCpf" placeholder="Apenas números"></div>
     <div class="form-group"><label>Data de Nascimento</label><input type="date" id="motoData"></div>
+    
+    <!-- NOVO CAMPO: CIDADE E ESTADO (HERANÇA NACIONAL) -->
+    <div style="display:flex; gap:12px;">
+      <div class="form-group" style="flex:2"><label>Cidade Atual</label><input type="text" id="motoCidade" value="Paragominas"></div>
+      <div class="form-group" style="flex:1"><label>Estado (UF)</label><input type="text" id="motoEstado" value="Pará"></div>
+    </div>
+
     <div class="form-group"><label>Placa da Moto</label><input type="text" id="motoPlaca" placeholder="ABC-1D23" style="text-transform:uppercase"></div>
     <div class="form-group"><label>WhatsApp com DDD</label><input type="tel" id="motoWhats" placeholder="(91) 99999-9999" oninput="mascaraTelefone(this)"></div>
     <div class="form-group">
@@ -594,6 +608,11 @@
         <div class="section-title">Configurações da Loja</div>
         <div class="form-group"><label>E-mail de Acesso</label><input type="email" id="editLojaEmail" disabled></div>
         <div class="form-group"><label>CNPJ / CPF</label><input type="text" id="editLojaCnpj" disabled></div>
+        
+        <div style="display:flex; gap:12px;">
+          <div class="form-group" style="flex:2"><label>Cidade</label><input type="text" id="editLojaCidade" disabled></div>
+          <div class="form-group" style="flex:1"><label>Estado</label><input type="text" id="editLojaEstado" disabled></div>
+        </div>
         
         <div class="login-divider" style="margin: 32px 0;"><span>Dados Públicos</span></div>
         
@@ -795,6 +814,12 @@
        <div class="section-title">Suas Informações</div>
        <div class="form-group"><label>E-mail de Acesso</label><input type="email" id="editMotoEmail" disabled></div>
        <div class="form-group"><label>CPF</label><input type="text" id="editMotoCpf" disabled></div>
+       
+       <div style="display:flex; gap:12px;">
+         <div class="form-group" style="flex:2"><label>Cidade de Operação</label><input type="text" id="editMotoCidade" disabled></div>
+         <div class="form-group" style="flex:1"><label>Estado</label><input type="text" id="editMotoEstado" disabled></div>
+       </div>
+       
        <div class="login-divider"><span>Dados Pessoais</span></div>
        <div class="form-group"><label>Nome Completo</label><input type="text" id="editMotoNome"></div>
        
@@ -1102,11 +1127,11 @@
   import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging.js";
   
   // 👉 SUBSTITUIÇÃO DO IMPORT EXTERNO POR VARIÁVEIS INTERNAS
-  const ATIVAR_FANTASMAS = true;
+  const ATIVAR_FANTASMAS = false;
   const listaFantasmas = [
-      { id: 'ghost_1', nome: 'wally Silva Castro', status: 'online', placaFoto: null },
-      { id: 'ghost_2', nome: 'Noe Alves', status: 'online', placaFoto: null },
-      { id: 'ghost_3', nome: 'Antonio Moto Pereira', status: 'online', placaFoto: null }
+      { id: 'ghost_1', nome: 'wally Silva Castro', status: 'offline', placaFoto: null },
+      { id: 'ghost_2', nome: 'Noe Alves', status: 'offline', placaFoto: null },
+      { id: 'ghost_3', nome: 'Antonio Moto Pereira', status: 'offline', placaFoto: null }
   ];
 
   const firebaseConfig = {
@@ -1637,6 +1662,8 @@
     const rua = document.getElementById('lojaRua').value.trim(); const num = document.getElementById('lojaNum').value.trim();
     const bairro = document.getElementById('lojaBairro').value.trim(); const ref = document.getElementById('lojaRef').value.trim();
     const whats = document.getElementById('lojaWhats').value.trim(); const fileInput = document.getElementById('lojaLogo');
+    const cidade = document.getElementById('lojaCidade').value.trim() || "Paragominas"; 
+    const estado = document.getElementById('lojaEstado').value.trim() || "Pará";
     
     if(!email || !senha || !nome || !rua || !bairro || !documento || !whats) return showToast("Preencha todos os campos obrigatórios!");
     
@@ -1664,7 +1691,7 @@
       await new Promise(resolve => setTimeout(resolve, 1500));
       await uc.user.getIdToken(true); 
 
-      await setDoc(doc(db, "usuarios", uc.user.uid), { nome, perfil: 'loja', email, documento, rua, num, bairro, ref, whats, logo: logoBase64, status: 'online', pedidosCriados: 0, ratingSum: 0, ratingCount: 0, dataCriacao: Date.now(), lastHeartbeat: Date.now() });
+      await setDoc(doc(db, "usuarios", uc.user.uid), { nome, cidade, estado, perfil: 'loja', email, documento, rua, num, bairro, ref, whats, logo: logoBase64, status: 'online', pedidosCriados: 0, ratingSum: 0, ratingCount: 0, dataCriacao: Date.now(), lastHeartbeat: Date.now() });
       
       window.isRegistering = false; hideLoading(); showToast('Bem-vindo ao TGS Delivery!'); window.location.reload(); 
       
@@ -1683,6 +1710,8 @@
     const dataNasc = document.getElementById('motoData').value; const placa = document.getElementById('motoPlaca').value.trim().toUpperCase();
     const whats = document.getElementById('motoWhats').value.trim(); const pix = document.getElementById('motoPix').value.trim();
     const temBag = document.getElementById('motoBagGrande').checked; const fotoPlacaInput = document.getElementById('motoPlacaFoto');
+    const cidade = document.getElementById('motoCidade').value.trim() || "Paragominas"; 
+    const estado = document.getElementById('motoEstado').value.trim() || "Pará";
     
     if(!email || !senha || !documento || !dataNasc || !whats || !pix) return showToast("Preencha os campos obrigatórios!");
     if(fotoPlacaInput.files.length === 0) return showToast("A foto da placa é obrigatória.");
@@ -1713,7 +1742,7 @@
       let saldoInicial = 0;
       try { const configSnap = await getDoc(doc(db, "config", "geral")); if(configSnap.exists()) { const cfg = configSnap.data(); if(cfg.promoInicio && cfg.promoFim && cfg.promoValor) { const dataLocalBR = getTodayStr(); if(dataLocalBR >= cfg.promoInicio && dataLocalBR <= cfg.promoFim) saldoInicial = parseFloat(cfg.promoValor); } } } catch(e) { console.error(e); }
       
-      await setDoc(doc(db, "usuarios", uc.user.uid), { nome, perfil: 'motoboy', email, documento, dataNasc, placa, whats, chavePix: pix, bagGrande: temBag, placaFoto: placaFotoBase64, status: 'pendente', saldo: saldoInicial, entregasFeitas: 0, ratingSum: 0, ratingCount: 0, dataCriacao: Date.now(), lastHeartbeat: Date.now() });
+      await setDoc(doc(db, "usuarios", uc.user.uid), { nome, cidade, estado, perfil: 'motoboy', email, documento, dataNasc, placa, whats, chavePix: pix, bagGrande: temBag, placaFoto: placaFotoBase64, status: 'pendente', saldo: saldoInicial, entregasFeitas: 0, ratingSum: 0, ratingCount: 0, dataCriacao: Date.now(), lastHeartbeat: Date.now() });
       
       await signOut(auth); window.isRegistering = false; hideLoading(); 
       showToast('Cadastro recebido! Aguardando aprovação.'); window.showScreen('login');
@@ -1730,6 +1759,7 @@
     document.getElementById('editLojaNome').value = userDataGlobal.nome || ''; document.getElementById('editLojaRua').value = userDataGlobal.rua || ''; 
     document.getElementById('editLojaNum').value = userDataGlobal.num || ''; document.getElementById('editLojaBairro').value = userDataGlobal.bairro || ''; 
     document.getElementById('editLojaRef').value = userDataGlobal.ref || ''; document.getElementById('editLojaWhats').value = userDataGlobal.whats || '';
+    document.getElementById('editLojaCidade').value = userDataGlobal.cidade || 'Paragominas'; document.getElementById('editLojaEstado').value = userDataGlobal.estado || 'Pará';
     if(userDataGlobal.logo) { document.getElementById('currentLogoImg').src = userDataGlobal.logo; document.getElementById('currentLogoContainer').style.display = 'block'; } else { document.getElementById('currentLogoContainer').style.display = 'none'; }
     window.switchLojaTab('tab-loja-perfil');
   };
@@ -1749,6 +1779,7 @@
     document.getElementById('editMotoNome').value = userDataGlobal.nome || ''; document.getElementById('editMotoPlaca').value = userDataGlobal.placa || ''; 
     document.getElementById('editMotoWhats').value = userDataGlobal.whats || ''; document.getElementById('editMotoData').value = userDataGlobal.dataNasc || '';
     document.getElementById('editMotoPix').value = userDataGlobal.chavePix || ''; document.getElementById('editMotoBag').checked = userDataGlobal.bagGrande || false;
+    document.getElementById('editMotoCidade').value = userDataGlobal.cidade || 'Paragominas'; document.getElementById('editMotoEstado').value = userDataGlobal.estado || 'Pará';
     if(userDataGlobal.placaFoto) { document.getElementById('currentPlacaImg').src = userDataGlobal.placaFoto; document.getElementById('currentPlacaContainer').style.display = 'block'; } else { document.getElementById('currentPlacaContainer').style.display = 'none'; }
     window.switchMotoTab('tab-moto-perfil');
   };
@@ -2003,6 +2034,13 @@
           if(data.status === 'aguardando') {
             if(data.bagGrande === true && userDataGlobal && !userDataGlobal.bagGrande) return; 
 
+            // 📍 FILTRO REGIONAL SILENCIOSO (Zero chance de erro no banco de dados)
+            const pedidoCidade = data.cidade || "Paragominas";
+            const pedidoEstado = data.estado || "Pará";
+            const motoCidade = userDataGlobal.cidade || "Paragominas";
+            const motoEstado = userDataGlobal.estado || "Pará";
+            if (pedidoCidade !== motoCidade || pedidoEstado !== motoEstado) return; // Ignora pedidos de outros estados
+
             const isNewOrderToThisDevice = !window.seenOrderIds.has(docSnap.id);
             
             if (!initialLoad && isNewOrderToThisDevice) {
@@ -2043,7 +2081,7 @@
              if(data.entregas && data.entregas.length > 0) {
                  let destHtml = '';
                  data.entregas.forEach((ent, idx) => {
-                     let enderecoCompleto = `${ent.rua}, ${ent.num} - ${ent.bairro}, Paragominas - PA`;
+                     let enderecoCompleto = `${ent.rua}, ${ent.num} - ${ent.bairro}, ${data.cidade || 'Paragominas'} - ${data.estado || 'PA'}`;
                      let mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(enderecoCompleto)}`;
                      
                      let whatsClienteBtn = '';
@@ -2121,8 +2159,18 @@
     onSnapshot(q, (snap) => {
       let online = 0; let emRota = 0; let total = snap.size; window.listaMotos = [];
       const agora = Date.now();
+      
+      const lojaCidade = userDataGlobal ? (userDataGlobal.cidade || "Paragominas") : "Paragominas";
+      const lojaEstado = userDataGlobal ? (userDataGlobal.estado || "Pará") : "Pará";
+
       snap.forEach(doc => { 
           const d = doc.data(); d.id = doc.id; 
+          
+          // Conta apenas as motos da mesma cidade/estado para a loja não ver números de outras regiões
+          const motoCidade = d.cidade || "Paragominas";
+          const motoEstado = d.estado || "Pará";
+          if (motoCidade !== lojaCidade || motoEstado !== lojaEstado) return;
+
           if (d.status === 'online' || d.status === 'em_rota') { if (d.lastHeartbeat && (agora - d.lastHeartbeat > 60000)) d.status = 'offline'; }
           window.listaMotos.push(d); 
           if(d.status === 'online') online++; if(d.status === 'em_rota') emRota++; 
@@ -2137,14 +2185,25 @@
   function listenMotoDashStats() {
     const q = query(collection(db, "usuarios"), where("perfil", "==", "loja"));
     onSnapshot(q, (snap) => {
-      let onlineLojas = 0; window.listaLojas = [];
+      let onlineLojas = 0; let totalLojas = 0; window.listaLojas = [];
       const agora = Date.now();
+      
+      const motoCidade = userDataGlobal ? (userDataGlobal.cidade || "Paragominas") : "Paragominas";
+      const motoEstado = userDataGlobal ? (userDataGlobal.estado || "Pará") : "Pará";
+
       snap.forEach(doc => { 
           const d = doc.data(); d.id = doc.id; 
+          
+          // Conta apenas as lojas da mesma cidade/estado
+          const lojaCidade = d.cidade || "Paragominas";
+          const lojaEstado = d.estado || "Pará";
+          if (motoCidade !== lojaCidade || motoEstado !== lojaEstado) return;
+          
+          totalLojas++;
           if (d.status === 'online') { if (d.lastHeartbeat && (agora - d.lastHeartbeat > 60000)) d.status = 'offline'; }
           window.listaLojas.push(d); if(d.status === 'online') onlineLojas++; 
       });
-      document.getElementById('dashMotoLojasAtivas').textContent = onlineLojas; document.getElementById('dashMotoLojasTotal').textContent = snap.size;
+      document.getElementById('dashMotoLojasAtivas').textContent = onlineLojas; document.getElementById('dashMotoLojasTotal').textContent = totalLojas;
     });
   }
 
@@ -2195,6 +2254,7 @@
     try {
       const p1 = addDoc(collection(db, "pedidos"), {
         lojaId: auth.currentUser.uid, lojaNome: userDataGlobal.nome || 'Loja', lojaLogo: userDataGlobal.logo || null, lojaWhats: userDataGlobal.whats || '', lojaEnd: `${userDataGlobal.rua}, ${userDataGlobal.num} - ${userDataGlobal.bairro} (${userDataGlobal.ref})`,
+        cidade: userDataGlobal.cidade || "Paragominas", estado: userDataGlobal.estado || "Pará",
         clienteEnd: clienteEnd, bairro: bairrosResumo, taxa: `R$ ${totalFee.toFixed(2).replace('.', ',')}`, obs: obs, pin: pin, bagGrande: bagGrande, status: 'aguardando', timestamp: Date.now(), qtdEntregas: entregas.length, entregas: entregas, modo: modoAtual
       });
       const p2 = updateDoc(doc(db, "usuarios", auth.currentUser.uid), { pedidosCriados: increment(1) });

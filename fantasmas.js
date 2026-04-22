@@ -4,7 +4,7 @@
 // ==========================================
 
 // Troque 'true' para 'false' quando quiser desligar a ilusão
-export const ATIVAR_FANTASMAS = true;
+export const ATIVAR_FANTASMAS = false
 
 // Nomes dos motoboys virtuais
 export const listaFantasmas = [
